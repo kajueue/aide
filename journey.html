@@ -103,24 +103,6 @@
             opacity: 0;
             pointer-events: none;
         }
-    /* 1. 針對卡片內快速編輯輸入框的精確高度設定 */
-    [id^="edit-note-"] {
-        min-height: auto !important;
-        height: auto !important;
-        resize: none;
-        overflow-y: hidden;
-        padding-top: 4px !important;
-        padding-bottom: 4px !important;
-        line-height: 1.6;
-    }
-
-    /* 2. 同步調整點擊前的文字顯示區域，確保高度縮減 */
-    .editable-note {
-        min-height: 32px !important; /* 確保是一行的高度 */
-        padding: 4px 8px !important; /* 縮減上下間距 */
-        display: flex;
-        align-items: center;
-    }
     </style>
 </head>
 <body class="p-4 md:p-6 lg:p-8">
@@ -267,10 +249,8 @@
 
                     <div id="noteContainer">
                         <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">內容紀錄</label>
-                       <textarea id="edit-note-${item.id}" 
-    class="hidden w-full border border-[#8da399] bg-white rounded-lg px-2.5 py-1 event-note-text outline-none" 
-    rows="1" 
-    onblur="saveQuickEdit('${item.id}')">${note}</textarea>
+                        <textarea id="caseNote" rows="1" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition"></textarea>
+                    </div>
 
                     <div class="flex justify-end gap-3 pt-2">
                         <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm text-[#8da399] font-medium hover:bg-[#f5f2ed] rounded-lg transition">取消</button>
@@ -447,9 +427,6 @@ function createCard(item, isPending, isExpired) {
     const titleClass = item.type === 'once' ? 'title-once' : 'title-weekly';
     const note = item.note || '';
 
-    // 邏輯：如果是固定行程 (weekly)，一律顯示框；如果是單次預約 (once)，一律不顯示框
-    const shouldShowNote = (item.type === 'weekly');
-
     card.innerHTML = `
         <div class="p-5 flex flex-col h-full">
             <div class="flex justify-between items-start mb-3">
@@ -462,14 +439,12 @@ function createCard(item, isPending, isExpired) {
                     <button onclick="deleteCase('${item.id}')" class="p-1 text-[#b5a48d]/50 hover:text-red-400 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                 </div>
             </div>
-            ${shouldShowNote ? `
             <div class="mt-auto">
                 <div id="display-note-${item.id}" onclick="startQuickEdit('${item.id}')" class="editable-note min-h-[40px] bg-[#faf9f7] ${!note ? 'border border-dashed border-[#e8e2da]' : ''}">
                    <p class="event-note-text whitespace-pre-line">${note}</p>
                 </div>
                 <textarea id="edit-note-${item.id}" class="hidden w-full border border-[#8da399] bg-white rounded-lg px-2.5 py-2 event-note-text outline-none" rows="2" onblur="saveQuickEdit('${item.id}')">${note}</textarea>
             </div>
-            ` : ''}
         </div>
     `;
     return card;
@@ -607,8 +582,3 @@ function createCard(item, isPending, isExpired) {
     </script>
 </body>
 </html>
-
-
-
-
-
