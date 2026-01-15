@@ -116,10 +116,8 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <p id="current-info" class="text-xs text-[#9ba8a4]"></p>
-                    <!-- 隱藏了同步狀態文字與 Loader -->
                     <div id="sync-status" class="hidden"></div>
                 </div>
-                <!-- 隱藏了帳號顯示文字 -->
                 <p id="user-display" class="hidden"></p>
             </div>
             <button onclick="openModal()" class="bg-[#8da399] hover:bg-[#7a8f85] text-white px-5 py-2 rounded-lg shadow-sm transition-all text-sm flex items-center justify-center border border-[#a4b5ae]">
@@ -171,7 +169,8 @@
 
                     <div>
                         <label id="labelName" class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">名稱</label>
-                        <input type="text" id="caseName" required class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" placeholder="輸入名稱">
+                        <!-- 核心修改 1: autocomplete="off" 禁止瀏覽器紀錄 -->
+                        <input type="text" id="caseName" required autocomplete="off" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" placeholder="輸入名稱">
                     </div>
 
                     <div id="weeklyOptions" class="grid grid-cols-2 gap-3">
@@ -183,6 +182,8 @@
                                 <option value="3">星期三</option>
                                 <option value="4">星期四</option>
                                 <option value="5">星期五</option>
+                                <option value="6">星期六</option>
+                                <option value="0">星期日</option>
                             </select>
                         </div>
                         <div>
@@ -199,7 +200,7 @@
                                 <option value="8">第七節</option>
                                 <option value="custom">自定義時間</option>
                             </select>
-                            <input type="text" id="customTimeWeekly" class="hidden mt-1.5 w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" placeholder="HH:mm" onblur="formatCustomTime(this)">
+                            <input type="text" id="customTimeWeekly" autocomplete="off" class="hidden mt-1.5 w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" placeholder="HH:mm" onblur="formatCustomTime(this)">
                         </div>
                     </div>
 
@@ -222,11 +223,10 @@
                                 <option value="8">第七節</option>
                                 <option value="custom">自定義時間</option>
                             </select>
-                            <input type="text" id="customTimeOnce" class="hidden mt-1.5 w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" placeholder="HH:mm" onblur="formatCustomTime(this)">
+                            <input type="text" id="customTimeOnce" autocomplete="off" class="hidden mt-1.5 w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" placeholder="HH:mm" onblur="formatCustomTime(this)">
                         </div>
                     </div>
 
-                    <!-- 內容紀錄 -->
                     <div id="noteContainer">
                         <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">內容紀錄</label>
                         <textarea id="caseNote" rows="1" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition"></textarea>
@@ -299,7 +299,6 @@
                 overlay.classList.add('hidden-auth');
                 setTimeout(() => overlay.classList.add('hidden'), 300);
                 mainApp.classList.remove('opacity-0');
-                // 內部維護帳號資訊，但不顯示在畫面上
                 setupSync();
             } else {
                 currentUser = null;
@@ -339,10 +338,25 @@
             todayContainer.innerHTML = '';
             allContainer.innerHTML = '';
 
+            // 核心修改 2: 排序邏輯調整
             const sortedList = [...caseList].sort((a, b) => {
+                // 不同類型時，單次行程優先排在最前面
                 if (a.type !== b.type) return a.type === 'once' ? -1 : 1;
-                if (a.type === 'once') return (a.date || '').localeCompare(b.date || '');
-                return (a.day || 0) - (b.day || 0);
+
+                if (a.type === 'once') {
+                    // 單次行程按日期排序
+                    return (a.date || '').localeCompare(b.date || '');
+                } else {
+                    // 固定行程：根據今天星期幾進行循環排序
+                    // 計算該行程相對於今天的偏移天數 (0-6)
+                    const getOffset = (day) => (day - todayNum + 7) % 7;
+                    const offsetA = getOffset(a.day);
+                    const offsetB = getOffset(b.day);
+                    
+                    if (offsetA !== offsetB) return offsetA - offsetB;
+                    // 同一天的按時段排序
+                    return (a.period === 'custom' ? 99 : a.period) - (b.period === 'custom' ? 99 : b.period);
+                }
             });
 
             const todayPendingCases = sortedList.filter(c => {
@@ -381,6 +395,7 @@
                 }
             }
             const p = parseInt(period);
+            // 粗略估計：早修到第四節算上午(過12點過期)，午休到第七節算下午(過17點過期)
             if (p <= 4) return currentHour >= 12;
             else return currentHour >= 17;
         }
@@ -571,6 +586,7 @@
             }
         });
 
+        // 每一分鐘自動更新一次介面，確保今日待辦跟隨時間更新
         setInterval(renderDisplay, 60000);
     </script>
 </body>
