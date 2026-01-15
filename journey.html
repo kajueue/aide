@@ -11,13 +11,34 @@
         body {
             font-family: 'Noto Sans TC', sans-serif;
             background-color: #f5f2ed;
-            font-size: 1rem;
             color: #4a5553; 
             -webkit-font-smoothing: antialiased;
         }
 
-        h1, h2, h3, label, button, span {
-            font-weight: 500 !important;
+        /* 單次預約標題：20px */
+        .title-once {
+            font-size: 20px !important;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+
+        /* 每週固定標題：18px */
+        .title-weekly {
+            font-size: 18px !important;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+
+        /* 內容紀錄（備註）：18px */
+        .event-note-text, [id^="edit-note-"] {
+            font-size: 18px !important;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        /* 彈出視窗輸入框：18px (與顯示一致) */
+        #caseNote, #caseName {
+            font-size: 18px !important;
         }
 
         .case-card {
@@ -25,18 +46,6 @@
             background-color: #ffffff;
             display: flex;
             flex-direction: column;
-        }
-
-        .event-title {
-            font-size: 20px !important;
-            line-height: 1.4;
-            font-weight: 500;
-        }
-
-        .event-note-text {
-            font-size: 18px !important;
-            line-height: 1.6;
-            font-weight: 500;
         }
 
         .case-card:hover {
@@ -47,6 +56,8 @@
         .editable-note {
             cursor: pointer;
             transition: background-color 0.2s;
+            padding: 8px;
+            border-radius: 8px;
         }
         .editable-note:hover {
             background-color: #faf9f7;
@@ -58,72 +69,43 @@
             border-color: #8da399;
         }
 
-        #modalContent {
-            max-height: 90vh;
-            display: flex;
-            flex-direction: column;
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #8da399;
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            animation: spin 1s linear infinite;
         }
-        .modal-body {
-            overflow-y: auto;
-        }
-        
-        /* 登入遮罩 */
-        #auth-overlay {
-            position: fixed;
-            inset: 0;
-            background: #f5f2ed;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            transition: opacity 0.3s ease;
-        }
-
-        .hidden-auth {
-            opacity: 0;
-            pointer-events: none;
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="p-4 md:p-6 lg:p-8">
 
-    <!-- 登入介面 -->
-    <div id="auth-overlay">
-        <div class="text-center p-8 bg-white rounded-3xl shadow-xl max-w-sm w-full mx-4">
-            <div class="w-16 h-16 bg-[#8da399] rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z"></path></svg>
-            </div>
-            <h2 class="text-xl font-bold text-[#5c6b65] mb-2">雲端行程同步</h2>
-            <p class="text-xs text-[#9ba8a4] mb-8">請登入 Google 帳號以開始同步您的行程</p>
-            <button id="btn-login" class="w-full flex items-center justify-center gap-3 bg-white border border-[#e8e2da] py-3 rounded-xl hover:bg-gray-50 transition-all font-medium text-[#5c6b65]">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
-                使用 Google 帳號登入
-            </button>
-            <div id="auth-error" class="mt-4 text-red-400 text-xs hidden"></div>
-        </div>
-    </div>
-
-    <!-- 主介面 -->
-    <div id="main-app" class="max-w-5xl mx-auto opacity-0 transition-opacity duration-500">
+    <div class="max-w-5xl mx-auto">
         <header class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <div class="flex items-center gap-2 mb-1">
                     <div class="p-1.5 bg-[#8da399] rounded-lg">
-                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z"></path></svg>
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     </div>
                     <h1 class="text-md text-[#5c6b65] tracking-tight">工作行程</h1>
-                    <button id="btn-logout" class="ml-2 text-[10px] text-gray-400 hover:text-red-400 underline">登出</button>
                 </div>
                 <div class="flex items-center gap-2">
                     <p id="current-info" class="text-xs text-[#9ba8a4]"></p>
-                    <div id="sync-status" class="hidden"></div>
+                    <div id="sync-status" class="flex items-center gap-1 text-[10px] text-[#8da399]">
+                        <div class="loader"></div> 檢查登入狀態...
+                    </div>
                 </div>
-                <p id="user-display" class="hidden"></p>
             </div>
-            <button onclick="openModal()" class="bg-[#8da399] hover:bg-[#7a8f85] text-white px-5 py-2 rounded-lg shadow-sm transition-all text-sm flex items-center justify-center border border-[#a4b5ae]">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                新增行程
-            </button>
+            <div class="flex gap-2">
+                <button id="loginBtn" onclick="login()" class="hidden text-xs bg-white border border-[#e8e2da] px-3 py-2 rounded-lg text-[#5c6b65] hover:bg-[#faf9f7] shadow-sm transition">Google 登入同步</button>
+                <button id="userBtn" class="hidden text-xs bg-[#f5f2ed] border border-[#e8e2da] px-3 py-2 rounded-lg text-[#8da399]" disabled></button>
+                <button onclick="openModal()" class="bg-[#8da399] hover:bg-[#7a8f85] text-white px-5 py-2 rounded-lg shadow-sm transition-all text-sm flex items-center justify-center border border-[#a4b5ae]">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    新增行程
+                </button>
+            </div>
         </header>
 
         <main class="flex flex-col gap-12">
@@ -145,10 +127,9 @@
         </main>
     </div>
 
-    <!-- Modal 彈窗 -->
     <div id="caseModal" class="fixed inset-0 bg-[#4a5553]/30 hidden backdrop-blur-[1px] flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden transition-all scale-95 opacity-0" id="modalContent">
-            <div class="p-5 modal-body">
+            <div class="p-5">
                 <div class="flex justify-between items-center mb-4">
                     <h2 id="modalTitle" class="text-lg text-[#5c6b65]">建立行程</h2>
                     <button onclick="closeModal()" class="text-[#c8d1cd] hover:text-[#8da399] transition">
@@ -158,7 +139,6 @@
                 <form id="caseForm" class="space-y-4">
                     <input type="hidden" id="editId">
                     <input type="hidden" id="caseType" value="weekly">
-                    
                     <div>
                         <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">行程類型</label>
                         <div class="flex gap-0 border border-[#e8e2da] rounded-lg overflow-hidden">
@@ -166,72 +146,42 @@
                             <button type="button" id="btnOnce" onclick="setType('once')" class="flex-1 py-1.5 text-sm transition-colors bg-[#faf9f7] text-[#9ba8a4]">單次預約</button>
                         </div>
                     </div>
-
                     <div>
-                        <label id="labelName" class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">名稱</label>
-                        <!-- 核心修改 1: autocomplete="off" 禁止瀏覽器紀錄 -->
-                        <input type="text" id="caseName" required autocomplete="off" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" placeholder="輸入名稱">
+                        <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">名稱</label>
+                        <input type="text" id="caseName" required class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#8da399]/20 transition" placeholder="輸入名稱">
                     </div>
-
                     <div id="weeklyOptions" class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">固定星期</label>
-                            <select id="caseDay" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition">
-                                <option value="1">星期一</option>
-                                <option value="2">星期二</option>
-                                <option value="3">星期三</option>
-                                <option value="4">星期四</option>
-                                <option value="5">星期五</option>
-                                <option value="6">星期六</option>
-                                <option value="0">星期日</option>
+                            <select id="caseDay" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-2 text-sm outline-none transition">
+                                <option value="1">星期一</option><option value="2">星期二</option><option value="3">星期三</option><option value="4">星期四</option><option value="5">星期五</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">時段</label>
-                            <select id="casePeriod" onchange="checkCustomTime('casePeriod', 'customTimeWeekly')" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition">
-                                <option value="0">早修</option>
-                                <option value="1">第一節</option>
-                                <option value="2">第二節</option>
-                                <option value="3">第三節</option>
-                                <option value="4">第四節</option>
-                                <option value="5">午休</option>
-                                <option value="6">第五節</option>
-                                <option value="7">第六節</option>
-                                <option value="8">第七節</option>
-                                <option value="custom">自定義時間</option>
+                            <select id="casePeriod" onchange="checkCustomTime('casePeriod', 'customTimeWeekly')" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-2 text-sm outline-none transition">
+                                <option value="0">早修</option><option value="1">第一節</option><option value="2">第二節</option><option value="3">第三節</option><option value="4">第四節</option><option value="5">午休</option><option value="6">第五節</option><option value="7">第六節</option><option value="8">第七節</option><option value="custom">自定義時間</option>
                             </select>
-                            <input type="text" id="customTimeWeekly" autocomplete="off" class="hidden mt-1.5 w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" placeholder="HH:mm" onblur="formatCustomTime(this)">
+                            <input type="text" id="customTimeWeekly" class="hidden mt-1.5 w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-1.5 text-sm outline-none" placeholder="例如 08:30" onblur="formatCustomTime(this)">
                         </div>
                     </div>
-
                     <div id="onceOptions" class="grid grid-cols-2 gap-3 hidden">
                         <div>
                             <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">預約日期</label>
-                            <input type="date" id="caseDate" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition">
+                            <input type="date" id="caseDate" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-2 text-sm outline-none">
                         </div>
                         <div>
                             <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">時段</label>
-                            <select id="casePeriodOnce" onchange="checkCustomTime('casePeriodOnce', 'customTimeOnce')" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition">
-                                <option value="0">早修</option>
-                                <option value="1">第一節</option>
-                                <option value="2">第二節</option>
-                                <option value="3">第三節</option>
-                                <option value="4">第四節</option>
-                                <option value="5">午休</option>
-                                <option value="6">第五節</option>
-                                <option value="7">第六節</option>
-                                <option value="8">第七節</option>
-                                <option value="custom">自定義時間</option>
+                            <select id="casePeriodOnce" onchange="checkCustomTime('casePeriodOnce', 'customTimeOnce')" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-2 text-sm outline-none">
+                                <option value="0">早修</option><option value="1">第一節</option><option value="2">第二節</option><option value="3">第三節</option><option value="4">第四節</option><option value="5">午休</option><option value="6">第五節</option><option value="7">第六節</option><option value="8">第七節</option><option value="custom">自定義時間</option>
                             </select>
-                            <input type="text" id="customTimeOnce" autocomplete="off" class="hidden mt-1.5 w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" placeholder="HH:mm" onblur="formatCustomTime(this)">
+                            <input type="text" id="customTimeOnce" class="hidden mt-1.5 w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-1.5 text-sm outline-none" placeholder="例如 14:00" onblur="formatCustomTime(this)">
                         </div>
                     </div>
-
                     <div id="noteContainer">
                         <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">內容紀錄</label>
-                        <textarea id="caseNote" rows="1" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition"></textarea>
+                        <textarea id="caseNote" rows="2" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#8da399]/20 transition"></textarea>
                     </div>
-
                     <div class="flex justify-end gap-3 pt-2">
                         <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm text-[#8da399] font-medium hover:bg-[#f5f2ed] rounded-lg transition">取消</button>
                         <button type="submit" class="px-6 py-2 bg-[#8da399] text-white rounded-lg text-sm hover:bg-[#7a8f85] transition shadow-sm">儲存檔案</button>
@@ -241,11 +191,10 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyChKcQgRMId5U6T_5n4XrJOn1aVwonotHY",
@@ -260,252 +209,122 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
-        
-        const APP_COLLECTION_ID = 'itinerary-global-sync-v2'; 
 
         let currentUser = null;
         let caseList = [];
-        let syncUnsubscribe = null;
+        let unsubscribe = null;
         const displayWeekDays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
         const periodNames = ["早修", "第一節", "第二節", "第三節", "第四節", "午休", "第五節", "第六節", "第七節"];
 
-        // 登入
-        document.getElementById('btn-login').onclick = async () => {
-            try {
-                const errBox = document.getElementById('auth-error');
-                errBox.classList.add('hidden');
-                await setPersistence(auth, browserLocalPersistence);
-                await signInWithPopup(auth, provider);
-            } catch (e) {
-                console.error("Login Error:", e);
-                document.getElementById('auth-error').innerText = "登入失敗，請稍後再試。";
-                document.getElementById('auth-error').classList.remove('hidden');
-            }
-        };
+        window.login = () => signInWithPopup(auth, provider).catch(console.error);
 
-        // 登出
-        document.getElementById('btn-logout').onclick = () => {
-            if (syncUnsubscribe) syncUnsubscribe();
-            signOut(auth);
-        };
-
-        // 狀態監聽
         onAuthStateChanged(auth, (user) => {
-            const overlay = document.getElementById('auth-overlay');
-            const mainApp = document.getElementById('main-app');
-
+            const loginBtn = document.getElementById('loginBtn');
+            const userBtn = document.getElementById('userBtn');
             if (user) {
                 currentUser = user;
-                overlay.classList.add('hidden-auth');
-                setTimeout(() => overlay.classList.add('hidden'), 300);
-                mainApp.classList.remove('opacity-0');
-                setupSync();
+                loginBtn.classList.add('hidden');
+                userBtn.classList.remove('hidden');
+                userBtn.innerText = `${user.displayName} (已同步)`;
+                setupSync(user.uid);
             } else {
-                currentUser = null;
-                overlay.classList.remove('hidden', 'hidden-auth');
-                mainApp.classList.add('opacity-0');
+                loginBtn.classList.remove('hidden');
+                userBtn.classList.add('hidden');
+                document.getElementById('today-container').innerHTML = '<div class="col-span-full py-10 text-center text-[#b5a48d]">請先點擊登入以同步雲端資料</div>';
+                document.getElementById('sync-status').innerText = '尚未登入';
             }
         });
 
-        // 核心同步邏輯
-        function setupSync() {
-            if (!currentUser) return;
-            const collectionRef = collection(db, 'artifacts', APP_COLLECTION_ID, 'users', currentUser.uid, 'itineraries');
-            
-            if (syncUnsubscribe) syncUnsubscribe();
-            
-            syncUnsubscribe = onSnapshot(collectionRef, (snapshot) => {
+        function setupSync(uid) {
+            if (unsubscribe) unsubscribe();
+            const colRef = collection(db, 'users', uid, 'itineraries');
+            unsubscribe = onSnapshot(colRef, (snapshot) => {
                 caseList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                document.getElementById('sync-status').innerHTML = '雲端同步中';
                 renderDisplay();
-            }, (error) => {
-                console.error("Sync error:", error);
             });
         }
 
-        // UI 渲染
         function renderDisplay() {
             const now = new Date();
             const todayNum = now.getDay();
             const todayStr = now.toISOString().split('T')[0];
+            document.getElementById('current-info').innerHTML = `<span class="text-[#8da399] mr-2">${displayWeekDays[todayNum]}</span> <span class="text-[#b5a48d]/60 text-xs">${now.toLocaleDateString('zh-TW')}</span>`;
             
-            document.getElementById('current-info').innerHTML = `
-                <span class="text-[#8da399] mr-2">${displayWeekDays[todayNum]}</span> 
-                <span class="text-[#b5a48d]/60 text-xs">${now.toLocaleDateString('zh-TW')}</span>
-            `;
-
             const todayContainer = document.getElementById('today-container');
             const allContainer = document.getElementById('all-cases-container');
-            todayContainer.innerHTML = '';
-            allContainer.innerHTML = '';
+            todayContainer.innerHTML = ''; allContainer.innerHTML = '';
 
-            // 核心修改 2: 排序邏輯調整
-            const sortedList = [...caseList].sort((a, b) => {
-                // 不同類型時，單次行程優先排在最前面
-                if (a.type !== b.type) return a.type === 'once' ? -1 : 1;
+            const sortedList = [...caseList].sort((a, b) => (a.type !== b.type ? (a.type === 'once' ? -1 : 1) : (a.type === 'once' ? a.date.localeCompare(b.date) : a.day - b.day)));
 
-                if (a.type === 'once') {
-                    // 單次行程按日期排序
-                    return (a.date || '').localeCompare(b.date || '');
-                } else {
-                    // 固定行程：根據今天星期幾進行循環排序
-                    // 計算該行程相對於今天的偏移天數 (0-6)
-                    const getOffset = (day) => (day - todayNum + 7) % 7;
-                    const offsetA = getOffset(a.day);
-                    const offsetB = getOffset(b.day);
-                    
-                    if (offsetA !== offsetB) return offsetA - offsetB;
-                    // 同一天的按時段排序
-                    return (a.period === 'custom' ? 99 : a.period) - (b.period === 'custom' ? 99 : b.period);
-                }
-            });
-
-            const todayPendingCases = sortedList.filter(c => {
-                const isExpired = isPeriodExpired(c.period, c.customTime);
-                if (c.type === 'once') return c.date === todayStr && !isExpired;
-                return c.day == todayNum && !isExpired;
-            });
-
-            if (todayPendingCases.length === 0) {
+            const todayCases = sortedList.filter(c => c.type === 'once' ? c.date === todayStr : c.day == todayNum);
+            if (todayCases.length === 0) {
                 todayContainer.innerHTML = `<div class="col-span-full py-10 text-center text-[#b5a48d]/50 text-sm">今日無待辦行程</div>`;
             } else {
-                todayPendingCases.forEach(item => todayContainer.appendChild(createCard(item, true)));
+                todayCases.forEach(item => todayContainer.appendChild(createCard(item, true)));
             }
 
             if (sortedList.length === 0) {
-                allContainer.innerHTML = `<div class="col-span-full py-10 text-center text-[#b5a48d]/40 text-sm">尚未建立任何行程。</div>`;
+                allContainer.innerHTML = `<div class="col-span-full py-10 text-center text-[#b5a48d]/40 text-sm">尚未建立行程</div>`;
             } else {
-                sortedList.forEach(item => {
-                    let isToday = (item.type === 'once') ? (item.date === todayStr) : (item.day == todayNum);
-                    const isExpired = isPeriodExpired(item.period, item.customTime);
-                    allContainer.appendChild(createCard(item, false, isToday && isExpired));
-                });
+                sortedList.forEach(item => allContainer.appendChild(createCard(item, false)));
             }
         }
 
-        function isPeriodExpired(period, customTimeValue) {
-            const now = new Date();
-            const currentHour = now.getHours();
-            const currentMin = now.getMinutes();
-            if (period === 'custom' && customTimeValue) {
-                const parts = customTimeValue.split(':');
-                if (parts.length === 2) {
-                    const h = parseInt(parts[0]);
-                    const m = parseInt(parts[1]);
-                    return (currentHour > h) || (currentHour === h && currentMin >= m);
-                }
-            }
-            const p = parseInt(period);
-            // 粗略估計：早修到第四節算上午(過12點過期)，午休到第七節算下午(過17點過期)
-            if (p <= 4) return currentHour >= 12;
-            else return currentHour >= 17;
-        }
-
-        function createCard(item, isPendingToday, isExpiredToday = false) {
+        function createCard(item, isToday) {
             const card = document.createElement('div');
-            const opacityClass = isExpiredToday ? 'opacity-70' : 'opacity-100';
-            const isOnce = item.type === 'once';
-            card.className = `case-card bg-white rounded-xl border shadow-sm ${opacityClass} ${isPendingToday ? 'border-[#8da399] ring-1 ring-[#8da399]/10' : 'border-[#e8e2da]'}`;
+            card.className = `case-card bg-white rounded-xl border shadow-sm ${isToday ? 'border-[#8da399] ring-1 ring-[#8da399]/10' : 'border-[#e8e2da]'}`;
             const periodStr = item.period === 'custom' ? item.customTime : periodNames[item.period];
+            const titleClass = item.type === 'once' ? 'title-once' : 'title-weekly';
+            const note = item.note || '';
 
-            if (isOnce) {
-                const d = item.date ? new Date(item.date) : new Date();
-                const timeLabel = `${(item.date||'').replace(/-/g, '/')} (${displayWeekDays[d.getDay()]}) · ${periodStr}`;
-                card.innerHTML = `
-                    <div class="flex items-center p-5 min-h-[100px]">
-                        <div class="flex justify-between items-center w-full">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-1.5 mb-1.5">
-                                    <span class="w-1.5 h-1.5 rounded-full ${isPendingToday ? 'bg-[#8da399] animate-pulse' : (isExpiredToday ? 'bg-orange-300' : 'bg-[#b5a48d]')}"></span>
-                                    <span class="text-[11px] text-[#b5a48d] uppercase tracking-widest font-medium">${timeLabel}</span>
-                                </div>
-                                <h3 class="event-title text-[#5c6b65] pt-1">${item.name}</h3>
-                            </div>
-                            <div class="flex gap-1 ml-4 self-center">
-                                <button onclick="window.editCase('${item.id}')" class="p-1.5 text-[#b5a48d]/40 hover:text-[#8da399] transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
-                                <button onclick="window.deleteCase('${item.id}')" class="p-1.5 text-[#b5a48d]/40 hover:text-red-400 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-                            </div>
+            card.innerHTML = `
+                <div class="p-5 flex flex-col h-full">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <span class="text-[11px] text-[#9ba8a4] uppercase tracking-widest font-medium">${item.type === 'once' ? item.date : displayWeekDays[item.day]} · ${periodStr}</span>
+                            <h3 class="${titleClass} text-[#5c6b65]">${item.name}</h3>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="editCase('${item.id}')" class="p-1 text-[#b5a48d]/50 hover:text-[#8da399] transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
+                            <button onclick="deleteCase('${item.id}')" class="p-1 text-[#b5a48d]/50 hover:text-red-400 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                         </div>
                     </div>
-                `;
-            } else {
-                const timeLabel = `${displayWeekDays[item.day]} · ${periodStr}`;
-                const hasNote = item.note && item.note.trim() !== '';
-                const displayNote = hasNote ? item.note : '';
-                card.innerHTML = `
-                    <div class="p-4 flex flex-col h-full">
-                        <div class="flex justify-between items-start mb-3">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-1.5 mb-1">
-                                    <span class="w-1.5 h-1.5 rounded-full ${isPendingToday ? 'bg-[#8da399] animate-pulse' : (isExpiredToday ? 'bg-orange-300' : 'bg-[#e8e2da]')}"></span>
-                                    <span class="text-[11px] text-[#9ba8a4] uppercase tracking-widest font-medium">${timeLabel}</span>
-                                </div>
-                                <h3 class="event-title text-[#5c6b65]">${item.name}</h3>
-                            </div>
-                            <div class="flex gap-1">
-                                <button onclick="window.editCase('${item.id}')" class="p-1 text-[#b5a48d]/50 hover:text-[#8da399] transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
-                                <button onclick="window.deleteCase('${item.id}')" class="p-1 text-[#b5a48d]/50 hover:text-red-400 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-                            </div>
+                    <div class="mt-auto">
+                        <div id="display-note-${item.id}" onclick="startQuickEdit('${item.id}')" class="editable-note min-h-[40px] bg-[#faf9f7] ${!note ? 'border border-dashed border-[#e8e2da]' : ''}">
+                           <p class="event-note-text text-[#2c3331] whitespace-pre-line">${note}</p>
                         </div>
-                        <div class="note-wrapper mt-auto">
-                            <div id="display-note-${item.id}" onclick="window.startQuickEdit('${item.id}')" class="editable-note min-h-[30px] bg-[#faf9f7] rounded-lg p-2.5 ${!hasNote ? 'border border-dashed border-[#e8e2da]' : ''}">
-                               <p class="event-note-text text-[#2c3331] whitespace-pre-line">${displayNote}</p>
-                            </div>
-                            <textarea id="edit-note-${item.id}" class="hidden w-full border border-[#8da399] bg-white rounded-lg px-2.5 py-2 event-note-text text-[#2c3331] outline-none transition" rows="1" onblur="window.saveQuickEdit('${item.id}')">${displayNote}</textarea>
-                        </div>
+                        <textarea id="edit-note-${item.id}" class="hidden w-full border border-[#8da399] bg-white rounded-lg px-2.5 py-2 event-note-text text-[#2c3331] outline-none" rows="2" onblur="saveQuickEdit('${item.id}')">${note}</textarea>
                     </div>
-                `;
-            }
+                </div>
+            `;
             return card;
         }
 
-        // 全域控制
         window.openModal = () => {
             document.getElementById('caseModal').classList.remove('hidden');
             setTimeout(() => document.getElementById('modalContent').classList.remove('scale-95', 'opacity-0'), 10);
             document.getElementById('caseForm').reset();
             document.getElementById('editId').value = '';
+            document.getElementById('modalTitle').innerText = '建立行程檔案';
             window.setType('weekly');
         };
 
         window.closeModal = () => {
-            const modalContent = document.getElementById('modalContent');
-            modalContent.classList.add('scale-95', 'opacity-0');
+            document.getElementById('modalContent').classList.add('scale-95', 'opacity-0');
             setTimeout(() => document.getElementById('caseModal').classList.add('hidden'), 200);
         };
 
         window.setType = (type) => {
             document.getElementById('caseType').value = type;
-            const btnWeekly = document.getElementById('btnWeekly');
-            const btnOnce = document.getElementById('btnOnce');
-            const noteContainer = document.getElementById('noteContainer');
-
-            if (type === 'weekly') {
-                btnWeekly.className = "flex-1 py-1.5 text-sm transition-colors type-btn-active";
-                btnOnce.className = "flex-1 py-1.5 text-sm transition-colors bg-[#faf9f7] text-[#9ba8a4]";
-                document.getElementById('weeklyOptions').classList.remove('hidden');
-                document.getElementById('onceOptions').classList.add('hidden');
-                noteContainer.classList.remove('hidden'); 
-            } else {
-                btnOnce.className = "flex-1 py-1.5 text-sm transition-colors type-btn-active";
-                btnWeekly.className = "flex-1 py-1.5 text-sm transition-colors bg-[#faf9f7] text-[#9ba8a4]";
-                document.getElementById('weeklyOptions').classList.add('hidden');
-                document.getElementById('onceOptions').classList.remove('hidden');
-                noteContainer.classList.add('hidden'); 
-            }
+            document.getElementById('btnWeekly').className = type === 'weekly' ? "flex-1 py-1.5 text-sm transition-colors type-btn-active" : "flex-1 py-1.5 text-sm transition-colors bg-[#faf9f7] text-[#9ba8a4]";
+            document.getElementById('btnOnce').className = type === 'once' ? "flex-1 py-1.5 text-sm transition-colors type-btn-active" : "flex-1 py-1.5 text-sm transition-colors bg-[#faf9f7] text-[#9ba8a4]";
+            document.getElementById('weeklyOptions').classList.toggle('hidden', type !== 'weekly');
+            document.getElementById('onceOptions').classList.toggle('hidden', type !== 'once');
         };
 
-        window.checkCustomTime = (selectId, inputId) => {
-            const select = document.getElementById(selectId);
-            const input = document.getElementById(inputId);
-            if (select.value === 'custom') { input.classList.remove('hidden'); input.focus(); } 
-            else { input.classList.add('hidden'); }
-        };
-
-        window.formatCustomTime = (input) => {
-            let val = input.value.replace(/[^0-9:]/g, '');
-            if (val.length === 4 && !val.includes(':')) val = val.substring(0, 2) + ':' + val.substring(2);
-            input.value = val;
-        };
+        window.checkCustomTime = (s, i) => document.getElementById(i).classList.toggle('hidden', document.getElementById(s).value !== 'custom');
+        window.formatCustomTime = (i) => { if(i.value.length === 4 && !i.value.includes(':')) i.value = i.value.slice(0,2)+':'+i.value.slice(2); };
 
         window.editCase = (id) => {
             const item = caseList.find(c => c.id === id);
@@ -514,82 +333,41 @@
             document.getElementById('editId').value = item.id;
             window.setType(item.type);
             document.getElementById('caseName').value = item.name;
+            document.getElementById('caseNote').value = item.note || '';
             if (item.type === 'weekly') {
-                document.getElementById('caseNote').value = item.note || '';
                 document.getElementById('caseDay').value = item.day;
                 document.getElementById('casePeriod').value = item.period;
-                if (item.period === 'custom') {
-                    const input = document.getElementById('customTimeWeekly');
-                    input.value = item.customTime;
-                    input.classList.remove('hidden');
-                }
+                if(item.period === 'custom') { document.getElementById('customTimeWeekly').value = item.customTime; document.getElementById('customTimeWeekly').classList.remove('hidden'); }
             } else {
                 document.getElementById('caseDate').value = item.date;
                 document.getElementById('casePeriodOnce').value = item.period;
-                if (item.period === 'custom') {
-                    const input = document.getElementById('customTimeOnce');
-                    input.value = item.customTime;
-                    input.classList.remove('hidden');
-                }
+                if(item.period === 'custom') { document.getElementById('customTimeOnce').value = item.customTime; document.getElementById('customTimeOnce').classList.remove('hidden'); }
             }
         };
 
-        window.deleteCase = async (id) => {
-            if (!currentUser || !confirm('確定要刪除嗎？')) return;
-            await deleteDoc(doc(db, 'artifacts', APP_COLLECTION_ID, 'users', currentUser.uid, 'itineraries', id));
-        };
-
-        window.startQuickEdit = (id) => {
-            const displayEl = document.getElementById(`display-note-${id}`);
-            const editEl = document.getElementById(`edit-note-${id}`);
-            if (displayEl && editEl) {
-                displayEl.classList.add('hidden'); editEl.classList.remove('hidden'); editEl.focus();
-            }
-        };
-
-        window.saveQuickEdit = async (id) => {
-            if (!currentUser) return;
-            const editEl = document.getElementById('edit-note-' + id);
-            const displayEl = document.getElementById('display-note-' + id);
-            const newNote = editEl.value;
-            displayEl.classList.remove('hidden'); editEl.classList.add('hidden');
-            await setDoc(doc(db, 'artifacts', APP_COLLECTION_ID, 'users', currentUser.uid, 'itineraries', id), { note: newNote }, { merge: true });
-        };
+        window.deleteCase = async (id) => { if(confirm('確定要刪除嗎？')) await deleteDoc(doc(db, 'users', currentUser.uid, 'itineraries', id)); };
+        window.startQuickEdit = (id) => { document.getElementById(`display-note-${id}`).classList.add('hidden'); const e = document.getElementById(`edit-note-${id}`); e.classList.remove('hidden'); e.focus(); };
+        window.saveQuickEdit = async (id) => { const n = document.getElementById(`edit-note-${id}`).value; await setDoc(doc(db, 'users', currentUser.uid, 'itineraries', id), { note: n }, { merge: true }); };
 
         document.getElementById('caseForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!currentUser) return;
-            
+            if(!currentUser) return alert('請先登入');
             const type = document.getElementById('caseType').value;
-            const name = document.getElementById('caseName').value;
-            const editId = document.getElementById('editId').value || Date.now().toString();
-            
-            let data = { type, name, updatedAt: serverTimestamp(), id: editId };
-            if (type === 'weekly') {
-                data.note = document.getElementById('caseNote').value;
-                data.day = parseInt(document.getElementById('caseDay').value);
-                data.period = document.getElementById('casePeriod').value;
-                data.customTime = data.period === 'custom' ? document.getElementById('customTimeWeekly').value : null;
-            } else {
-                data.date = document.getElementById('caseDate').value;
-                data.period = document.getElementById('casePeriodOnce').value;
-                data.customTime = data.period === 'custom' ? document.getElementById('customTimeOnce').value : null;
-                data.day = data.date ? new Date(data.date).getDay() : 0;
-                data.note = ""; 
-            }
-
-            try {
-                await setDoc(doc(db, 'artifacts', APP_COLLECTION_ID, 'users', currentUser.uid, 'itineraries', editId), data);
-                window.closeModal(); 
-            } catch (err) {
-                console.error("Save error:", err);
-            }
+            const id = document.getElementById('editId').value || Date.now().toString();
+            const data = {
+                type,
+                name: document.getElementById('caseName').value,
+                note: document.getElementById('caseNote').value,
+                day: type === 'weekly' ? parseInt(document.getElementById('caseDay').value) : new Date(document.getElementById('caseDate').value).getDay(),
+                period: type === 'weekly' ? document.getElementById('casePeriod').value : document.getElementById('casePeriodOnce').value,
+                customTime: type === 'weekly' ? document.getElementById('customTimeWeekly').value : document.getElementById('customTimeOnce').value,
+                date: type === 'once' ? document.getElementById('caseDate').value : null
+            };
+            await setDoc(doc(db, 'users', currentUser.uid, 'itineraries', id), data);
+            window.closeModal();
         });
 
-        // 每一分鐘自動更新一次介面，確保今日待辦跟隨時間更新
         setInterval(renderDisplay, 60000);
     </script>
 </body>
 </html>
-
-
