@@ -67,16 +67,6 @@
             overflow-y: auto;
         }
         
-        .loader {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #8da399;
-            border-radius: 50%;
-            width: 14px;
-            height: 14px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
         /* 登入遮罩 */
         #auth-overlay {
             position: fixed;
@@ -126,11 +116,11 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <p id="current-info" class="text-xs text-[#9ba8a4]"></p>
-                    <div id="sync-status" class="flex items-center gap-1 text-[10px] text-[#8da399]">
-                        <div class="loader"></div> 雲端同步中...
-                    </div>
+                    <!-- 隱藏了同步狀態文字與 Loader -->
+                    <div id="sync-status" class="hidden"></div>
                 </div>
-                <p id="user-display" class="text-[10px] text-[#b5a48d] mt-1 opacity-60"></p>
+                <!-- 隱藏了帳號顯示文字 -->
+                <p id="user-display" class="hidden"></p>
             </div>
             <button onclick="openModal()" class="bg-[#8da399] hover:bg-[#7a8f85] text-white px-5 py-2 rounded-lg shadow-sm transition-all text-sm flex items-center justify-center border border-[#a4b5ae]">
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
@@ -236,7 +226,7 @@
                         </div>
                     </div>
 
-                    <!-- 內容紀錄：現在會根據類型自動顯示/隱藏 -->
+                    <!-- 內容紀錄 -->
                     <div id="noteContainer">
                         <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">內容紀錄</label>
                         <textarea id="caseNote" rows="1" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition"></textarea>
@@ -271,7 +261,6 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
         
-        // 確保手機與電腦同步的關鍵：固定的 appId
         const APP_COLLECTION_ID = 'itinerary-global-sync-v2'; 
 
         let currentUser = null;
@@ -310,7 +299,7 @@
                 overlay.classList.add('hidden-auth');
                 setTimeout(() => overlay.classList.add('hidden'), 300);
                 mainApp.classList.remove('opacity-0');
-                document.getElementById('user-display').innerText = `已同步帳號: ${user.email}`;
+                // 內部維護帳號資訊，但不顯示在畫面上
                 setupSync();
             } else {
                 currentUser = null;
@@ -322,28 +311,16 @@
         // 核心同步邏輯
         function setupSync() {
             if (!currentUser) return;
-            // 統一儲存路徑：artifacts / {APP_COLLECTION_ID} / users / {UID} / itineraries
             const collectionRef = collection(db, 'artifacts', APP_COLLECTION_ID, 'users', currentUser.uid, 'itineraries');
             
             if (syncUnsubscribe) syncUnsubscribe();
             
             syncUnsubscribe = onSnapshot(collectionRef, (snapshot) => {
                 caseList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                updateSyncUI(true);
                 renderDisplay();
             }, (error) => {
                 console.error("Sync error:", error);
-                updateSyncUI(false);
             });
-        }
-
-        function updateSyncUI(success) {
-            const statusEl = document.getElementById('sync-status');
-            if (success) {
-                statusEl.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 雲端已同步`;
-            } else {
-                statusEl.innerHTML = `<span class="text-red-400">連線中...</span>`;
-            }
         }
 
         // UI 渲染
@@ -492,13 +469,13 @@
                 btnOnce.className = "flex-1 py-1.5 text-sm transition-colors bg-[#faf9f7] text-[#9ba8a4]";
                 document.getElementById('weeklyOptions').classList.remove('hidden');
                 document.getElementById('onceOptions').classList.add('hidden');
-                noteContainer.classList.remove('hidden'); // 顯示內容紀錄
+                noteContainer.classList.remove('hidden'); 
             } else {
                 btnOnce.className = "flex-1 py-1.5 text-sm transition-colors type-btn-active";
                 btnWeekly.className = "flex-1 py-1.5 text-sm transition-colors bg-[#faf9f7] text-[#9ba8a4]";
                 document.getElementById('weeklyOptions').classList.add('hidden');
                 document.getElementById('onceOptions').classList.remove('hidden');
-                noteContainer.classList.add('hidden'); // 隱藏內容紀錄
+                noteContainer.classList.add('hidden'); 
             }
         };
 
@@ -560,10 +537,7 @@
             const editEl = document.getElementById('edit-note-' + id);
             const displayEl = document.getElementById('display-note-' + id);
             const newNote = editEl.value;
-            
-            // UI 先行更新感官更好
             displayEl.classList.remove('hidden'); editEl.classList.add('hidden');
-
             await setDoc(doc(db, 'artifacts', APP_COLLECTION_ID, 'users', currentUser.uid, 'itineraries', id), { note: newNote }, { merge: true });
         };
 
@@ -586,12 +560,12 @@
                 data.period = document.getElementById('casePeriodOnce').value;
                 data.customTime = data.period === 'custom' ? document.getElementById('customTimeOnce').value : null;
                 data.day = data.date ? new Date(data.date).getDay() : 0;
-                data.note = ""; // 單次預約清空內容
+                data.note = ""; 
             }
 
             try {
                 await setDoc(doc(db, 'artifacts', APP_COLLECTION_ID, 'users', currentUser.uid, 'itineraries', editId), data);
-                window.closeModal(); // 修正：儲存後自動關閉
+                window.closeModal(); 
             } catch (err) {
                 console.error("Save error:", err);
             }
