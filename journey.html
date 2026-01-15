@@ -103,6 +103,24 @@
             opacity: 0;
             pointer-events: none;
         }
+    /* 解決快速編輯點擊後變兩行的問題 */
+[id^="edit-note-"] {
+    min-height: 1.6em !important; /* 強制設定為一行的高度 */
+    height: auto !important;
+    padding-top: 2px !important;   /* 極致縮減上方內距 */
+    padding-bottom: 2px !important;/* 極致縮減下方內距 */
+    line-height: 1.6 !important;
+    overflow: hidden !important;   /* 防止出現滾動條增加視覺厚度 */
+    display: block;
+}
+
+/* 同時微調點擊前的顯示區域，讓兩者切換時高度完全一致 */
+.editable-note {
+    min-height: 1.6em !important;
+    padding: 2px 8px !important;   /* 這裡的 padding 也要跟著縮減 */
+    display: flex;
+    align-items: center;
+}
     </style>
 </head>
 <body class="p-4 md:p-6 lg:p-8">
@@ -249,7 +267,7 @@
 
                     <div id="noteContainer">
                         <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">內容紀錄</label>
-                        <textarea id="caseNote" rows="1" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition"></textarea>
+                        <textarea id="caseNote" rows="1" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition"></textarea>
                     </div>
 
                     <div class="flex justify-end gap-3 pt-2">
@@ -587,3 +605,4 @@ function createCard(item, isPending, isExpired) {
     </script>
 </body>
 </html>
+
