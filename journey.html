@@ -103,17 +103,17 @@
             opacity: 0;
             pointer-events: none;
         }
-/* 只有卡片內快速編輯的框 (id 開頭為 edit-note-) 才縮小高度 */
+/* 修改卡片內編輯框：移除固定高度，改用最小高度 */
 [id^="edit-note-"] {
-    min-height: 32px !important;  /* 固定高度 */
-    height: 32px !important;      /* 固定高度 */
+    min-height: 32px !important;  /* 預設維持一行的高度 */
+    height: auto;                 /* 移除固定 32px，讓 JS 可以控制高度 */
     padding-top: 4px !important;
     padding-bottom: 4px !important;
     line-height: 1.4 !important;
     resize: none !important;
-    overflow: hidden !important;
+    overflow: hidden !important;  /* 隱藏捲軸，看起來更像自然撐開 */
+    display: block;
 }
-
 /* 確保「建立行程」彈出視窗裡的輸入框恢復正常顯示 */
 #caseNote {
     min-height: 80px !important;  /* 彈出視窗的框要夠大 */
@@ -475,7 +475,13 @@ function createCard(item, isPending, isExpired) {
                 <div id="display-note-${item.id}" onclick="startQuickEdit('${item.id}')" class="editable-note min-h-[40px] bg-[#faf9f7] ${!note ? 'border border-dashed border-[#e8e2da]' : ''}">
                    <p class="event-note-text whitespace-pre-line">${note}</p>
                 </div>
-                <textarea id="edit-note-${item.id}" class="hidden w-full border border-[#8da399] bg-white rounded-lg px-2.5 py-2 event-note-text outline-none" rows="2" onblur="saveQuickEdit('${item.id}')">${note}</textarea>
+<textarea 
+    id="edit-note-${item.id}" 
+    class="hidden w-full border border-[#8da399] bg-white rounded-lg px-2.5 py-1 event-note-text outline-none" 
+    rows="1" 
+    style="min-height: 32px; height: 32px; resize: none; overflow: hidden;" 
+    oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'" 
+    onblur="saveQuickEdit('${item.id}')">${note}</textarea>
             </div>
             ` : ''}
         </div>
@@ -615,6 +621,7 @@ function createCard(item, isPending, isExpired) {
     </script>
 </body>
 </html>
+
 
 
 
