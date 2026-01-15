@@ -69,11 +69,11 @@
         
         /* 載入中動畫 */
         .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #8da399;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #8da399;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
+            width: 12px;
+            height: 12px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -93,7 +93,7 @@
                 <div class="flex items-center gap-2">
                     <p id="current-info" class="text-xs text-[#9ba8a4]"></p>
                     <div id="sync-status" class="flex items-center gap-1 text-[10px] text-[#8da399]">
-                        <div class="loader"></div> 雲端同步中...
+                        <div class="loader"></div> 雲端連線中...
                     </div>
                 </div>
                 <p id="user-display" class="text-[10px] text-[#b5a48d] mt-1 opacity-60"></p>
@@ -125,7 +125,7 @@
         </main>
     </div>
 
-    <!-- Modal 保持不變 -->
+    <!-- Modal -->
     <div id="caseModal" class="fixed inset-0 bg-[#4a5553]/30 hidden backdrop-blur-[1px] flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden transition-all scale-95 opacity-0" id="modalContent">
             <div class="p-5 modal-body">
@@ -161,6 +161,8 @@
                                 <option value="3">星期三</option>
                                 <option value="4">星期四</option>
                                 <option value="5">星期五</option>
+                                <option value="6">星期六</option>
+                                <option value="0">星期日</option>
                             </select>
                         </div>
                         <div>
@@ -177,7 +179,7 @@
                                 <option value="8">第七節</option>
                                 <option value="custom">自定義時間</option>
                             </select>
-                            <input type="text" id="customTimeWeekly" class="hidden mt-1.5 w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" onblur="formatCustomTime(this)">
+                            <input type="text" id="customTimeWeekly" class="hidden mt-1.5 w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" onblur="formatCustomTime(this)" placeholder="HH:MM">
                         </div>
                     </div>
 
@@ -200,7 +202,7 @@
                                 <option value="8">第七節</option>
                                 <option value="custom">自定義時間</option>
                             </select>
-                            <input type="text" id="customTimeOnce" class="hidden mt-1.5 w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" onblur="formatCustomTime(this)">
+                            <input type="text" id="customTimeOnce" class="hidden mt-1.5 w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" onblur="formatCustomTime(this)" placeholder="HH:MM">
                         </div>
                     </div>
 
@@ -222,21 +224,21 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // Firebase 設定與初始化
+        // 環境變數 (由執行環境提供)
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'itinerary-app-v1';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'itinerary-manager';
 
         let currentUser = null;
         let caseList = [];
         const displayWeekDays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
         const periodNames = ["早修", "第一節", "第二節", "第三節", "第四節", "午休", "第五節", "第六節", "第七節"];
 
-        // 認證邏輯
+        // 身份認證
         const initAuth = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -246,7 +248,7 @@
                 }
             } catch (error) {
                 console.error("Auth error:", error);
-                document.getElementById('sync-status').innerHTML = "同步失敗，請重新整理";
+                document.getElementById('sync-status').innerText = "連線失敗";
             }
         };
 
@@ -258,12 +260,11 @@
             }
         });
 
-        // 雲端同步監聽
+        // 雲端同步
         function setupSync() {
             if (!currentUser) return;
             const collectionRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'itineraries');
             
-            // 使用簡單查詢以避免索引問題
             onSnapshot(collectionRef, (snapshot) => {
                 caseList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 updateSyncUI(true);
@@ -279,11 +280,11 @@
             if (success) {
                 statusEl.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 雲端已同步`;
             } else {
-                statusEl.innerHTML = `<span class="text-red-400">同步離線</span>`;
+                statusEl.innerHTML = `<span class="text-red-400">連線中斷</span>`;
             }
         }
 
-        // 畫面渲染
+        // 渲染畫面
         function renderDisplay() {
             const now = new Date();
             const todayNum = now.getDay();
@@ -300,9 +301,8 @@
             todayContainer.innerHTML = '';
             allContainer.innerHTML = '';
 
-            // 排序邏輯 (本地處理)
+            // 排序
             const sortedList = [...caseList].sort((a, b) => {
-                // 先排日期或星期
                 if (a.type !== b.type) return a.type === 'once' ? -1 : 1;
                 if (a.type === 'once') return a.date.localeCompare(b.date);
                 return a.day - b.day;
@@ -331,7 +331,6 @@
             }
         }
 
-        // 判斷是否已過時
         function isPeriodExpired(period, customTimeValue) {
             const now = new Date();
             const currentHour = now.getHours();
@@ -349,7 +348,6 @@
             else return currentHour >= 17;
         }
 
-        // 建立卡片
         function createCard(item, isPendingToday, isExpiredToday = false) {
             const card = document.createElement('div');
             const opacityClass = isExpiredToday ? 'opacity-70' : 'opacity-100';
@@ -408,7 +406,7 @@
             return card;
         }
 
-        // 公開方法給 HTML 使用
+        // Window 方法
         window.openModal = () => {
             const modal = document.getElementById('caseModal');
             const modalContent = document.getElementById('modalContent');
@@ -433,17 +431,14 @@
             const btnOnce = document.getElementById('btnOnce');
             const weeklyOptions = document.getElementById('weeklyOptions');
             const onceOptions = document.getElementById('onceOptions');
-            const noteContainer = document.getElementById('noteContainer');
             if (type === 'weekly') {
                 btnWeekly.className = "flex-1 py-1.5 text-sm transition-colors type-btn-active";
                 btnOnce.className = "flex-1 py-1.5 text-sm transition-colors bg-[#faf9f7] text-[#9ba8a4]";
                 weeklyOptions.classList.remove('hidden'); onceOptions.classList.add('hidden');
-                noteContainer.classList.remove('hidden');
             } else {
                 btnOnce.className = "flex-1 py-1.5 text-sm transition-colors type-btn-active";
                 btnWeekly.className = "flex-1 py-1.5 text-sm transition-colors bg-[#faf9f7] text-[#9ba8a4]";
                 weeklyOptions.classList.add('hidden'); onceOptions.classList.remove('hidden');
-                noteContainer.classList.add('hidden');
             }
         };
 
@@ -471,15 +466,25 @@
                 document.getElementById('caseNote').value = item.note || '';
                 document.getElementById('caseDay').value = item.day;
                 document.getElementById('casePeriod').value = item.period;
+                if(item.period === 'custom') {
+                    const customInput = document.getElementById('customTimeWeekly');
+                    customInput.classList.remove('hidden');
+                    customInput.value = item.customTime || '';
+                }
             } else {
                 document.getElementById('caseDate').value = item.date;
                 document.getElementById('casePeriodOnce').value = item.period;
+                if(item.period === 'custom') {
+                    const customInput = document.getElementById('customTimeOnce');
+                    customInput.classList.remove('hidden');
+                    customInput.value = item.customTime || '';
+                }
             }
         };
 
         window.deleteCase = async (id) => {
             if (!currentUser) return;
-            if (confirm('確定要刪除嗎？')) {
+            if (confirm('確定要刪除此行程嗎？')) {
                 const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'itineraries', id);
                 await deleteDoc(docRef);
             }
@@ -505,11 +510,11 @@
             
             const type = document.getElementById('caseType').value;
             const name = document.getElementById('caseName').value;
-            const note = type === 'weekly' ? document.getElementById('caseNote').value : null;
             const editId = document.getElementById('editId').value || Date.now().toString();
             
-            let data = { type, name, note };
+            let data = { type, name, updatedAt: new Date() };
             if (type === 'weekly') {
+                data.note = document.getElementById('caseNote').value;
                 data.day = parseInt(document.getElementById('caseDay').value);
                 data.period = document.getElementById('casePeriod').value;
                 data.customTime = data.period === 'custom' ? document.getElementById('customTimeWeekly').value : null;
@@ -521,13 +526,12 @@
             }
 
             const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'itineraries', editId);
-            await setDoc(docRef, data);
+            await setDoc(docRef, data, { merge: true });
             window.closeModal();
         });
 
-        // 啟動流程
         initAuth();
-        setInterval(renderDisplay, 60000); // 每分鐘刷新一次時間判斷
+        setInterval(renderDisplay, 30000);
     </script>
 </body>
 </html>
