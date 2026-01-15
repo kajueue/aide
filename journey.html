@@ -103,6 +103,24 @@
             opacity: 0;
             pointer-events: none;
         }
+    /* 1. 針對卡片內快速編輯輸入框的精確高度設定 */
+    [id^="edit-note-"] {
+        min-height: auto !important;
+        height: auto !important;
+        resize: none;
+        overflow-y: hidden;
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
+        line-height: 1.6;
+    }
+
+    /* 2. 同步調整點擊前的文字顯示區域，確保高度縮減 */
+    .editable-note {
+        min-height: 32px !important; /* 確保是一行的高度 */
+        padding: 4px 8px !important; /* 縮減上下間距 */
+        display: flex;
+        align-items: center;
+    }
     </style>
 </head>
 <body class="p-4 md:p-6 lg:p-8">
@@ -249,8 +267,12 @@
 
                     <div id="noteContainer">
                         <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">內容紀錄</label>
-                        <textarea id="caseNote" rows="1" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition"></textarea>
-                    </div>
+                        // 請找到這一段並替換
+<textarea 
+    id="edit-note-${item.id}" 
+    class="hidden w-full border border-[#8da399] bg-white rounded-lg px-2.5 py-1 event-note-text outline-none" 
+    rows="1" 
+    onblur="saveQuickEdit('${item.id}')">${note}</textarea>
 
                     <div class="flex justify-end gap-3 pt-2">
                         <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm text-[#8da399] font-medium hover:bg-[#f5f2ed] rounded-lg transition">取消</button>
@@ -587,6 +609,7 @@ function createCard(item, isPending, isExpired) {
     </script>
 </body>
 </html>
+
 
 
 
