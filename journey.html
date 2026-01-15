@@ -32,13 +32,19 @@
             line-height: 1.4;
             font-weight: 500;
         }
+/* 內容紀錄（備註）文字設定 */
+.event-note-text {
+    font-size: 18px !important;
+    line-height: 1.6;
+    font-weight: 500;
+    color: #5c6b65 !important; /* 強制顏色與標題一致 */
+}
 
-        .event-note-text {
-            font-size: 18px !important;
-            line-height: 1.6;
-            font-weight: 500;
-        }
-
+/* 快速編輯輸入框的顏色也同步 */
+[id^="edit-note-"] {
+    font-size: 18px !important;
+    color: #5c6b65 !important;
+}
         .case-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 15px -3px rgba(139, 126, 116, 0.1);
@@ -591,3 +597,4 @@
     </script>
 </body>
 </html>
+
