@@ -267,9 +267,7 @@
 
                     <div id="noteContainer">
                         <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">內容紀錄</label>
-                        // 請找到這一段並替換
-<textarea 
-    id="edit-note-${item.id}" 
+                       <textarea id="edit-note-${item.id}" 
     class="hidden w-full border border-[#8da399] bg-white rounded-lg px-2.5 py-1 event-note-text outline-none" 
     rows="1" 
     onblur="saveQuickEdit('${item.id}')">${note}</textarea>
@@ -609,6 +607,7 @@ function createCard(item, isPending, isExpired) {
     </script>
 </body>
 </html>
+
 
 
 
