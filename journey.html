@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>行程系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
+<style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
         
         body {
@@ -27,15 +27,33 @@
             flex-direction: column;
         }
 
-        .event-title {
-            font-size: 20px !important;
-            line-height: 1.4;
+        /* 標題顏色統一為深灰綠 #5c6b65 */
+        .title-once { 
+            font-size: 20px !important; 
+            line-height: 1.4; 
             font-weight: 500;
+            color: #5c6b65 !important;
         }
 
+        .title-weekly { 
+            font-size: 18px !important; 
+            line-height: 1.4; 
+            font-weight: 500;
+            color: #5c6b65 !important;
+        }
+
+        /* 內容紀錄（備註）：設定與標題一樣的顏色 #5c6b65 */
         .event-note-text {
             font-size: 18px !important;
             line-height: 1.6;
+            font-weight: 500;
+            color: #5c6b65 !important;
+        }
+
+        /* 快速編輯時的輸入框顏色也同步 */
+        [id^="edit-note-"] {
+            font-size: 18px !important;
+            color: #5c6b65 !important;
             font-weight: 500;
         }
 
@@ -47,6 +65,8 @@
         .editable-note {
             cursor: pointer;
             transition: background-color 0.2s;
+            padding: 8px;
+            border-radius: 8px;
         }
         .editable-note:hover {
             background-color: #faf9f7;
@@ -395,69 +415,40 @@
                 }
             }
             const p = parseInt(period);
-            // 粗略估計：早修到第四節算上午(過12點過期)，午休到第七節算下午(過17點過期)
-            if (p <= 4) return currentHour >= 12;
+            // 粗略估計：早修到第四節算上午(過13點過期)，午休到第七節算下午(過17點過期)
+            if (p <= 4) return currentHour >= 13;
             else return currentHour >= 17;
         }
 
-        function createCard(item, isPendingToday, isExpiredToday = false) {
-            const card = document.createElement('div');
-            const opacityClass = isExpiredToday ? 'opacity-70' : 'opacity-100';
-            const isOnce = item.type === 'once';
-            card.className = `case-card bg-white rounded-xl border shadow-sm ${opacityClass} ${isPendingToday ? 'border-[#8da399] ring-1 ring-[#8da399]/10' : 'border-[#e8e2da]'}`;
-            const periodStr = item.period === 'custom' ? item.customTime : periodNames[item.period];
+function createCard(item, isPending, isExpired) {
+    const card = document.createElement('div');
+    card.className = `case-card rounded-xl border shadow-sm ${isExpired ? 'opacity-40' : 'opacity-100'} ${isPending ? 'border-[#8da399] ring-1 ring-[#8da399]/10' : 'border-[#e8e2da]'}`;
+    const periodStr = item.period === 'custom' ? item.customTime : periodNames[item.period];
+    const titleClass = item.type === 'once' ? 'title-once' : 'title-weekly';
+    const note = item.note || '';
 
-            if (isOnce) {
-                const d = item.date ? new Date(item.date) : new Date();
-                const timeLabel = `${(item.date||'').replace(/-/g, '/')} (${displayWeekDays[d.getDay()]}) · ${periodStr}`;
-                card.innerHTML = `
-                    <div class="flex items-center p-5 min-h-[100px]">
-                        <div class="flex justify-between items-center w-full">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-1.5 mb-1.5">
-                                    <span class="w-1.5 h-1.5 rounded-full ${isPendingToday ? 'bg-[#8da399] animate-pulse' : (isExpiredToday ? 'bg-orange-300' : 'bg-[#b5a48d]')}"></span>
-                                    <span class="text-[11px] text-[#b5a48d] uppercase tracking-widest font-medium">${timeLabel}</span>
-                                </div>
-                                <h3 class="event-title text-[#5c6b65] pt-1">${item.name}</h3>
-                            </div>
-                            <div class="flex gap-1 ml-4 self-center">
-                                <button onclick="window.editCase('${item.id}')" class="p-1.5 text-[#b5a48d]/40 hover:text-[#8da399] transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
-                                <button onclick="window.deleteCase('${item.id}')" class="p-1.5 text-[#b5a48d]/40 hover:text-red-400 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                const timeLabel = `${displayWeekDays[item.day]} · ${periodStr}`;
-                const hasNote = item.note && item.note.trim() !== '';
-                const displayNote = hasNote ? item.note : '';
-                card.innerHTML = `
-                    <div class="p-4 flex flex-col h-full">
-                        <div class="flex justify-between items-start mb-3">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-1.5 mb-1">
-                                    <span class="w-1.5 h-1.5 rounded-full ${isPendingToday ? 'bg-[#8da399] animate-pulse' : (isExpiredToday ? 'bg-orange-300' : 'bg-[#e8e2da]')}"></span>
-                                    <span class="text-[11px] text-[#9ba8a4] uppercase tracking-widest font-medium">${timeLabel}</span>
-                                </div>
-                                <h3 class="event-title text-[#5c6b65]">${item.name}</h3>
-                            </div>
-                            <div class="flex gap-1">
-                                <button onclick="window.editCase('${item.id}')" class="p-1 text-[#b5a48d]/50 hover:text-[#8da399] transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
-                                <button onclick="window.deleteCase('${item.id}')" class="p-1 text-[#b5a48d]/50 hover:text-red-400 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-                            </div>
-                        </div>
-                        <div class="note-wrapper mt-auto">
-                            <div id="display-note-${item.id}" onclick="window.startQuickEdit('${item.id}')" class="editable-note min-h-[30px] bg-[#faf9f7] rounded-lg p-2.5 ${!hasNote ? 'border border-dashed border-[#e8e2da]' : ''}">
-                               <p class="event-note-text text-[#2c3331] whitespace-pre-line">${displayNote}</p>
-                            </div>
-                            <textarea id="edit-note-${item.id}" class="hidden w-full border border-[#8da399] bg-white rounded-lg px-2.5 py-2 event-note-text text-[#2c3331] outline-none transition" rows="1" onblur="window.saveQuickEdit('${item.id}')">${displayNote}</textarea>
-                        </div>
-                    </div>
-                `;
-            }
-            return card;
-        }
-
+    card.innerHTML = `
+        <div class="p-5 flex flex-col h-full">
+            <div class="flex justify-between items-start mb-3">
+                <div>
+                    <span class="text-[11px] text-[#9ba8a4] uppercase tracking-widest font-medium">${item.type === 'once' ? item.date.replace(/-/g, '/') : displayWeekDays[item.day]} · ${periodStr}</span>
+                    <h3 class="${titleClass}">${item.name}</h3>
+                </div>
+                <div class="flex gap-1">
+                    <button onclick="editCase('${item.id}')" class="p-1 text-[#b5a48d]/50 hover:text-[#8da399] transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
+                    <button onclick="deleteCase('${item.id}')" class="p-1 text-[#b5a48d]/50 hover:text-red-400 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                </div>
+            </div>
+            <div class="mt-auto">
+                <div id="display-note-${item.id}" onclick="startQuickEdit('${item.id}')" class="editable-note min-h-[40px] bg-[#faf9f7] ${!note ? 'border border-dashed border-[#e8e2da]' : ''}">
+                   <p class="event-note-text whitespace-pre-line">${note}</p>
+                </div>
+                <textarea id="edit-note-${item.id}" class="hidden w-full border border-[#8da399] bg-white rounded-lg px-2.5 py-2 event-note-text outline-none" rows="2" onblur="saveQuickEdit('${item.id}')">${note}</textarea>
+            </div>
+        </div>
+    `;
+    return card;
+}
         // 全域控制
         window.openModal = () => {
             document.getElementById('caseModal').classList.remove('hidden');
@@ -591,3 +582,4 @@
     </script>
 </body>
 </html>
+
