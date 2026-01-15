@@ -157,7 +157,7 @@
         </main>
     </div>
 
-    <!-- Modal 彈窗 (保留原有 HTML) -->
+    <!-- Modal 彈窗 -->
     <div id="caseModal" class="fixed inset-0 bg-[#4a5553]/30 hidden backdrop-blur-[1px] flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden transition-all scale-95 opacity-0" id="modalContent">
             <div class="p-5 modal-body">
@@ -236,6 +236,7 @@
                         </div>
                     </div>
 
+                    <!-- 內容紀錄：現在會根據類型自動顯示/隱藏 -->
                     <div id="noteContainer">
                         <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">內容紀錄</label>
                         <textarea id="caseNote" rows="1" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition"></textarea>
@@ -269,7 +270,9 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'itinerary-gh-sync-v1';
+        
+        // 確保手機與電腦同步的關鍵：固定的 appId
+        const APP_COLLECTION_ID = 'itinerary-global-sync-v2'; 
 
         let currentUser = null;
         let caseList = [];
@@ -277,55 +280,52 @@
         const displayWeekDays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
         const periodNames = ["早修", "第一節", "第二節", "第三節", "第四節", "午休", "第五節", "第六節", "第七節"];
 
-        // 登入功能 - 強制設定 Persistence
+        // 登入
         document.getElementById('btn-login').onclick = async () => {
             try {
                 const errBox = document.getElementById('auth-error');
                 errBox.classList.add('hidden');
-                
                 await setPersistence(auth, browserLocalPersistence);
                 await signInWithPopup(auth, provider);
             } catch (e) {
                 console.error("Login Error:", e);
-                const errBox = document.getElementById('auth-error');
-                errBox.innerText = "登入失敗，請確認網域授權或稍後再試。";
-                errBox.classList.remove('hidden');
+                document.getElementById('auth-error').innerText = "登入失敗，請稍後再試。";
+                document.getElementById('auth-error').classList.remove('hidden');
             }
         };
 
-        // 登出功能
+        // 登出
         document.getElementById('btn-logout').onclick = () => {
             if (syncUnsubscribe) syncUnsubscribe();
             signOut(auth);
         };
 
-        // 核心狀態管理：修復「選完跳回首頁」的邏輯
+        // 狀態監聽
         onAuthStateChanged(auth, (user) => {
             const overlay = document.getElementById('auth-overlay');
             const mainApp = document.getElementById('main-app');
 
             if (user) {
                 currentUser = user;
-                // 成功登入：隱藏遮罩，顯示主程式
                 overlay.classList.add('hidden-auth');
                 setTimeout(() => overlay.classList.add('hidden'), 300);
                 mainApp.classList.remove('opacity-0');
-                document.getElementById('user-display').innerText = `使用者: ${user.displayName || '用戶'}`;
+                document.getElementById('user-display').innerText = `已同步帳號: ${user.email}`;
                 setupSync();
             } else {
                 currentUser = null;
-                // 未登入：顯示遮罩，隱藏主程式
                 overlay.classList.remove('hidden', 'hidden-auth');
                 mainApp.classList.add('opacity-0');
             }
         });
 
-        // 雲端同步
+        // 核心同步邏輯
         function setupSync() {
             if (!currentUser) return;
-            const collectionRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'itineraries');
+            // 統一儲存路徑：artifacts / {APP_COLLECTION_ID} / users / {UID} / itineraries
+            const collectionRef = collection(db, 'artifacts', APP_COLLECTION_ID, 'users', currentUser.uid, 'itineraries');
             
-            if (syncUnsubscribe) syncUnsubscribe(); // 防止重複監聽
+            if (syncUnsubscribe) syncUnsubscribe();
             
             syncUnsubscribe = onSnapshot(collectionRef, (snapshot) => {
                 caseList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -342,11 +342,11 @@
             if (success) {
                 statusEl.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 雲端已同步`;
             } else {
-                statusEl.innerHTML = `<span class="text-red-400">同步中...</span>`;
+                statusEl.innerHTML = `<span class="text-red-400">連線中...</span>`;
             }
         }
 
-        // 渲染列表 (保留您的 createCard 邏輯)
+        // UI 渲染
         function renderDisplay() {
             const now = new Date();
             const todayNum = now.getDay();
@@ -364,8 +364,8 @@
 
             const sortedList = [...caseList].sort((a, b) => {
                 if (a.type !== b.type) return a.type === 'once' ? -1 : 1;
-                if (a.type === 'once') return a.date.localeCompare(b.date);
-                return a.day - b.day;
+                if (a.type === 'once') return (a.date || '').localeCompare(b.date || '');
+                return (a.day || 0) - (b.day || 0);
             });
 
             const todayPendingCases = sortedList.filter(c => {
@@ -391,7 +391,6 @@
             }
         }
 
-        // 保留您的判斷與建立卡片函數
         function isPeriodExpired(period, customTimeValue) {
             const now = new Date();
             const currentHour = now.getHours();
@@ -417,8 +416,8 @@
             const periodStr = item.period === 'custom' ? item.customTime : periodNames[item.period];
 
             if (isOnce) {
-                const d = new Date(item.date);
-                const timeLabel = `${item.date.replace(/-/g, '/')} (${displayWeekDays[d.getDay()]}) · ${periodStr}`;
+                const d = item.date ? new Date(item.date) : new Date();
+                const timeLabel = `${(item.date||'').replace(/-/g, '/')} (${displayWeekDays[d.getDay()]}) · ${periodStr}`;
                 card.innerHTML = `
                     <div class="flex items-center p-5 min-h-[100px]">
                         <div class="flex justify-between items-center w-full">
@@ -467,7 +466,7 @@
             return card;
         }
 
-        // 綁定全域函數 (Modal 與 編輯邏輯)
+        // 全域控制
         window.openModal = () => {
             document.getElementById('caseModal').classList.remove('hidden');
             setTimeout(() => document.getElementById('modalContent').classList.remove('scale-95', 'opacity-0'), 10);
@@ -486,16 +485,20 @@
             document.getElementById('caseType').value = type;
             const btnWeekly = document.getElementById('btnWeekly');
             const btnOnce = document.getElementById('btnOnce');
+            const noteContainer = document.getElementById('noteContainer');
+
             if (type === 'weekly') {
                 btnWeekly.className = "flex-1 py-1.5 text-sm transition-colors type-btn-active";
                 btnOnce.className = "flex-1 py-1.5 text-sm transition-colors bg-[#faf9f7] text-[#9ba8a4]";
                 document.getElementById('weeklyOptions').classList.remove('hidden');
                 document.getElementById('onceOptions').classList.add('hidden');
+                noteContainer.classList.remove('hidden'); // 顯示內容紀錄
             } else {
                 btnOnce.className = "flex-1 py-1.5 text-sm transition-colors type-btn-active";
                 btnWeekly.className = "flex-1 py-1.5 text-sm transition-colors bg-[#faf9f7] text-[#9ba8a4]";
                 document.getElementById('weeklyOptions').classList.add('hidden');
                 document.getElementById('onceOptions').classList.remove('hidden');
+                noteContainer.classList.add('hidden'); // 隱藏內容紀錄
             }
         };
 
@@ -523,28 +526,45 @@
                 document.getElementById('caseNote').value = item.note || '';
                 document.getElementById('caseDay').value = item.day;
                 document.getElementById('casePeriod').value = item.period;
+                if (item.period === 'custom') {
+                    const input = document.getElementById('customTimeWeekly');
+                    input.value = item.customTime;
+                    input.classList.remove('hidden');
+                }
             } else {
                 document.getElementById('caseDate').value = item.date;
                 document.getElementById('casePeriodOnce').value = item.period;
+                if (item.period === 'custom') {
+                    const input = document.getElementById('customTimeOnce');
+                    input.value = item.customTime;
+                    input.classList.remove('hidden');
+                }
             }
         };
 
         window.deleteCase = async (id) => {
             if (!currentUser || !confirm('確定要刪除嗎？')) return;
-            await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'itineraries', id));
+            await deleteDoc(doc(db, 'artifacts', APP_COLLECTION_ID, 'users', currentUser.uid, 'itineraries', id));
         };
 
         window.startQuickEdit = (id) => {
             const displayEl = document.getElementById(`display-note-${id}`);
             const editEl = document.getElementById(`edit-note-${id}`);
-            displayEl.classList.add('hidden'); editEl.classList.remove('hidden'); editEl.focus();
+            if (displayEl && editEl) {
+                displayEl.classList.add('hidden'); editEl.classList.remove('hidden'); editEl.focus();
+            }
         };
 
         window.saveQuickEdit = async (id) => {
             if (!currentUser) return;
             const editEl = document.getElementById('edit-note-' + id);
+            const displayEl = document.getElementById('display-note-' + id);
             const newNote = editEl.value;
-            await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'itineraries', id), { note: newNote }, { merge: true });
+            
+            // UI 先行更新感官更好
+            displayEl.classList.remove('hidden'); editEl.classList.add('hidden');
+
+            await setDoc(doc(db, 'artifacts', APP_COLLECTION_ID, 'users', currentUser.uid, 'itineraries', id), { note: newNote }, { merge: true });
         };
 
         document.getElementById('caseForm').addEventListener('submit', async (e) => {
@@ -555,7 +575,7 @@
             const name = document.getElementById('caseName').value;
             const editId = document.getElementById('editId').value || Date.now().toString();
             
-            let data = { type, name, updatedAt: serverTimestamp() };
+            let data = { type, name, updatedAt: serverTimestamp(), id: editId };
             if (type === 'weekly') {
                 data.note = document.getElementById('caseNote').value;
                 data.day = parseInt(document.getElementById('caseDay').value);
@@ -565,11 +585,16 @@
                 data.date = document.getElementById('caseDate').value;
                 data.period = document.getElementById('casePeriodOnce').value;
                 data.customTime = data.period === 'custom' ? document.getElementById('customTimeOnce').value : null;
-                data.day = new Date(data.date).getDay();
+                data.day = data.date ? new Date(data.date).getDay() : 0;
+                data.note = ""; // 單次預約清空內容
             }
 
-            await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'itineraries', editId), data);
-            window.closeModal();
+            try {
+                await setDoc(doc(db, 'artifacts', APP_COLLECTION_ID, 'users', currentUser.uid, 'itineraries', editId), data);
+                window.closeModal(); // 修正：儲存後自動關閉
+            } catch (err) {
+                console.error("Save error:", err);
+            }
         });
 
         setInterval(renderDisplay, 60000);
