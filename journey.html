@@ -103,21 +103,21 @@
             opacity: 0;
             pointer-events: none;
         }
-    /* 解決快速編輯點擊後變兩行的問題 */
+/* 強制卡片內編輯框維持單行高度 */
 [id^="edit-note-"] {
-    min-height: 1.6em !important; /* 強制設定為一行的高度 */
-    height: auto !important;
-    padding-top: 2px !important;   /* 極致縮減上方內距 */
-    padding-bottom: 2px !important;/* 極致縮減下方內距 */
-    line-height: 1.6 !important;
-    overflow: hidden !important;   /* 防止出現滾動條增加視覺厚度 */
-    display: block;
+    min-height: 32px !important;  /* 與預覽框高度對齊 */
+    height: 32px !important;      /* 固定高度防止撐開 */
+    padding-top: 4px !important;    /* 縮減上方間距 */
+    padding-bottom: 4px !important; /* 縮減下方間距 */
+    line-height: 1.4 !important;    /* 微調行高 */
+    resize: none !important;        /* 徹底移除右下角那兩條斜線 */
+    overflow: hidden !important;    /* 隱藏捲軸 */
 }
 
-/* 同時微調點擊前的顯示區域，讓兩者切換時高度完全一致 */
+/* 同步調整顯示框的高度，確保切換時不跳動 */
 .editable-note {
-    min-height: 1.6em !important;
-    padding: 2px 8px !important;   /* 這裡的 padding 也要跟著縮減 */
+    min-height: 32px !important;
+    padding: 4px 8px !important;
     display: flex;
     align-items: center;
 }
@@ -267,7 +267,9 @@
 
                     <div id="noteContainer">
                         <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">內容紀錄</label>
-                        <textarea id="caseNote" rows="1" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition"></textarea>
+                       <textarea     id="edit-note-${item.id}"     class="hidden w-full border border-[#8da399] bg-white rounded-lg px-2 py-1 event-note-text outline-none"     rows="1" 
+    style="min-height: auto; height: auto; resize: none; overflow: hidden;" 
+    onblur="saveQuickEdit('${item.id}')">${note}</textarea>
                     </div>
 
                     <div class="flex justify-end gap-3 pt-2">
@@ -605,4 +607,5 @@ function createCard(item, isPending, isExpired) {
     </script>
 </body>
 </html>
+
 
