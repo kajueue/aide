@@ -427,6 +427,9 @@ function createCard(item, isPending, isExpired) {
     const titleClass = item.type === 'once' ? 'title-once' : 'title-weekly';
     const note = item.note || '';
 
+    // 邏輯：如果是固定行程 (weekly)，一律顯示框；如果是單次預約 (once)，一律不顯示框
+    const shouldShowNote = (item.type === 'weekly');
+
     card.innerHTML = `
         <div class="p-5 flex flex-col h-full">
             <div class="flex justify-between items-start mb-3">
@@ -439,9 +442,9 @@ function createCard(item, isPending, isExpired) {
                     <button onclick="deleteCase('${item.id}')" class="p-1 text-[#b5a48d]/50 hover:text-red-400 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                 </div>
             </div>
-            ${note ? `
+            ${shouldShowNote ? `
             <div class="mt-auto">
-                <div id="display-note-${item.id}" onclick="startQuickEdit('${item.id}')" class="editable-note bg-[#faf9f7]">
+                <div id="display-note-${item.id}" onclick="startQuickEdit('${item.id}')" class="editable-note min-h-[40px] bg-[#faf9f7] ${!note ? 'border border-dashed border-[#e8e2da]' : ''}">
                    <p class="event-note-text whitespace-pre-line">${note}</p>
                 </div>
                 <textarea id="edit-note-${item.id}" class="hidden w-full border border-[#8da399] bg-white rounded-lg px-2.5 py-2 event-note-text outline-none" rows="2" onblur="saveQuickEdit('${item.id}')">${note}</textarea>
@@ -584,5 +587,6 @@ function createCard(item, isPending, isExpired) {
     </script>
 </body>
 </html>
+
 
 
