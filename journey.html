@@ -19,7 +19,7 @@
             font-weight: 500 !important;
         }
 
-        /* 類型標題大小與顏色 */
+        /* 標題與內容顏色統一為 #5c6b65 */
         .title-once { 
             font-size: 20px !important; 
             line-height: 1.4; 
@@ -31,15 +31,15 @@
             color: #5c6b65 !important;
         }
 
-        /* 內容紀錄（備註）顏色與標題一致 */
+        /* 備註顏色也同步為 #5c6b65 */
         .event-note-text, [id^="edit-note-"] {
             font-size: 18px !important;
             line-height: 1.6;
             font-weight: 500;
-            color: #5c6b65 !important; /* 確保與標題顏色相同 */
+            color: #5c6b65 !important;
         }
 
-        /* 彈出視窗輸入框設定 */
+        /* 彈出視窗輸入框 */
         #caseNote, #caseName { 
             font-size: 18px !important; 
             color: #5c6b65;
@@ -90,7 +90,7 @@
             <div>
                 <div class="flex items-center gap-2 mb-1">
                     <div class="p-1.5 bg-[#8da399] rounded-lg">
-                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z"></path></svg>
                     </div>
                     <h1 class="text-md text-[#5c6b65] tracking-tight">工作行程</h1>
                 </div>
@@ -140,7 +140,9 @@
                     </button>
                 </div>
                 <form id="caseForm" class="space-y-4">
-                    <input type="hidden" id="editId"><input type="hidden" id="caseType" value="weekly">
+                    <input type="hidden" id="editId">
+                    <input type="hidden" id="caseType" value="weekly">
+                    
                     <div>
                         <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">行程類型</label>
                         <div class="flex gap-0 border border-[#e8e2da] rounded-lg overflow-hidden">
@@ -148,25 +150,43 @@
                             <button type="button" id="btnOnce" onclick="setType('once')" class="flex-1 py-1.5 text-sm transition-colors bg-[#faf9f7] text-[#9ba8a4]">單次預約</button>
                         </div>
                     </div>
+
                     <div>
                         <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">名稱</label>
-                        <input type="text" id="caseName" required class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#8da399]/20 transition" placeholder="輸入名稱">
+                        <input type="text" id="caseName" required class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#8da399]/20 transition" placeholder="例如：某某個案或會議">
                     </div>
+
                     <div id="weeklyOptions" class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">固定星期</label>
                             <select id="caseDay" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-2 text-sm outline-none transition">
-                                <option value="1">星期一</option><option value="2">星期二</option><option value="3">星期三</option><option value="4">星期四</option><option value="5">星期五</option>
+                                <option value="1">星期一</option>
+                                <option value="2">星期二</option>
+                                <option value="3">星期三</option>
+                                <option value="4">星期四</option>
+                                <option value="5">星期五</option>
+                                <option value="6">星期六</option>
+                                <option value="0">星期日</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">時段</label>
                             <select id="casePeriod" onchange="checkCustomTime('casePeriod', 'customTimeWeekly')" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-2 text-sm outline-none transition">
-                                <option value="0">早修</option><option value="1">第一節</option><option value="2">第二節</option><option value="3">第三節</option><option value="4">第四節</option><option value="5">午休</option><option value="6">第五節</option><option value="7">第六節</option><option value="8">第七節</option><option value="custom">自定義時間</option>
+                                <option value="0">早修</option>
+                                <option value="1">第一節</option>
+                                <option value="2">第二節</option>
+                                <option value="3">第三節</option>
+                                <option value="4">第四節</option>
+                                <option value="5">午休</option>
+                                <option value="6">第五節</option>
+                                <option value="7">第六節</option>
+                                <option value="8">第七節</option>
+                                <option value="custom">自定義時間</option>
                             </select>
                             <input type="text" id="customTimeWeekly" class="hidden mt-1.5 w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-1.5 text-sm outline-none" placeholder="例如 08:30" onblur="formatCustomTime(this)">
                         </div>
                     </div>
+
                     <div id="onceOptions" class="grid grid-cols-2 gap-3 hidden">
                         <div>
                             <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">預約日期</label>
@@ -175,15 +195,26 @@
                         <div>
                             <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">時段</label>
                             <select id="casePeriodOnce" onchange="checkCustomTime('casePeriodOnce', 'customTimeOnce')" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-2 text-sm outline-none">
-                                <option value="0">早修</option><option value="1">第一節</option><option value="2">第二節</option><option value="3">第三節</option><option value="4">第四節</option><option value="5">午休</option><option value="6">第五節</option><option value="7">第六節</option><option value="8">第七節</option><option value="custom">自定義時間</option>
+                                <option value="0">早修</option>
+                                <option value="1">第一節</option>
+                                <option value="2">第二節</option>
+                                <option value="3">第三節</option>
+                                <option value="4">第四節</option>
+                                <option value="5">午休</option>
+                                <option value="6">第五節</option>
+                                <option value="7">第六節</option>
+                                <option value="8">第七節</option>
+                                <option value="custom">自定義時間</option>
                             </select>
                             <input type="text" id="customTimeOnce" class="hidden mt-1.5 w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-1.5 text-sm outline-none" placeholder="例如 14:00" onblur="formatCustomTime(this)">
                         </div>
                     </div>
+
                     <div>
                         <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">內容紀錄</label>
-                        <textarea id="caseNote" rows="2" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#8da399]/20 transition"></textarea>
+                        <textarea id="caseNote" rows="3" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#8da399]/20 transition" placeholder="輸入備註內容..."></textarea>
                     </div>
+
                     <div class="flex justify-end gap-3 pt-2">
                         <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm text-[#8da399] font-medium hover:bg-[#f5f2ed] rounded-lg transition">取消</button>
                         <button type="submit" class="px-6 py-2 bg-[#8da399] text-white rounded-lg text-sm hover:bg-[#7a8f85] transition shadow-sm">儲存檔案</button>
@@ -231,7 +262,7 @@
                 setupSync(user.uid);
             } else {
                 loginBtn.classList.remove('hidden'); userBtn.classList.add('hidden');
-                document.getElementById('today-container').innerHTML = '<div class="col-span-full py-10 text-center text-[#b5a48d]">請先點擊登入</div>';
+                document.getElementById('today-container').innerHTML = '<div class="col-span-full py-10 text-center text-[#b5a48d]">請先登入以讀取雲端行程</div>';
                 document.getElementById('sync-status').innerText = '尚未登入';
             }
         });
@@ -241,7 +272,7 @@
             const colRef = collection(db, 'users', uid, 'itineraries');
             unsubscribe = onSnapshot(colRef, (snapshot) => {
                 caseList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                document.getElementById('sync-status').innerText = '雲端同步中';
+                document.getElementById('sync-status').innerText = '雲端已同步';
                 renderDisplay();
             });
         }
@@ -259,8 +290,8 @@
                 }
             }
             const p = parseInt(period);
-            if (p <= 4) return currentHour >= 12;
-            else return currentHour >= 17;
+            if (p <= 4) return currentHour >= 12; // 早修到四節算中午前
+            else return currentHour >= 17; // 其他算傍晚前
         }
 
         function renderDisplay() {
@@ -273,17 +304,32 @@
             const allContainer = document.getElementById('all-cases-container');
             todayContainer.innerHTML = ''; allContainer.innerHTML = '';
 
-            const sortedList = [...caseList].sort((a, b) => (a.type !== b.type ? (a.type === 'once' ? -1 : 1) : (a.type === 'once' ? a.date.localeCompare(b.date) : a.day - b.day)));
-
-            const todayPending = sortedList.filter(c => (c.type === 'once' ? c.date === todayStr : c.day == todayNum) && !isPeriodExpired(c.period, c.customTime));
-            if (todayPending.length === 0) todayContainer.innerHTML = `<div class="col-span-full py-10 text-center text-[#b5a48d]/50 text-sm">今日已無待辦</div>`;
-            else todayPending.forEach(item => todayContainer.appendChild(createCard(item, true, false)));
-
-            if (sortedList.length === 0) allContainer.innerHTML = `<div class="col-span-full py-10 text-center text-[#b5a48d]/40 text-sm">無行程</div>`;
-            else sortedList.forEach(item => {
-                const isToday = item.type === 'once' ? item.date === todayStr : item.day == todayNum;
-                allContainer.appendChild(createCard(item, false, isToday && isPeriodExpired(item.period, item.customTime)));
+            const sortedList = [...caseList].sort((a, b) => {
+                if (a.type !== b.type) return a.type === 'once' ? -1 : 1;
+                return a.type === 'once' ? a.date.localeCompare(b.date) : a.day - b.day;
             });
+
+            // 今日待辦：當天且未過期
+            const todayPending = sortedList.filter(c => {
+                const isToday = c.type === 'once' ? c.date === todayStr : c.day == todayNum;
+                return isToday && !isPeriodExpired(c.period, c.customTime);
+            });
+            
+            if (todayPending.length === 0) {
+                todayContainer.innerHTML = `<div class="col-span-full py-10 text-center text-[#b5a48d]/50 text-sm">今日已無待辦行程</div>`;
+            } else {
+                todayPending.forEach(item => todayContainer.appendChild(createCard(item, true, false)));
+            }
+
+            // 全部行程
+            if (sortedList.length === 0) {
+                allContainer.innerHTML = `<div class="col-span-full py-10 text-center text-[#b5a48d]/40 text-sm">尚未建立行程資料</div>`;
+            } else {
+                sortedList.forEach(item => {
+                    const isToday = item.type === 'once' ? item.date === todayStr : item.day == todayNum;
+                    allContainer.appendChild(createCard(item, false, isToday && isPeriodExpired(item.period, item.customTime)));
+                });
+            }
         }
 
         function createCard(item, isPending, isExpired) {
@@ -316,6 +362,7 @@
             return card;
         }
 
+        /* 視窗控制 */
         window.openModal = () => {
             document.getElementById('caseModal').classList.remove('hidden');
             setTimeout(() => document.getElementById('modalContent').classList.remove('scale-95', 'opacity-0'), 10);
@@ -360,9 +407,19 @@
             }
         };
 
-        window.deleteCase = async (id) => { if(confirm('確定刪除？')) await deleteDoc(doc(db, 'users', currentUser.uid, 'itineraries', id)); };
-        window.startQuickEdit = (id) => { document.getElementById(`display-note-${id}`).classList.add('hidden'); const e = document.getElementById(`edit-note-${id}`); e.classList.remove('hidden'); e.focus(); };
-        window.saveQuickEdit = async (id) => { const n = document.getElementById(`edit-note-${id}`).value; await setDoc(doc(db, 'users', currentUser.uid, 'itineraries', id), { note: n }, { merge: true }); };
+        window.deleteCase = async (id) => { if(confirm('確定要刪除此行程嗎？')) await deleteDoc(doc(db, 'users', currentUser.uid, 'itineraries', id)); };
+        
+        window.startQuickEdit = (id) => { 
+            document.getElementById(`display-note-${id}`).classList.add('hidden'); 
+            const e = document.getElementById(`edit-note-${id}`); 
+            e.classList.remove('hidden'); 
+            e.focus(); 
+        };
+        
+        window.saveQuickEdit = async (id) => { 
+            const n = document.getElementById(`edit-note-${id}`).value; 
+            await setDoc(doc(db, 'users', currentUser.uid, 'itineraries', id), { note: n }, { merge: true }); 
+        };
 
         document.getElementById('caseForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -382,7 +439,7 @@
             window.closeModal();
         });
 
-        setInterval(renderDisplay, 60000);
+        setInterval(renderDisplay, 60000); // 每分鐘自動刷新一次（檢查過期狀態）
     </script>
 </body>
 </html>
