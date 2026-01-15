@@ -103,18 +103,27 @@
             opacity: 0;
             pointer-events: none;
         }
-/* 強制卡片內編輯框維持單行高度 */
+/* 只有卡片內快速編輯的框 (id 開頭為 edit-note-) 才縮小高度 */
 [id^="edit-note-"] {
-    min-height: 32px !important;  /* 與預覽框高度對齊 */
-    height: 32px !important;      /* 固定高度防止撐開 */
-    padding-top: 4px !important;    /* 縮減上方間距 */
-    padding-bottom: 4px !important; /* 縮減下方間距 */
-    line-height: 1.4 !important;    /* 微調行高 */
-    resize: none !important;        /* 徹底移除右下角那兩條斜線 */
-    overflow: hidden !important;    /* 隱藏捲軸 */
+    min-height: 32px !important;  /* 固定高度 */
+    height: 32px !important;      /* 固定高度 */
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+    line-height: 1.4 !important;
+    resize: none !important;
+    overflow: hidden !important;
 }
 
-/* 同步調整顯示框的高度，確保切換時不跳動 */
+/* 確保「建立行程」彈出視窗裡的輸入框恢復正常顯示 */
+#caseNote {
+    min-height: 80px !important;  /* 彈出視窗的框要夠大 */
+    height: auto !important;
+    padding: 8px !important;
+    display: block !important;    /* 確保它不是 hidden */
+    visibility: visible !important;
+}
+
+/* 同步調整卡片預覽狀態的高度 */
 .editable-note {
     min-height: 32px !important;
     padding: 4px 8px !important;
@@ -266,11 +275,10 @@
                     </div>
 
                     <div id="noteContainer">
-                        <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">內容紀錄</label>
-                       <textarea     id="edit-note-${item.id}"     class="hidden w-full border border-[#8da399] bg-white rounded-lg px-2 py-1 event-note-text outline-none"     rows="1" 
-    style="min-height: auto; height: auto; resize: none; overflow: hidden;" 
-    onblur="saveQuickEdit('${item.id}')">${note}</textarea>
-                    </div>
+                       <div>
+    <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">內容紀錄</label>
+    <textarea id="caseNote" rows="3" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#8da399]/20 transition" placeholder="輸入備註內容..."></textarea>
+</div>
 
                     <div class="flex justify-end gap-3 pt-2">
                         <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm text-[#8da399] font-medium hover:bg-[#f5f2ed] rounded-lg transition">取消</button>
@@ -607,5 +615,6 @@ function createCard(item, isPending, isExpired) {
     </script>
 </body>
 </html>
+
 
 
