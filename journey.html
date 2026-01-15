@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>行程管理系統 - 雲端版</title>
+    <title>行程管理系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
@@ -34,7 +34,7 @@
         }
 
         .event-note-text {
-            font-size: 16px !important;
+            font-size: 20px !important;
             line-height: 1.6;
             font-weight: 500;
         }
@@ -71,32 +71,63 @@
             border: 2px solid #f3f3f3;
             border-top: 2px solid #8da399;
             border-radius: 50%;
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* 自定義捲軸 */
-        .modal-body::-webkit-scrollbar { width: 4px; }
-        .modal-body::-webkit-scrollbar-thumb { background: #e8e2da; border-radius: 10px; }
+        /* 登入遮罩 */
+        #auth-overlay {
+            position: fixed;
+            inset: 0;
+            background: #f5f2ed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: opacity 0.3s ease;
+        }
+
+        .hidden-auth {
+            opacity: 0;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body class="p-4 md:p-6 lg:p-8">
 
-    <div class="max-w-5xl mx-auto">
+    <!-- 登入介面 -->
+    <div id="auth-overlay">
+        <div class="text-center p-8 bg-white rounded-3xl shadow-xl max-w-sm w-full mx-4">
+            <div class="w-16 h-16 bg-[#8da399] rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z"></path></svg>
+            </div>
+            <h2 class="text-xl font-bold text-[#5c6b65] mb-2">雲端行程同步</h2>
+            <p class="text-xs text-[#9ba8a4] mb-8">請登入 Google 帳號以開始同步您的行程</p>
+            <button id="btn-login" class="w-full flex items-center justify-center gap-3 bg-white border border-[#e8e2da] py-3 rounded-xl hover:bg-gray-50 transition-all font-medium text-[#5c6b65]">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
+                使用 Google 帳號登入
+            </button>
+            <div id="auth-error" class="mt-4 text-red-400 text-xs hidden"></div>
+        </div>
+    </div>
+
+    <!-- 主介面 -->
+    <div id="main-app" class="max-w-5xl mx-auto opacity-0 transition-opacity duration-500">
         <header class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <div class="flex items-center gap-2 mb-1">
                     <div class="p-1.5 bg-[#8da399] rounded-lg">
-                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z"></path></svg>
                     </div>
                     <h1 class="text-md text-[#5c6b65] tracking-tight">雲端行程管理</h1>
+                    <button id="btn-logout" class="ml-2 text-[10px] text-gray-400 hover:text-red-400 underline">登出</button>
                 </div>
                 <div class="flex items-center gap-2">
                     <p id="current-info" class="text-xs text-[#9ba8a4]"></p>
                     <div id="sync-status" class="flex items-center gap-1 text-[10px] text-[#8da399]">
-                        <div class="loader"></div> 雲端連線中...
+                        <div class="loader"></div> 雲端同步中...
                     </div>
                 </div>
                 <p id="user-display" class="text-[10px] text-[#b5a48d] mt-1 opacity-60"></p>
@@ -113,9 +144,7 @@
                     <span class="w-1.5 h-4 bg-[#8da399] rounded-full"></span>
                     <h2 class="text-md text-[#5c6b65]">今日待辦</h2>
                 </div>
-                <div id="today-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    <div class="col-span-full py-10 text-center text-[#b5a48d]/50 text-sm">載入中...</div>
-                </div>
+                <div id="today-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
             </section>
 
             <section>
@@ -123,13 +152,12 @@
                     <span class="w-1.5 h-4 bg-[#b5a48d] rounded-full"></span>
                     <h2 class="text-md text-[#b5a48d]">全部行程</h2>
                 </div>
-                <div id="all-cases-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                </div>
+                <div id="all-cases-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
             </section>
         </main>
     </div>
 
-    <!-- Modal -->
+    <!-- Modal 彈窗 (保留原有 HTML) -->
     <div id="caseModal" class="fixed inset-0 bg-[#4a5553]/30 hidden backdrop-blur-[1px] flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden transition-all scale-95 opacity-0" id="modalContent">
             <div class="p-5 modal-body">
@@ -152,8 +180,8 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">名稱</label>
-                        <input type="text" id="caseName" required class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" placeholder="例如：數學課、診所預約">
+                        <label id="labelName" class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">名稱</label>
+                        <input type="text" id="caseName" required class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" placeholder="輸入名稱">
                     </div>
 
                     <div id="weeklyOptions" class="grid grid-cols-2 gap-3">
@@ -165,8 +193,6 @@
                                 <option value="3">星期三</option>
                                 <option value="4">星期四</option>
                                 <option value="5">星期五</option>
-                                <option value="6">星期六</option>
-                                <option value="0">星期日</option>
                             </select>
                         </div>
                         <div>
@@ -183,7 +209,7 @@
                                 <option value="8">第七節</option>
                                 <option value="custom">自定義時間</option>
                             </select>
-                            <input type="text" id="customTimeWeekly" class="hidden mt-1.5 w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" onblur="formatCustomTime(this)" placeholder="HH:MM">
+                            <input type="text" id="customTimeWeekly" class="hidden mt-1.5 w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" placeholder="HH:mm" onblur="formatCustomTime(this)">
                         </div>
                     </div>
 
@@ -206,13 +232,13 @@
                                 <option value="8">第七節</option>
                                 <option value="custom">自定義時間</option>
                             </select>
-                            <input type="text" id="customTimeOnce" class="hidden mt-1.5 w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" onblur="formatCustomTime(this)" placeholder="HH:MM">
+                            <input type="text" id="customTimeOnce" class="hidden mt-1.5 w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" placeholder="HH:mm" onblur="formatCustomTime(this)">
                         </div>
                     </div>
 
                     <div id="noteContainer">
                         <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">內容紀錄</label>
-                        <textarea id="caseNote" rows="3" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition" placeholder="備註行程細節..."></textarea>
+                        <textarea id="caseNote" rows="1" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#8da399]/20 outline-none transition"></textarea>
                     </div>
 
                     <div class="flex justify-end gap-3 pt-2">
@@ -224,54 +250,84 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase 初始化與環境配置
-        const firebaseConfig = JSON.parse(__firebase_config);
+        const firebaseConfig = {
+            apiKey: "AIzaSyChKcQgRMId5U6T_5n4XrJOn1aVwonotHY",
+            authDomain: "journey-b7ba3.firebaseapp.com",
+            projectId: "journey-b7ba3",
+            storageBucket: "journey-b7ba3.firebasestorage.app",
+            messagingSenderId: "999872038815",
+            appId: "1:999872038815:web:1a9e733f870b438fba5faa"
+        };
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'itinerary-manager-demo';
+        const provider = new GoogleAuthProvider();
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'itinerary-gh-sync-v1';
 
         let currentUser = null;
         let caseList = [];
+        let syncUnsubscribe = null;
         const displayWeekDays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
         const periodNames = ["早修", "第一節", "第二節", "第三節", "第四節", "午休", "第五節", "第六節", "第七節"];
 
-        // 身份認證啟動
-        const initAuth = async () => {
+        // 登入功能 - 強制設定 Persistence
+        document.getElementById('btn-login').onclick = async () => {
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Auth error:", error);
-                document.getElementById('sync-status').innerHTML = `<span class="text-red-400">連線失敗</span>`;
+                const errBox = document.getElementById('auth-error');
+                errBox.classList.add('hidden');
+                
+                await setPersistence(auth, browserLocalPersistence);
+                await signInWithPopup(auth, provider);
+            } catch (e) {
+                console.error("Login Error:", e);
+                const errBox = document.getElementById('auth-error');
+                errBox.innerText = "登入失敗，請確認網域授權或稍後再試。";
+                errBox.classList.remove('hidden');
             }
         };
 
+        // 登出功能
+        document.getElementById('btn-logout').onclick = () => {
+            if (syncUnsubscribe) syncUnsubscribe();
+            signOut(auth);
+        };
+
+        // 核心狀態管理：修復「選完跳回首頁」的邏輯
         onAuthStateChanged(auth, (user) => {
+            const overlay = document.getElementById('auth-overlay');
+            const mainApp = document.getElementById('main-app');
+
             if (user) {
                 currentUser = user;
-                document.getElementById('user-display').innerText = `Sync ID: ${user.uid}`;
+                // 成功登入：隱藏遮罩，顯示主程式
+                overlay.classList.add('hidden-auth');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+                mainApp.classList.remove('opacity-0');
+                document.getElementById('user-display').innerText = `使用者: ${user.displayName || '用戶'}`;
                 setupSync();
+            } else {
+                currentUser = null;
+                // 未登入：顯示遮罩，隱藏主程式
+                overlay.classList.remove('hidden', 'hidden-auth');
+                mainApp.classList.add('opacity-0');
             }
         });
 
-        // 雲端即時同步
+        // 雲端同步
         function setupSync() {
             if (!currentUser) return;
-            // 遵循 RULE 1 的路徑規範
-            const collectionPath = `artifacts/${appId}/users/${currentUser.uid}/itineraries`;
-            const collectionRef = collection(db, collectionPath);
+            const collectionRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'itineraries');
             
-            // 使用 onSnapshot 監聽變化，遵循 RULE 2 不使用複雜 Query
-            onSnapshot(collectionRef, (snapshot) => {
+            if (syncUnsubscribe) syncUnsubscribe(); // 防止重複監聽
+            
+            syncUnsubscribe = onSnapshot(collectionRef, (snapshot) => {
                 caseList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 updateSyncUI(true);
                 renderDisplay();
@@ -284,16 +340,13 @@
         function updateSyncUI(success) {
             const statusEl = document.getElementById('sync-status');
             if (success) {
-                statusEl.innerHTML = `
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 
-                    雲端已同步
-                `;
+                statusEl.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 雲端已同步`;
             } else {
-                statusEl.innerHTML = `<span class="text-red-400">連線中斷</span>`;
+                statusEl.innerHTML = `<span class="text-red-400">同步中...</span>`;
             }
         }
 
-        // 渲染邏輯
+        // 渲染列表 (保留您的 createCard 邏輯)
         function renderDisplay() {
             const now = new Date();
             const todayNum = now.getDay();
@@ -306,21 +359,15 @@
 
             const todayContainer = document.getElementById('today-container');
             const allContainer = document.getElementById('all-cases-container');
-            
             todayContainer.innerHTML = '';
             allContainer.innerHTML = '';
 
-            // 前端排序與過濾
             const sortedList = [...caseList].sort((a, b) => {
-                // 先排類型 (單次優先)
                 if (a.type !== b.type) return a.type === 'once' ? -1 : 1;
-                // 單次按日期排
                 if (a.type === 'once') return a.date.localeCompare(b.date);
-                // 固定按星期排
                 return a.day - b.day;
             });
 
-            // 過濾出今日未過期的待辦
             const todayPendingCases = sortedList.filter(c => {
                 const isExpired = isPeriodExpired(c.period, c.customTime);
                 if (c.type === 'once') return c.date === todayStr && !isExpired;
@@ -328,23 +375,23 @@
             });
 
             if (todayPendingCases.length === 0) {
-                todayContainer.innerHTML = `<div class="col-span-full py-10 text-center text-[#b5a48d]/50 text-sm bg-white/50 rounded-xl border border-dashed border-[#e8e2da]">今日無待辦行程</div>`;
+                todayContainer.innerHTML = `<div class="col-span-full py-10 text-center text-[#b5a48d]/50 text-sm">今日無待辦行程</div>`;
             } else {
                 todayPendingCases.forEach(item => todayContainer.appendChild(createCard(item, true)));
             }
 
             if (sortedList.length === 0) {
-                allContainer.innerHTML = `<div class="col-span-full py-10 text-center text-[#b5a48d]/40 text-sm">尚未建立任何行程。點擊右上角「新增行程」開始。</div>`;
+                allContainer.innerHTML = `<div class="col-span-full py-10 text-center text-[#b5a48d]/40 text-sm">尚未建立任何行程。</div>`;
             } else {
                 sortedList.forEach(item => {
                     let isToday = (item.type === 'once') ? (item.date === todayStr) : (item.day == todayNum);
-                    const isExpired = isToday && isPeriodExpired(item.period, item.customTime);
-                    allContainer.appendChild(createCard(item, false, isExpired));
+                    const isExpired = isPeriodExpired(item.period, item.customTime);
+                    allContainer.appendChild(createCard(item, false, isToday && isExpired));
                 });
             }
         }
 
-        // 判斷時段是否已過期
+        // 保留您的判斷與建立卡片函數
         function isPeriodExpired(period, customTimeValue) {
             const now = new Date();
             const currentHour = now.getHours();
@@ -358,90 +405,97 @@
                 }
             }
             const p = parseInt(period);
-            if (isNaN(p)) return false; 
-            // 簡易判斷：早修到第四節算上午(12:00)，午休後算下午(17:00)
             if (p <= 4) return currentHour >= 12;
             else return currentHour >= 17;
         }
 
-        // 產生卡片 HTML
         function createCard(item, isPendingToday, isExpiredToday = false) {
             const card = document.createElement('div');
-            const opacityClass = isExpiredToday ? 'opacity-50 grayscale-[0.3]' : 'opacity-100';
+            const opacityClass = isExpiredToday ? 'opacity-70' : 'opacity-100';
             const isOnce = item.type === 'once';
-            card.className = `case-card bg-white rounded-xl border shadow-sm ${opacityClass} ${isPendingToday ? 'border-[#8da399] ring-2 ring-[#8da399]/10' : 'border-[#e8e2da]'}`;
-            
+            card.className = `case-card bg-white rounded-xl border shadow-sm ${opacityClass} ${isPendingToday ? 'border-[#8da399] ring-1 ring-[#8da399]/10' : 'border-[#e8e2da]'}`;
             const periodStr = item.period === 'custom' ? item.customTime : periodNames[item.period];
-            const timeLabel = isOnce 
-                ? `${item.date.replace(/-/g, '/')} (${displayWeekDays[new Date(item.date).getDay()]}) · ${periodStr}`
-                : `${displayWeekDays[item.day]} · ${periodStr}`;
 
-            const hasNote = item.note && item.note.trim() !== '';
-            const displayNote = hasNote ? item.note : '無備註內容...';
-
-            card.innerHTML = `
-                <div class="p-5 flex flex-col h-full min-h-[140px]">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-1.5 mb-1">
-                                <span class="w-1.5 h-1.5 rounded-full ${isPendingToday ? 'bg-[#8da399] animate-pulse' : (isExpiredToday ? 'bg-gray-300' : 'bg-[#b5a48d]')}"></span>
-                                <span class="text-[11px] text-[#9ba8a4] uppercase tracking-widest font-medium">${timeLabel}</span>
+            if (isOnce) {
+                const d = new Date(item.date);
+                const timeLabel = `${item.date.replace(/-/g, '/')} (${displayWeekDays[d.getDay()]}) · ${periodStr}`;
+                card.innerHTML = `
+                    <div class="flex items-center p-5 min-h-[100px]">
+                        <div class="flex justify-between items-center w-full">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-1.5 mb-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full ${isPendingToday ? 'bg-[#8da399] animate-pulse' : (isExpiredToday ? 'bg-orange-300' : 'bg-[#b5a48d]')}"></span>
+                                    <span class="text-[11px] text-[#b5a48d] uppercase tracking-widest font-medium">${timeLabel}</span>
+                                </div>
+                                <h3 class="event-title text-[#5c6b65] pt-1">${item.name}</h3>
                             </div>
-                            <h3 class="event-title text-[#5c6b65]">${item.name}</h3>
-                        </div>
-                        <div class="flex gap-1 ml-2">
-                            <button onclick="window.editCase('${item.id}')" class="p-1.5 text-[#b5a48d]/40 hover:text-[#8da399] transition">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                            </button>
-                            <button onclick="window.deleteCase('${item.id}')" class="p-1.5 text-[#b5a48d]/40 hover:text-red-400 transition">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
+                            <div class="flex gap-1 ml-4 self-center">
+                                <button onclick="window.editCase('${item.id}')" class="p-1.5 text-[#b5a48d]/40 hover:text-[#8da399] transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
+                                <button onclick="window.deleteCase('${item.id}')" class="p-1.5 text-[#b5a48d]/40 hover:text-red-400 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                            </div>
                         </div>
                     </div>
-                    <div class="note-wrapper mt-auto">
-                        <div id="display-note-${item.id}" onclick="window.startQuickEdit('${item.id}')" class="editable-note min-h-[40px] bg-[#faf9f7] rounded-lg p-3 ${!hasNote ? 'border border-dashed border-[#e8e2da]' : ''}">
-                           <p class="event-note-text text-[#2c3331] whitespace-pre-line">${displayNote}</p>
+                `;
+            } else {
+                const timeLabel = `${displayWeekDays[item.day]} · ${periodStr}`;
+                const hasNote = item.note && item.note.trim() !== '';
+                const displayNote = hasNote ? item.note : '';
+                card.innerHTML = `
+                    <div class="p-4 flex flex-col h-full">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <span class="w-1.5 h-1.5 rounded-full ${isPendingToday ? 'bg-[#8da399] animate-pulse' : (isExpiredToday ? 'bg-orange-300' : 'bg-[#e8e2da]')}"></span>
+                                    <span class="text-[11px] text-[#9ba8a4] uppercase tracking-widest font-medium">${timeLabel}</span>
+                                </div>
+                                <h3 class="event-title text-[#5c6b65]">${item.name}</h3>
+                            </div>
+                            <div class="flex gap-1">
+                                <button onclick="window.editCase('${item.id}')" class="p-1 text-[#b5a48d]/50 hover:text-[#8da399] transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
+                                <button onclick="window.deleteCase('${item.id}')" class="p-1 text-[#b5a48d]/50 hover:text-red-400 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                            </div>
                         </div>
-                        <textarea id="edit-note-${item.id}" class="hidden w-full border border-[#8da399] bg-white rounded-lg px-3 py-2 event-note-text text-[#2c3331] outline-none transition" rows="3" onblur="window.saveQuickEdit('${item.id}')">${item.note || ''}</textarea>
+                        <div class="note-wrapper mt-auto">
+                            <div id="display-note-${item.id}" onclick="window.startQuickEdit('${item.id}')" class="editable-note min-h-[30px] bg-[#faf9f7] rounded-lg p-2.5 ${!hasNote ? 'border border-dashed border-[#e8e2da]' : ''}">
+                               <p class="event-note-text text-[#2c3331] whitespace-pre-line">${displayNote}</p>
+                            </div>
+                            <textarea id="edit-note-${item.id}" class="hidden w-full border border-[#8da399] bg-white rounded-lg px-2.5 py-2 event-note-text text-[#2c3331] outline-none transition" rows="1" onblur="window.saveQuickEdit('${item.id}')">${displayNote}</textarea>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
             return card;
         }
 
-        // Global Window Functions
+        // 綁定全域函數 (Modal 與 編輯邏輯)
         window.openModal = () => {
-            const modal = document.getElementById('caseModal');
-            const modalContent = document.getElementById('modalContent');
-            modal.classList.remove('hidden');
-            setTimeout(() => modalContent.classList.remove('scale-95', 'opacity-0'), 10);
+            document.getElementById('caseModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('modalContent').classList.remove('scale-95', 'opacity-0'), 10);
             document.getElementById('caseForm').reset();
             document.getElementById('editId').value = '';
-            document.getElementById('modalTitle').innerText = '建立行程檔案';
             window.setType('weekly');
         };
 
         window.closeModal = () => {
-            const modal = document.getElementById('caseModal');
             const modalContent = document.getElementById('modalContent');
             modalContent.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => modal.classList.add('hidden'), 200);
+            setTimeout(() => document.getElementById('caseModal').classList.add('hidden'), 200);
         };
 
         window.setType = (type) => {
             document.getElementById('caseType').value = type;
             const btnWeekly = document.getElementById('btnWeekly');
             const btnOnce = document.getElementById('btnOnce');
-            const weeklyOptions = document.getElementById('weeklyOptions');
-            const onceOptions = document.getElementById('onceOptions');
             if (type === 'weekly') {
                 btnWeekly.className = "flex-1 py-1.5 text-sm transition-colors type-btn-active";
                 btnOnce.className = "flex-1 py-1.5 text-sm transition-colors bg-[#faf9f7] text-[#9ba8a4]";
-                weeklyOptions.classList.remove('hidden'); onceOptions.classList.add('hidden');
+                document.getElementById('weeklyOptions').classList.remove('hidden');
+                document.getElementById('onceOptions').classList.add('hidden');
             } else {
                 btnOnce.className = "flex-1 py-1.5 text-sm transition-colors type-btn-active";
                 btnWeekly.className = "flex-1 py-1.5 text-sm transition-colors bg-[#faf9f7] text-[#9ba8a4]";
-                weeklyOptions.classList.add('hidden'); onceOptions.classList.remove('hidden');
+                document.getElementById('weeklyOptions').classList.add('hidden');
+                document.getElementById('onceOptions').classList.remove('hidden');
             }
         };
 
@@ -465,75 +519,45 @@
             document.getElementById('editId').value = item.id;
             window.setType(item.type);
             document.getElementById('caseName').value = item.name;
-            document.getElementById('caseNote').value = item.note || '';
             if (item.type === 'weekly') {
+                document.getElementById('caseNote').value = item.note || '';
                 document.getElementById('caseDay').value = item.day;
                 document.getElementById('casePeriod').value = item.period;
-                if(item.period === 'custom') {
-                    const customInput = document.getElementById('customTimeWeekly');
-                    customInput.classList.remove('hidden');
-                    customInput.value = item.customTime || '';
-                }
             } else {
                 document.getElementById('caseDate').value = item.date;
                 document.getElementById('casePeriodOnce').value = item.period;
-                if(item.period === 'custom') {
-                    const customInput = document.getElementById('customTimeOnce');
-                    customInput.classList.remove('hidden');
-                    customInput.value = item.customTime || '';
-                }
             }
-            document.getElementById('modalTitle').innerText = '編輯行程檔案';
         };
 
         window.deleteCase = async (id) => {
-            if (!currentUser) return;
-            // 自定義彈窗而非使用不可控的 alert
-            if (confirm('確定要刪除此行程嗎？')) {
-                const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'itineraries', id);
-                await deleteDoc(docRef);
-            }
+            if (!currentUser || !confirm('確定要刪除嗎？')) return;
+            await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'itineraries', id));
         };
 
         window.startQuickEdit = (id) => {
             const displayEl = document.getElementById(`display-note-${id}`);
             const editEl = document.getElementById(`edit-note-${id}`);
-            displayEl.classList.add('hidden'); 
-            editEl.classList.remove('hidden'); 
-            editEl.focus();
+            displayEl.classList.add('hidden'); editEl.classList.remove('hidden'); editEl.focus();
         };
 
         window.saveQuickEdit = async (id) => {
             if (!currentUser) return;
             const editEl = document.getElementById('edit-note-' + id);
-            const displayEl = document.getElementById('display-note-' + id);
             const newNote = editEl.value;
-            
-            displayEl.classList.remove('hidden');
-            editEl.classList.add('hidden');
-
-            const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'itineraries', id);
-            await setDoc(docRef, { note: newNote, updatedAt: new Date() }, { merge: true });
+            await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'itineraries', id), { note: newNote }, { merge: true });
         };
 
-        // 表單提交處理
         document.getElementById('caseForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!currentUser) return;
             
             const type = document.getElementById('caseType').value;
             const name = document.getElementById('caseName').value;
-            const note = document.getElementById('caseNote').value;
             const editId = document.getElementById('editId').value || Date.now().toString();
             
-            let data = { 
-                type, 
-                name, 
-                note,
-                updatedAt: new Date() 
-            };
-
+            let data = { type, name, updatedAt: serverTimestamp() };
             if (type === 'weekly') {
+                data.note = document.getElementById('caseNote').value;
                 data.day = parseInt(document.getElementById('caseDay').value);
                 data.period = document.getElementById('casePeriod').value;
                 data.customTime = data.period === 'custom' ? document.getElementById('customTimeWeekly').value : null;
@@ -544,14 +568,10 @@
                 data.day = new Date(data.date).getDay();
             }
 
-            const docPath = `artifacts/${appId}/users/${currentUser.uid}/itineraries/${editId}`;
-            const docRef = doc(db, docPath);
-            await setDoc(docRef, data, { merge: true });
+            await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'itineraries', editId), data);
             window.closeModal();
         });
 
-        // 定期重新渲染（確保「過期」狀態更新）
-        initAuth();
         setInterval(renderDisplay, 60000);
     </script>
 </body>
