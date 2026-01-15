@@ -11,34 +11,13 @@
         body {
             font-family: 'Noto Sans TC', sans-serif;
             background-color: #f5f2ed;
+            font-size: 1rem;
             color: #4a5553; 
             -webkit-font-smoothing: antialiased;
         }
 
-        /* 單次預約標題：20px */
-        .title-once {
-            font-size: 20px !important;
-            line-height: 1.4;
-            font-weight: 500;
-        }
-
-        /* 每週固定標題：18px */
-        .title-weekly {
-            font-size: 18px !important;
-            line-height: 1.4;
-            font-weight: 500;
-        }
-
-        /* 內容紀錄（備註）：18px */
-        .event-note-text, [id^="edit-note-"] {
-            font-size: 18px !important;
-            line-height: 1.6;
-            font-weight: 500;
-        }
-
-        /* 彈出視窗輸入框：18px (與顯示一致) */
-        #caseNote, #caseName {
-            font-size: 18px !important;
+        h1, h2, h3, label, button, span {
+            font-weight: 500 !important;
         }
 
         .case-card {
@@ -46,6 +25,18 @@
             background-color: #ffffff;
             display: flex;
             flex-direction: column;
+        }
+
+        .event-title {
+            font-size: 20px !important;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+
+        .event-note-text {
+            font-size: 18px !important;
+            line-height: 1.6;
+            font-weight: 500;
         }
 
         .case-card:hover {
@@ -56,8 +47,6 @@
         .editable-note {
             cursor: pointer;
             transition: background-color 0.2s;
-            padding: 8px;
-            border-radius: 8px;
         }
         .editable-note:hover {
             background-color: #faf9f7;
@@ -69,15 +58,31 @@
             border-color: #8da399;
         }
 
-        .loader {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #8da399;
-            border-radius: 50%;
-            width: 12px;
-            height: 12px;
-            animation: spin 1s linear infinite;
+        #modalContent {
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .modal-body {
+            overflow-y: auto;
+        }
+        
+        /* 登入遮罩 */
+        #auth-overlay {
+            position: fixed;
+            inset: 0;
+            background: #f5f2ed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: opacity 0.3s ease;
+        }
+
+        .hidden-auth {
+            opacity: 0;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body class="p-4 md:p-6 lg:p-8">
@@ -586,4 +591,3 @@
     </script>
 </body>
 </html>
-
