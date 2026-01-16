@@ -272,20 +272,20 @@
                         </div>
                     </div>
 
-                    <div id="noteContainer">
-                       <div>
-    <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">內容紀錄</label>
-    <textarea id="caseNote" rows="3" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#8da399]/20 transition"></textarea>
-</div>
-
-                    <div class="flex justify-end gap-3 pt-2">
-                        <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm text-[#8da399] font-medium hover:bg-[#f5f2ed] rounded-lg transition">取消</button>
-                        <button type="submit" class="px-6 py-2 bg-[#8da399] text-white rounded-lg text-sm hover:bg-[#7a8f85] transition shadow-sm">儲存檔案</button>
-                    </div>
-                </form>
+<div id="noteContainer">
+            <div>
+              <label class="block text-xs text-[#7a8f85] mb-1.5 uppercase tracking-wide font-medium">內容紀錄</label>
+              <textarea id="caseNote" rows="3" class="w-full border border-[#e8e2da] bg-[#faf9f7] rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#8da399]/20 transition"></textarea>
             </div>
-        </div>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-4">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm text-[#8da399] font-medium hover:bg-[#f5f2ed] rounded-lg transition">取消</button>
+            <button type="submit" class="px-6 py-2 bg-[#8da399] text-white rounded-lg text-sm hover:bg-[#7a8f85] transition shadow-sm">儲存檔案</button>
+          </div>
+        </form> </div>
     </div>
+  </div>
 
     <!-- Firebase SDK -->
     <script type="module">
@@ -505,25 +505,25 @@ function createCard(item, isPending, isExpired) {
         };
 
         window.setType = (type) => {
-            document.getElementById('caseType').value = type;
-            const btnWeekly = document.getElementById('btnWeekly');
-            const btnOnce = document.getElementById('btnOnce');
-            const noteContainer = document.getElementById('noteContainer');
+    document.getElementById('caseType').value = type;
+    const btnWeekly = document.getElementById('btnWeekly');
+    const btnOnce = document.getElementById('btnOnce');
+    const noteContainer = document.getElementById('noteContainer');
 
-            if (type === 'weekly') {
-                btnWeekly.className = "flex-1 py-1.5 text-sm transition-colors type-btn-active";
-                btnOnce.className = "flex-1 py-1.5 text-sm transition-colors bg-[#faf9f7] text-[#9ba8a4]";
-                document.getElementById('weeklyOptions').classList.remove('hidden');
-                document.getElementById('onceOptions').classList.add('hidden');
-                noteContainer.classList.remove('hidden'); 
-            } else {
-                btnOnce.className = "flex-1 py-1.5 text-sm transition-colors type-btn-active";
-                btnWeekly.className = "flex-1 py-1.5 text-sm transition-colors bg-[#faf9f7] text-[#9ba8a4]";
-                document.getElementById('weeklyOptions').classList.add('hidden');
-                document.getElementById('onceOptions').classList.remove('hidden');
-                noteContainer.classList.add('hidden'); 
-            }
-        };
+    if (type === 'weekly') {
+        btnWeekly.className = "flex-1 py-1.5 text-sm transition-colors type-btn-active";
+        btnOnce.className = "flex-1 py-1.5 text-sm transition-colors bg-[#faf9f7] text-[#9ba8a4]";
+        document.getElementById('weeklyOptions').classList.remove('hidden');
+        document.getElementById('onceOptions').classList.add('hidden');
+        noteContainer.classList.remove('hidden'); // 固定行程顯示備註
+    } else {
+        btnOnce.className = "flex-1 py-1.5 text-sm transition-colors type-btn-active";
+        btnWeekly.className = "flex-1 py-1.5 text-sm transition-colors bg-[#faf9f7] text-[#9ba8a4]";
+        document.getElementById('weeklyOptions').classList.add('hidden');
+        document.getElementById('onceOptions').classList.remove('hidden');
+        noteContainer.classList.add('hidden');    // 單次預約隱藏備註
+    }
+};
 
         window.checkCustomTime = (selectId, inputId) => {
             const select = document.getElementById(selectId);
@@ -622,10 +622,3 @@ function createCard(item, isPending, isExpired) {
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
