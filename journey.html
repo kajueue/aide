@@ -428,23 +428,26 @@
             }
         }
 
-        function isPeriodExpired(period, customTimeValue) {
-            const now = new Date();
-            const currentHour = now.getHours();
-            const currentMin = now.getMinutes();
-            if (period === 'custom' && customTimeValue) {
-                const parts = customTimeValue.split(':');
-                if (parts.length === 2) {
-                    const h = parseInt(parts[0]);
-                    const m = parseInt(parts[1]);
-                    return (currentHour > h) || (currentHour === h && currentMin >= m);
-                }
-            }
-            const p = parseInt(period);
-            // 粗略估計：早修到第四節算上午(過13點過期)，午休到第七節算下午(過17點過期)
-            if (p <= 4) return currentHour >= 13;
-            else return currentHour >= 17;
-        }
+function isPeriodExpired(period, customTimeValue) {
+    const now = new Date();
+    const currentHour = now.getHours();
+
+    // 1. 處理自定義時間 (這部分仍需考慮分鐘，以維持準確性)
+    if (period === 'custom' && customTimeValue) {
+        const [h, m] = customTimeValue.split(':').map(Number);
+        return (currentHour > h) || (currentHour === h && now.getMinutes() >= m);
+    }
+
+    // 2. 處理固定時段 (整點判斷)
+    const p = parseInt(period);
+    
+    if (p <= 1) return currentHour >= 10; // 早修、第一節：10點後過期
+    if (p <= 3) return currentHour >= 12; // 第二節、第三節：12點後過期
+    if (p <= 5) return currentHour >= 14; // 第四節、午休：14點後過期
+    if (p <= 8) return currentHour >= 16; // 第五、六、七節：16點後過期
+
+    return false;
+}
 
 function createCard(item, isPending, isExpired) {
     const card = document.createElement('div');
@@ -619,6 +622,7 @@ function createCard(item, isPending, isExpired) {
     </script>
 </body>
 </html>
+
 
 
 
