@@ -323,7 +323,7 @@
                 <div class="py-1.5 flex justify-between items-center group border-b border-gray-50 last:border-0 hover:bg-gray-50 px-1">
                     <div class="flex items-center space-x-3 overflow-hidden">
                         <span class="text-[10px] text-gray-400 font-medium tabular-nums flex-shrink-0 w-10">${r.date.split('-').slice(1).join('/')}</span>
-                        <div class="text-gray-700 truncate" style="font-size: 13px;">
+                        <div class="text-gray-700 truncate" style="font-size: 14px;">
                             <span class="font-bold text-gray-400 mr-1">${r.brand}</span>
                             ${r.series ? `<span class="text-gray-500 font-medium">[${r.series}]</span>` : ''}
                             <span class="text-gray-600">${r.flavor}</span>
@@ -368,7 +368,7 @@
             const likes = sorted.filter(i => i.count >= 2 && i.avg >= 4).slice(0, 10);
             const dislikes = sorted.filter(i => i.count >= 2 && i.avg < 3).slice(0, 10);
 
-            const tagStyle = "font-size: 13px; padding: 4px 10px; margin-right: 6px; margin-bottom: 6px;";
+            const tagStyle = "font-size: 16px; padding: 4px 10px; margin-right: 6px; margin-bottom: 6px;";
             document.getElementById('likeIngredients').innerHTML = likes.map(i => `<span class="tag tag-like" style="${tagStyle}">${i.name}</span>`).join('') || '<span class="text-xs text-gray-300">數據收集中...</span>';
             document.getElementById('dislikeIngredients').innerHTML = dislikes.map(i => `<span class="tag tag-dislike" style="${tagStyle}">${i.name}</span>`).join('') || '<span class="text-xs text-gray-300">數據收集中...</span>';
         }
@@ -388,8 +388,7 @@
 
             const itemHtml = (list, type) => list.length ? list.map(i => `
                 <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded-lg flex justify-between items-start mb-2 py-2 px-3">
-                    // 在 renderShoppingList 函式內
-<span class="font-medium text-gray-700 leading-tight pr-2" style="font-size: 13px;">${i.name}</span>
+                <span class="font-medium text-gray-700 leading-tight pr-2" style="font-size: 16px;">${i.name}</span>
                     <span class="font-bold text-gray-900 text-xs flex-shrink-0 bg-white/50 px-1.5 py-0.5 rounded">${i.avg.toFixed(1)}</span>
                 </div>`).join('') : '<p class="text-gray-300 text-xs text-center py-4 italic">暫無數據</p>';
 
