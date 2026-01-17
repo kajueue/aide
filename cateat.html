@@ -382,26 +382,48 @@
             document.getElementById('avoidList').innerHTML = itemHtml(avoid, 'avoid');
         }
 
-        function renderAnalysis() {
-            const ingStats = {};
-            allRecords.forEach(r => {
-                if (!r.ingredients) return;
-                const ings = r.ingredients.split(/[，,、\s\n]+/).map(i => i.trim()).filter(i => i && !additiveKeywords.test(i));
-                [...new Set(ings)].forEach(ing => {
-                    if (!ingStats[ing]) ingStats[ing] = { count: 0, total: 0 };
-                    ingStats[ing].count++;
-                    ingStats[ing].total += r.rating;
-                });
-            });
+function renderAnalysis() {
+    const ingStats = {};
+    
+    // 定義轉換對照表：將各種寫法統一轉換為標準稱呼
+    const ingredientMapping = {
+        '雞肉': ['雞肉絲', '雞胸肉', '雞里肌', '雞腿肉', '新鮮雞肉', '脫水雞肉'],
+        '鮪魚': ['黃鰭鮪', '鮪魚肉', '鮪魚片'],
+        '鮭魚': ['鮮鮭魚', '鮭魚肉'', '鮭魚片']
+    };
 
-            const sorted = Object.keys(ingStats).map(name => ({ name, avg: ingStats[name].total / ingStats[name].count, count: ingStats[name].count }));
-            const likes = sorted.filter(i => i.count >= 2 && i.avg >= 4).slice(0, 10);
-            const dislikes = sorted.filter(i => i.count >= 2 && i.avg < 3).slice(0, 10);
+    allRecords.forEach(r => {
+        if (!r.ingredients) return;
+        
+        // 1. 拆分成分
+        let ings = r.ingredients.split(/[，,、\s\n]+/).map(i => i.trim()).filter(i => i && !additiveKeywords.test(i));
+        
+        // 2. 標準化成分名稱
+        ings = ings.map(ing => {
+            for (const [standard, aliases] of Object.entries(ingredientMapping)) {
+                // 如果目前的成分名稱包含在對照表的別名中，或者是包含標準名稱關鍵字
+                if (aliases.includes(ing) || ing === standard) {
+                    return standard;
+                }
+            }
+            return ing; // 如果都不符合，保留原始名稱
+        });
 
-            document.getElementById('likeIngredients').innerHTML = likes.map(i => `<span class="tag tag-like" style="font-size: 11px;">${i.name}</span>`).join('') || '<span class="text-xs text-gray-300">數據收集中...</span>';
-            document.getElementById('dislikeIngredients').innerHTML = dislikes.map(i => `<span class="tag tag-dislike" style="font-size: 11px;">${i.name}</span>`).join('') || '<span class="text-xs text-gray-300">數據收集中...</span>';
-        }
+        // 3. 累計數據 (同一個罐頭若有多個同類成分，只計一次)
+        [...new Set(ings)].forEach(ing => {
+            if (!ingStats[ing]) ingStats[ing] = { count: 0, total: 0 };
+            ingStats[ing].count++;
+            ingStats[ing].total += r.rating;
+        });
+    });
 
+    const sorted = Object.keys(ingStats).map(name => ({ name, avg: ingStats[name].total / ingStats[name].count, count: ingStats[name].count }));
+    const likes = sorted.filter(i => i.count >= 2 && i.avg >= 4).slice(0, 10);
+    const dislikes = sorted.filter(i => i.count >= 2 && i.avg < 3).slice(0, 10);
+
+    document.getElementById('likeIngredients').innerHTML = likes.map(i => `<span class="tag tag-like" style="font-size: 11px;">${i.name}</span>`).join('') || '<span class="text-xs text-gray-300">數據收集中...</span>';
+    document.getElementById('dislikeIngredients').innerHTML = dislikes.map(i => `<span class="tag tag-dislike" style="font-size: 11px;">${i.name}</span>`).join('') || '<span class="text-xs text-gray-300">數據收集中...</span>';
+}
         const recordForm = document.getElementById('recordForm');
         const ratingInput = document.getElementById('rating');
         const ratingVal = document.getElementById('ratingVal');
