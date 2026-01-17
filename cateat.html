@@ -319,16 +319,16 @@
                 list.innerHTML = `<p class="text-center py-6 text-gray-300 text-xs italic">尚無歷史紀錄</p>`;
                 return;
             }
-            list.innerHTML = allRecords.slice(0, 15).map(r => `
-                <div class="py-1.5 flex justify-between items-center group border-b border-gray-50 last:border-0 hover:bg-gray-50 px-1">
-                    <div class="flex items-center space-x-3 overflow-hidden">
-                        <span class="text-[10px] text-gray-400 font-medium tabular-nums flex-shrink-0 w-10">${r.date.split('-').slice(1).join('/')}</span>
-                        <div class="text-gray-700 truncate" style="font-size: 14px;">
-                            <span class="font-bold text-gray-400 mr-1">${r.brand}</span>
-                            ${r.series ? `<span class="text-gray-500 font-medium">[${r.series}]</span>` : ''}
-                            <span class="text-gray-600">${r.flavor}</span>
-                        </div>
-                    </div>
+
+    list.innerHTML = allRecords.slice(0, 15).map(r => `
+        <div class="py-1 flex justify-between items-center group border-b border-gray-50 last:border-0 hover:bg-gray-50 px-1">
+            <div class="flex items-center space-x-2 overflow-hidden"> <span class="text-[10px] text-gray-400 font-medium tabular-nums flex-shrink-0 w-9">${r.date.split('-').slice(1).join('/')}</span>
+                <div class="text-gray-700 truncate" style="font-size: 13px; line-height: 1.2;"> <span class="font-bold text-gray-400 mr-1">${r.brand}</span>
+                    ${r.series ? `<span class="text-gray-500 font-medium">[${r.series}]</span>` : ''}
+                    <span class="text-gray-600">${r.flavor}</span>
+                </div>
+            </div>
+
                     <div class="flex items-center space-x-2 flex-shrink-0">
                         <span class="text-[10px] font-bold ${r.rating >= 4 ? 'text-orange-500' : 'text-gray-300'}">${'★'.repeat(r.rating)}</span>
                         <button onclick="window.deleteRecord('${r.id}')" class="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-400 transition-all">
@@ -386,11 +386,11 @@
             const safe = processed.filter(i => i.avg >= 3.7).sort((a,b) => b.avg - a.avg);
             const avoid = processed.filter(i => i.avg < 3.3).sort((a,b) => a.avg - b.avg);
 
-            const itemHtml = (list, type) => list.length ? list.map(i => `
-                <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded-lg flex justify-between items-start mb-2 py-2 px-3">
-                <span class="font-medium text-gray-700 leading-tight pr-2" style="font-size: 16px;">${i.name}</span>
-                    <span class="font-bold text-gray-900 text-xs flex-shrink-0 bg-white/50 px-1.5 py-0.5 rounded">${i.avg.toFixed(1)}</span>
-                </div>`).join('') : '<p class="text-gray-300 text-xs text-center py-4 italic">暫無數據</p>';
+const itemHtml = (list, type) => list.length ? list.map(i => `
+    <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded-lg flex justify-between items-start mb-1 py-1.5 px-3">
+        <span class="font-medium text-gray-700 leading-tight pr-2" style="font-size: 13px;">${i.name}</span>
+        <span class="font-bold text-gray-900 text-[10px] flex-shrink-0 bg-white/50 px-1.5 py-0.5 rounded">${i.avg.toFixed(1)}</span>
+    </div>`).join('')  : '<p class="text-gray-300 text-xs text-center py-4 italic">暫無數據</p>';
 
             document.getElementById('safeBuyList').innerHTML = itemHtml(safe, 'safe');
             document.getElementById('avoidList').innerHTML = itemHtml(avoid, 'avoid');
