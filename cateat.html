@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>貓咪挑食紀錄與成分分析器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        body { font-family: 'Noto+Sans+TC', sans-serif; background-color: #fdf6f0; }
+        .card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .btn-primary { background-color: #f97316; color: white; transition: all 0.2s; }
+        .btn-primary:hover { background-color: #ea580c; }
+        .tag { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 0.5rem; font-size: 0.875rem; margin-right: 0.5rem; margin-bottom: 0.5rem; }
+        .tag-like { background-color: #dcfce7; color: #166534; }
+        .tag-dislike { background-color: #fee2e2; color: #991b1b; }
+        .list-item { border-left: 4px solid transparent; transition: all 0.2s; }
+        .list-safe { border-left-color: #22c55e; background-color: #f0fdf4; }
+        .list-avoid { border-left-color: #ef4444; background-color: #fef2f2; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-5xl mx-auto">
+        <header class="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-orange-800">🐱 貓咪挑食分析器</h1>
+            </div>
+            <div id="userStatus" class="text-sm px-4 py-2 bg-orange-100 text-orange-700 rounded-full font-medium">正在連接資料庫...</div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- 左側：輸入表單 -->
+            <div class="lg:col-span-4">
+                <div class="card p-6 sticky top-8">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700">新增試吃紀錄</h2>
+                    <form id="recordForm" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600">日期</label>
+                            <input type="date" id="date" required class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-orange-300 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600">品牌</label>
+                            <input type="text" id="brand" list="brandList" required class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-orange-300 outline-none">
+                            <datalist id="brandList"></datalist>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600">系列</label>
+                            <input type="text" id="series" list="seriesList" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-orange-300 outline-none">
+                            <datalist id="seriesList"></datalist>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600">口味</label>
+                            <input type="text" id="flavor" list="flavorList" required class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-orange-300 outline-none">
+                            <datalist id="flavorList"></datalist>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600">成分</label>
+                            <textarea id="ingredients" rows="3" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-orange-300 outline-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600">喜歡程度 (1-5)</label>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <input type="range" id="rating" min="1" max="5" value="3" class="w-full accent-orange-500">
+                                <span id="ratingVal" class="font-bold text-orange-600 w-4 text-center">3</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full py-3 btn-primary rounded-xl font-bold shadow-lg shadow-orange-200">儲存紀錄</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 右側：分析與列表 -->
+            <div class="lg:col-span-8 space-y-8">
+                <!-- 購物參考名單 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="card p-6 border-t-4 border-green-500">
+                        <h2 class="text-lg font-bold text-green-700 mb-4 flex items-center">
+                            ✅ 放心買 <span class="ml-2 text-xs font-normal text-gray-400">(平均 ≥ 3.7)</span>
+                        </h2>
+                        <div id="safeBuyList" class="space-y-2">
+                            <p class="text-gray-400 text-sm italic">尚無數據</p>
+                        </div>
+                    </div>
+                    <div class="card p-6 border-t-4 border-red-500">
+                        <h2 class="text-lg font-bold text-red-700 mb-4 flex items-center">
+                            ⚠️ 不要買 <span class="ml-2 text-xs font-normal text-gray-400">(平均 < 3.3)</span>
+                        </h2>
+                        <div id="avoidList" class="space-y-2">
+                            <p class="text-gray-400 text-sm italic">尚無數據</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 成分喜好分析 -->
+                <div class="card p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700">成分大數據分析</h2>
+                    <div id="analysisContent" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-green-50 rounded-lg">
+                            <h3 class="text-sm font-bold text-green-700 mb-2">🌟 偏愛成分</h3>
+                            <div id="likeIngredients" class="flex flex-wrap"></div>
+                        </div>
+                        <div class="p-4 bg-red-50 rounded-lg">
+                            <h3 class="text-sm font-bold text-red-700 mb-2">🚫 避雷成分</h3>
+                            <div id="dislikeIngredients" class="flex flex-wrap"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 歷史紀錄列表 -->
+                <div class="card p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700">歷史餵食紀錄</h2>
+                    <div id="historyList" class="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                        <div class="text-center py-8 text-gray-400">正在讀取紀錄...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 訊息提示 -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 transition-transform duration-300 z-50"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'cat-food-tracker';
+
+        let currentUser = null;
+        let allRecords = [];
+        let foodDatabase = {};
+
+        const recordForm = document.getElementById('recordForm');
+        const brandInput = document.getElementById('brand');
+        const seriesInput = document.getElementById('series');
+        const flavorInput = document.getElementById('flavor');
+        const ingredientsInput = document.getElementById('ingredients');
+        const ratingInput = document.getElementById('rating');
+        const ratingVal = document.getElementById('ratingVal');
+        const historyList = document.getElementById('historyList');
+        const safeBuyList = document.getElementById('safeBuyList');
+        const avoidList = document.getElementById('avoidList');
+        const likeIngredientsDiv = document.getElementById('likeIngredients');
+        const dislikeIngredientsDiv = document.getElementById('dislikeIngredients');
+        const userStatus = document.getElementById('userStatus');
+
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth error", error);
+                showToast("連線失敗");
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                userStatus.innerText = `ID: ${user.uid.substring(0,8)}`;
+                setupListeners();
+            }
+        });
+
+        ratingInput.oninput = (e) => ratingVal.innerText = e.target.value;
+
+        // 當品牌或系列變動時，更新對應的 datalists
+        brandInput.addEventListener('input', renderDatalists);
+        seriesInput.addEventListener('input', renderDatalists);
+
+        function autoFillData() {
+            const b = brandInput.value.trim();
+            const s = seriesInput.value.trim();
+            const f = flavorInput.value.trim();
+            if (!b || !f) return;
+
+            const key = `${b}_${s}_${f}`;
+            if (foodDatabase[key]) {
+                const data = foodDatabase[key];
+                if (!ingredientsInput.value) ingredientsInput.value = data.ingredients || '';
+            }
+        }
+
+        brandInput.onblur = autoFillData;
+        seriesInput.onblur = autoFillData;
+        flavorInput.onblur = autoFillData;
+
+        function setupListeners() {
+            if (!currentUser) return;
+            const recordsCol = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records');
+            
+            onSnapshot(recordsCol, (snapshot) => {
+                allRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                allRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                foodDatabase = {};
+                allRecords.forEach(r => {
+                    const key = `${r.brand}_${r.series || ''}_${r.flavor}`;
+                    foodDatabase[key] = { ingredients: r.ingredients };
+                });
+
+                renderHistory();
+                renderAnalysis();
+                renderShoppingList();
+                renderDatalists();
+            });
+        }
+
+        function renderDatalists() {
+            const currentBrand = brandInput.value.trim();
+            const currentSeries = seriesInput.value.trim();
+
+            // 品牌選單：始終顯示所有不重複品牌
+            const allBrands = [...new Set(allRecords.map(r => r.brand))];
+            document.getElementById('brandList').innerHTML = allBrands.map(b => `<option value="${b}">`).join('');
+
+            // 系列選單：根據目前輸入的品牌過濾
+            const filteredSeries = [...new Set(allRecords
+                .filter(r => !currentBrand || r.brand === currentBrand)
+                .map(r => r.series)
+                .filter(s => s)
+            )];
+            document.getElementById('seriesList').innerHTML = filteredSeries.map(s => `<option value="${s}">`).join('');
+
+            // 口味選單：根據目前輸入的品牌與系列過濾
+            const filteredFlavors = [...new Set(allRecords
+                .filter(r => (!currentBrand || r.brand === currentBrand) && (!currentSeries || (r.series || '') === currentSeries))
+                .map(r => r.flavor)
+            )];
+            document.getElementById('flavorList').innerHTML = filteredFlavors.map(f => `<option value="${f}">`).join('');
+        }
+
+        function renderHistory() {
+            if (allRecords.length === 0) {
+                historyList.innerHTML = `<div class="text-center py-8 text-gray-400 italic">尚無紀錄</div>`;
+                return;
+            }
+
+            historyList.innerHTML = allRecords.map(r => `
+                <div class="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="text-[10px] font-mono text-gray-400">${r.date}</div>
+                            <div class="font-bold text-gray-800">
+                                ${r.brand} ${r.series ? `<span class="text-orange-600 font-medium">[${r.series}]</span>` : ''} ${r.flavor}
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="text-orange-500 font-bold">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span>
+                            <button onclick="deleteRecord('${r.id}')" class="text-red-300 hover:text-red-500 text-[10px] mt-1">刪除</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderShoppingList() {
+            const flavorStats = {};
+            allRecords.forEach(r => {
+                const key = `${r.brand}${r.series ? `(${r.series})` : ''} - ${r.flavor}`;
+                if (!flavorStats[key]) flavorStats[key] = { total: 0, count: 0 };
+                flavorStats[key].total += r.rating;
+                flavorStats[key].count += 1;
+            });
+
+            const processed = Object.keys(flavorStats).map(key => ({
+                name: key,
+                avg: flavorStats[key].total / flavorStats[key].count
+            }));
+
+            const safe = processed.filter(i => i.avg >= 3.7).sort((a,b) => b.avg - a.avg);
+            const avoid = processed.filter(i => i.avg < 3.3).sort((a,b) => a.avg - b.avg);
+
+            safeBuyList.innerHTML = safe.length ? safe.map(i => `
+                <div class="p-2 text-sm list-item list-safe rounded flex justify-between">
+                    <span class="font-medium">${i.name}</span>
+                    <span class="text-green-600 font-bold">${i.avg.toFixed(1)}</span>
+                </div>
+            `).join('') : '<p class="text-gray-400 text-sm italic">尚無符合項目</p>';
+
+            avoidList.innerHTML = avoid.length ? avoid.map(i => `
+                <div class="p-2 text-sm list-item list-avoid rounded flex justify-between">
+                    <span class="font-medium">${i.name}</span>
+                    <span class="text-red-600 font-bold">${i.avg.toFixed(1)}</span>
+                </div>
+            `).join('') : '<p class="text-gray-400 text-sm italic">尚無符合項目</p>';
+        }
+
+        function renderAnalysis() {
+            const ingredientStats = {};
+            allRecords.forEach(r => {
+                if (!r.ingredients) return;
+                const ings = r.ingredients.split(/[，,、\s\n]+/).map(i => i.trim()).filter(i => i);
+                ings.forEach(ing => {
+                    if (!ingredientStats[ing]) ingredientStats[ing] = { count: 0, total: 0 };
+                    ingredientStats[ing].count++;
+                    ingredientStats[ing].total += r.rating;
+                });
+            });
+
+            const sorted = Object.keys(ingredientStats).map(name => ({
+                name,
+                avg: ingredientStats[name].total / ingredientStats[name].count
+            }));
+
+            const likes = sorted.filter(i => i.avg >= 4).sort((a,b) => b.avg - a.avg);
+            const dislikes = sorted.filter(i => i.avg <= 2).sort((a,b) => a.avg - b.avg);
+
+            likeIngredientsDiv.innerHTML = likes.length ? likes.map(i => `<span class="tag tag-like">${i.name}</span>`).join('') : '<span class="text-xs text-gray-400">數據累積中</span>';
+            dislikeIngredientsDiv.innerHTML = dislikes.length ? dislikes.map(i => `<span class="tag tag-dislike">${i.name}</span>`).join('') : '<span class="text-xs text-gray-400">數據累積中</span>';
+        }
+
+        recordForm.onsubmit = async (e) => {
+            e.preventDefault();
+            if (!currentUser) return;
+
+            const newRecord = {
+                date: document.getElementById('date').value,
+                brand: brandInput.value.trim(),
+                series: seriesInput.value.trim(),
+                flavor: flavorInput.value.trim(),
+                rating: parseInt(ratingInput.value),
+                ingredients: ingredientsInput.value.trim(),
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records'), newRecord);
+                showToast("紀錄已儲存 ✨");
+                seriesInput.value = '';
+                flavorInput.value = '';
+                ingredientsInput.value = '';
+                ratingInput.value = '3';
+                ratingVal.innerText = '3';
+                renderDatalists(); // 提交後重新整理選單
+            } catch (err) {
+                showToast("儲存失敗");
+            }
+        };
+
+        window.deleteRecord = async (id) => {
+            if (!confirm("確定刪除？")) return;
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'records', id));
+                showToast("已刪除");
+            } catch (err) {
+                showToast("刪除失敗");
+            }
+        };
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.remove('translate-y-20');
+            setTimeout(() => toast.classList.add('translate-y-20'), 3000);
+        }
+
+        document.getElementById('date').valueAsDate = new Date();
+        initAuth();
+    </script>
+</body>
+</html>
