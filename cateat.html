@@ -143,23 +143,23 @@
                     <form id="recordForm" class="space-y-4">
                         <div class="space-y-1">
                             <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">日期</label>
-                            <input type="date" id="date" required class="w-full p-2.5 rounded-lg">
+                            <input type="date" id="date" required class="w-full p-2.5 rounded-lg text-sm">
                         </div>
                         <div class="space-y-1">
                             <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">品牌</label>
-                            <input type="text" id="brand" list="brandList" class="w-full p-2.5 rounded-lg">
+                            <input type="text" id="brand" list="brandList" class="w-full p-2.5 rounded-lg text-sm">
                             <datalist id="brandList"></datalist>
                         </div>
                         <div class="space-y-1">
                             <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">系列 / 口味</label>
                             <div class="grid grid-cols-2 gap-2">
-                                <input type="text" id="series" placeholder="系列" class="w-full p-2.5 rounded-lg">
-                                <input type="text" id="flavor" placeholder="口味" required class="w-full p-2.5 rounded-lg">
+                                <input type="text" id="series" placeholder="系列" class="w-full p-2.5 rounded-lg text-sm">
+                                <input type="text" id="flavor" placeholder="口味" required class="w-full p-2.5 rounded-lg text-sm">
                             </div>
                         </div>
                         <div class="space-y-1">
-                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">成分</label>
-                            <textarea id="ingredients" rows="3" class="w-full p-2.5 rounded-lg text-sm"></textarea>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">成分明細</label>
+                            <textarea id="ingredients" rows="3" class="w-full p-2.5 rounded-lg text-xs"></textarea>
                         </div>
                         <div class="space-y-1">
                             <div class="flex justify-between items-center">
@@ -173,42 +173,43 @@
                 </div>
             </div>
 
-            <div class="lg:col-span-8 space-y-8">
+            <div class="lg:col-span-8 space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="card p-5">
-                        <h2 class="text-sm font-bold text-green-700 mb-4 flex items-center">
+                    <div class="card p-4">
+                        <h2 class="text-xs font-bold text-green-700 mb-3 flex items-center uppercase tracking-wider">
                             <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span> 推薦清單 (≥ 3.7)
                         </h2>
-                        <div id="safeBuyList" class="space-y-2"></div>
+                        <div id="safeBuyList" class="space-y-1"></div>
                     </div>
-                    <div class="card p-5">
-                        <h2 class="text-sm font-bold text-red-700 mb-4 flex items-center">
+                    <div class="card p-4">
+                        <h2 class="text-xs font-bold text-red-700 mb-3 flex items-center uppercase tracking-wider">
                             <span class="w-2 h-2 bg-red-400 rounded-full mr-2"></span> 避雷清單 (< 3.3)
                         </h2>
-                        <div id="avoidList" class="space-y-2"></div>
+                        <div id="avoidList" class="space-y-1"></div>
                     </div>
                 </div>
 
-                <div class="card p-6">
-                    <h2 class="text-base font-bold mb-4 text-gray-800">成分偏好分析</h2>
+                <div class="card p-5">
+                    <h2 class="text-sm font-bold mb-4 text-gray-800">成分偏好</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-3">
-                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center">🌟 偏愛成分</h3>
-                            <div id="likeIngredients" class="flex flex-wrap min-h-[40px]"></div>
+                            <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center">🌟 偏愛成分</h3>
+                            <div id="likeIngredients" class="flex flex-wrap min-h-[30px]"></div>
                         </div>
                         <div class="space-y-3">
-                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center">🚫 避雷成分</h3>
-                            <div id="dislikeIngredients" class="flex flex-wrap min-h-[40px]"></div>
+                            <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center">🚫 避雷成分</h3>
+                            <div id="dislikeIngredients" class="flex flex-wrap min-h-[30px]"></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card p-6">
-                    <div class="flex justify-between items-center mb-5">
-                        <h2 class="text-base font-bold text-gray-800">歷史紀錄</h2>
-                        <span class="text-[10px] text-gray-400 font-medium tracking-tighter">CLOUD SYNCED</span>
+                <!-- 歷史紀錄：精簡版面 -->
+                <div class="card p-5">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-sm font-bold text-gray-800">歷史紀錄</h2>
+                        <span class="text-[9px] text-gray-300 font-medium tracking-widest">RECENT ACTIVITIES</span>
                     </div>
-                    <div id="historyList" class="space-y-3"></div>
+                    <div id="historyList" class="divide-y divide-gray-50"></div>
                 </div>
             </div>
         </div>
@@ -305,7 +306,6 @@
             bList.innerHTML = [...new Set(allRecords.map(r => r.brand))].map(b => `<option value="${b}">`).join('');
         }
 
-        // --- 新增自動填寫邏輯 ---
         const brandInput = document.getElementById('brand');
         const flavorInput = document.getElementById('flavor');
         const seriesInput = document.getElementById('series');
@@ -316,14 +316,12 @@
             const currentFlavor = flavorInput.value.trim();
 
             if (currentBrand && currentFlavor) {
-                // 從歷史紀錄找出一筆品牌與口味完全相符的紀錄
                 const matched = allRecords.find(r => 
                     r.brand.toLowerCase() === currentBrand.toLowerCase() && 
                     r.flavor.toLowerCase() === currentFlavor.toLowerCase()
                 );
 
                 if (matched && matched.ingredients) {
-                    // 如果目前欄位是空的，才自動帶入（避免覆蓋使用者正在輸入的內容）
                     if (!seriesInput.value) seriesInput.value = matched.series || '';
                     if (!ingredientsInput.value) {
                         ingredientsInput.value = matched.ingredients;
@@ -335,24 +333,27 @@
 
         brandInput.addEventListener('input', attemptAutoFill);
         flavorInput.addEventListener('input', attemptAutoFill);
-        // -----------------------
 
         function renderHistory() {
             const list = document.getElementById('historyList');
             if (allRecords.length === 0) {
-                list.innerHTML = `<p class="text-center py-8 text-gray-400 text-sm italic">目前尚無紀錄</p>`;
+                list.innerHTML = `<p class="text-center py-6 text-gray-300 text-xs italic">尚無歷史紀錄</p>`;
                 return;
             }
+            // 縮小字體 (text-xs) 與間距 (py-2)
             list.innerHTML = allRecords.slice(0, 15).map(r => `
-                <div class="p-4 border border-gray-100 rounded-xl flex justify-between items-center hover:bg-gray-50 transition-colors">
-                    <div>
-                        <div class="text-[10px] text-gray-400 font-bold mb-1">${r.date}</div>
-                        <div class="font-bold text-gray-700">${r.brand} · ${r.flavor}</div>
+                <div class="py-2 flex justify-between items-center group">
+                    <div class="flex items-baseline space-x-3">
+                        <span class="text-[10px] text-gray-400 font-medium tabular-nums w-16">${r.date.split('-').slice(1).join('/')}</span>
+                        <div class="text-xs text-gray-600 font-medium">
+                            <span class="text-gray-400 font-normal mr-1">${r.brand}</span>
+                            <span>${r.flavor}</span>
+                        </div>
                     </div>
-                    <div class="flex items-center space-x-4">
-                        <span class="text-orange-400 font-black text-sm">${'★'.repeat(r.rating)}<span class="text-gray-200">${'★'.repeat(5-r.rating)}</span></span>
-                        <button onclick="window.deleteRecord('${r.id}')" class="p-2 text-gray-300 hover:text-red-400">
-                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-[10px] font-bold ${r.rating >= 4 ? 'text-orange-400' : 'text-gray-300'}">${'★'.repeat(r.rating)}</span>
+                        <button onclick="window.deleteRecord('${r.id}')" class="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-400 transition-all">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
                     </div>
                 </div>
@@ -372,10 +373,10 @@
             const avoid = processed.filter(i => i.avg < 3.3).sort((a,b) => a.avg - b.avg);
 
             const itemHtml = (list, type) => list.length ? list.map(i => `
-                <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded-lg flex justify-between items-center mb-1">
-                    <span class="truncate pr-3 font-medium text-gray-600 text-sm">${i.name}</span>
-                    <span class="font-bold text-gray-800 text-sm">${i.avg.toFixed(1)}</span>
-                </div>`).join('') : '<p class="text-gray-300 text-xs text-center py-4 italic">尚無數據</p>';
+                <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded-lg flex justify-between items-center mb-1 py-1.5 px-3">
+                    <span class="truncate pr-3 font-medium text-gray-600 text-xs">${i.name}</span>
+                    <span class="font-bold text-gray-800 text-[10px]">${i.avg.toFixed(1)}</span>
+                </div>`).join('') : '<p class="text-gray-300 text-[10px] text-center py-2 italic">暫無數據</p>';
 
             document.getElementById('safeBuyList').innerHTML = itemHtml(safe, 'safe');
             document.getElementById('avoidList').innerHTML = itemHtml(avoid, 'avoid');
@@ -397,8 +398,8 @@
             const likes = sorted.filter(i => i.count >= 2 && i.avg >= 4).slice(0, 10);
             const dislikes = sorted.filter(i => i.count >= 2 && i.avg < 3).slice(0, 10);
 
-            document.getElementById('likeIngredients').innerHTML = likes.map(i => `<span class="tag tag-like">${i.name}</span>`).join('') || '<span class="text-xs text-gray-300">數據收集中...</span>';
-            document.getElementById('dislikeIngredients').innerHTML = dislikes.map(i => `<span class="tag tag-dislike">${i.name}</span>`).join('') || '<span class="text-xs text-gray-300">數據收集中...</span>';
+            document.getElementById('likeIngredients').innerHTML = likes.map(i => `<span class="tag tag-like" style="font-size: 11px;">${i.name}</span>`).join('') || '<span class="text-xs text-gray-300">數據收集中...</span>';
+            document.getElementById('dislikeIngredients').innerHTML = dislikes.map(i => `<span class="tag tag-dislike" style="font-size: 11px;">${i.name}</span>`).join('') || '<span class="text-xs text-gray-300">數據收集中...</span>';
         }
 
         const recordForm = document.getElementById('recordForm');
@@ -422,7 +423,6 @@
                 await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records'), newRecord);
                 showToast("✅ 已同步至雲端");
                 
-                // 儲存成功後全清空，方便輸入完全不同的資料
                 brandInput.value = '';
                 seriesInput.value = '';
                 flavorInput.value = '';
