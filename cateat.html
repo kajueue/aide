@@ -27,6 +27,26 @@
             <div id="userStatus" class="text-[10px] px-3 py-1 bg-orange-100 text-orange-700 rounded-full font-medium">連線中...</div>
         </header>
 
+        <!-- 設定指引：當發生權限錯誤時顯示 -->
+        <div id="permissionWarning" class="hidden mb-6 p-4 bg-amber-50 border-l-4 border-amber-500 text-amber-800 rounded shadow-sm">
+            <p class="font-bold text-sm">⚠️ Firestore 權限不足</p>
+            <p class="text-xs mt-1">請前往 Firebase 控制台 > **Firestore Database** > **Rules**，將規則修改為以下內容並點擊 **Publish**：</p>
+            <pre class="bg-gray-800 text-gray-200 p-2 mt-2 rounded text-[10px] overflow-x-auto">
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/{any=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}</pre>
+        </div>
+
+        <!-- 驗證設定警告 -->
+        <div id="setupWarning" class="hidden mb-6 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded shadow-sm">
+            <p class="font-bold text-sm">⚠️ Firebase Authentication 設定未完成</p>
+            <p class="text-xs mt-1">請前往 Firebase 控制台 > Authentication > Sign-in method，啟用「匿名 (Anonymous)」登入功能。</p>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
             <!-- 左側：輸入表單 -->
             <div class="lg:col-span-4">
@@ -54,7 +74,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-500">成分</label>
-                            <textarea id="ingredients" rows="2" class="w-full mt-1 p-1.5 border rounded focus:ring-1 focus:ring-orange-300 outline-none text-xs" placeholder="肉類食材為優先分析對象"></textarea>
+                            <textarea id="ingredients" rows="2" class="w-full mt-1 p-1.5 border rounded focus:ring-1 focus:ring-orange-300 outline-none text-xs"></textarea>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-500">喜歡程度 (1-5)</label>
@@ -70,7 +90,6 @@
 
             <!-- 右側：分析與列表 -->
             <div class="lg:col-span-8 space-y-6">
-                <!-- 購物參考名單 -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div class="card p-4 border-t-2 border-green-400">
                         <h2 class="text-sm font-bold text-green-700 mb-2 flex items-center">✅ 放心買 <span class="ml-1 text-[10px] font-normal text-gray-400">(≥ 3.7)</span></h2>
@@ -82,12 +101,11 @@
                     </div>
                 </div>
 
-                <!-- 成分喜好分析 -->
                 <div class="card p-4">
                     <h2 class="text-sm font-semibold mb-3 text-gray-700">食材大數據分析 <span class="text-[10px] font-normal text-gray-400">(自動過濾營養添加劑)</span></h2>
                     <div id="analysisContent" class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div class="p-3 bg-green-50 rounded-lg">
-                            <h3 class="text-[11px] font-bold text-green-700 mb-2">🌟 偏愛食材</h3>
+                            <h3 class="text-[11px] font-bold text-green-700 mb-2">🌟 偏愛食材 <span class="text-[9px] font-normal">(重複2次以上)</span></h3>
                             <div id="likeIngredients" class="flex flex-wrap"></div>
                         </div>
                         <div class="p-3 bg-red-50 rounded-lg">
@@ -97,7 +115,6 @@
                     </div>
                 </div>
 
-                <!-- 歷史紀錄列表 -->
                 <div class="card p-4">
                     <h2 class="text-sm font-semibold mb-3 text-gray-700">歷史紀錄 <span class="text-[10px] font-normal text-gray-400">(最近 5 筆)</span></h2>
                     <div id="historyList" class="space-y-2"></div>
@@ -109,21 +126,27 @@
     <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded text-xs shadow-lg transform translate-y-20 transition-transform duration-300 z-50"></div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-        import { getFirestore, collection, doc, addDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, onSnapshot, deleteDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = JSON.parse(__firebase_config);
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbbOuuPkrHHUENvvrygkmWGTl-na4zl7s",
+            authDomain: "cateat-74a78.firebaseapp.com",
+            projectId: "cateat-74a78",
+            storageBucket: "cateat-74a78.firebasestorage.app",
+            messagingSenderId: "778459598654",
+            appId: "1:778459598654:web:388e1b8e900d9a9e6ca66f"
+        };
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'cat-food-tracker';
 
         let currentUser = null;
         let allRecords = [];
         let foodDatabase = {};
 
-        // 營養成分過濾名單 (正規表達式)
         const additiveKeywords = /維生素|維他命|B1|B2|B6|B12|A|D3|E|K3|牛磺酸|礦物質|葡萄糖酸|碳酸|磷酸|硫酸|氯化|葉酸|生物素|菸鹼酸|泛酸|Omega/i;
 
         const recordForm = document.getElementById('recordForm');
@@ -139,19 +162,28 @@
         const likeIngredientsDiv = document.getElementById('likeIngredients');
         const dislikeIngredientsDiv = document.getElementById('dislikeIngredients');
         const userStatus = document.getElementById('userStatus');
+        const setupWarning = document.getElementById('setupWarning');
+        const permissionWarning = document.getElementById('permissionWarning');
 
-        async function initAuth() {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
+        async function login() {
+            try {
                 await signInAnonymously(auth);
+            } catch (error) {
+                console.error("Firebase Auth Error:", error);
+                if (error.code === 'auth/configuration-not-found') {
+                    setupWarning.classList.remove('hidden');
+                    userStatus.innerText = "驗證設定錯誤";
+                } else {
+                    showToast("登入失敗: " + error.message);
+                }
             }
         }
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                userStatus.innerText = `UID: ${user.uid.substring(0,6)}`;
+                userStatus.innerText = `用戶: ${user.uid.substring(0,6)}`;
+                setupWarning.classList.add('hidden');
                 setupListeners();
             }
         });
@@ -177,7 +209,9 @@
 
         function setupListeners() {
             if (!currentUser) return;
-            onSnapshot(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records'), (snapshot) => {
+            const userRecordsRef = collection(db, 'users', currentUser.uid, 'records');
+            
+            onSnapshot(userRecordsRef, (snapshot) => {
                 allRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 allRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
                 
@@ -187,10 +221,17 @@
                     foodDatabase[key] = { ingredients: r.ingredients };
                 });
 
+                permissionWarning.classList.add('hidden'); // 監聽成功則隱藏權限警告
                 renderHistory();
                 renderAnalysis();
                 renderShoppingList();
                 renderDatalists();
+            }, (error) => {
+                console.error("Firestore Listen Error:", error);
+                if (error.code === 'permission-denied') {
+                    permissionWarning.classList.remove('hidden');
+                    showToast("資料庫權限不足");
+                }
             });
         }
 
@@ -218,7 +259,7 @@
                     </div>
                     <div class="flex flex-col items-end">
                         <span class="text-orange-500 font-bold">${'★'.repeat(r.rating)}</span>
-                        <button onclick="deleteRecord('${r.id}')" class="text-red-300 hover:text-red-500 text-[9px] mt-0.5">刪除</button>
+                        <button onclick="window.deleteRecord('${r.id}')" class="text-red-300 hover:text-red-500 text-[9px] mt-0.5">刪除</button>
                     </div>
                 </div>
             `).join('');
@@ -248,10 +289,17 @@
 
         function renderAnalysis() {
             const ingStats = {};
+            const mergeMap = { '雞胸肉': '雞肉', '雞肉絲': '雞肉', '鮪魚肉': '鮪魚' };
+
             allRecords.forEach(r => {
                 if (!r.ingredients) return;
-                const ings = r.ingredients.split(/[，,、\s\n]+/).map(i => i.trim()).filter(i => i && !additiveKeywords.test(i));
-                ings.forEach(ing => {
+                const ings = r.ingredients.split(/[，,、\s\n]+/)
+                    .map(i => i.trim())
+                    .filter(i => i && !additiveKeywords.test(i))
+                    .map(i => mergeMap[i] || i);
+
+                const uniqueIngsInRecord = [...new Set(ings)];
+                uniqueIngsInRecord.forEach(ing => {
                     if (!ingStats[ing]) ingStats[ing] = { count: 0, total: 0 };
                     ingStats[ing].count++;
                     ingStats[ing].total += r.rating;
@@ -264,13 +312,11 @@
                 count: ingStats[name].count
             }));
 
-            // 喜歡：平均4分以上
-            const likes = sorted.filter(i => i.avg >= 4).sort((a,b) => b.count - a.count).slice(0, 10);
-            // 避雷：重複2次以上且平均低於3分，按出現次數（比重）排序
+            const likes = sorted.filter(i => i.count >= 2 && i.avg >= 4).sort((a,b) => b.count - a.count).slice(0, 10);
             const dislikes = sorted.filter(i => i.count >= 2 && i.avg < 3).sort((a,b) => b.count - a.count).slice(0, 10);
 
-            likeIngredientsDiv.innerHTML = likes.length ? likes.map(i => `<span class="tag tag-like">${i.name}</span>`).join('') : '<span class="text-[10px] text-gray-400">尚無明顯偏好</span>';
-            dislikeIngredientsDiv.innerHTML = dislikes.length ? dislikes.map(i => `<span class="tag tag-dislike">${i.name} (${i.count}次)</span>`).join('') : '<span class="text-[10px] text-gray-400">尚無重複避雷食材</span>';
+            likeIngredientsDiv.innerHTML = likes.length ? likes.map(i => `<span class="tag tag-like">${i.name}</span>`).join('') : '<span class="text-[10px] text-gray-400">尚無重複偏好食材</span>';
+            dislikeIngredientsDiv.innerHTML = dislikes.length ? dislikes.map(i => `<span class="tag tag-dislike">${i.name}</span>`).join('') : '<span class="text-[10px] text-gray-400">尚無重複避雷食材</span>';
         }
 
         recordForm.onsubmit = async (e) => {
@@ -286,15 +332,22 @@
                 createdAt: new Date().toISOString()
             };
             try {
-                await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records'), newRecord);
+                await addDoc(collection(db, 'users', currentUser.uid, 'records'), newRecord);
                 showToast("已儲存");
                 seriesInput.value = ''; flavorInput.value = ''; ingredientsInput.value = ''; ratingInput.value = '3'; ratingVal.innerText = '3';
-            } catch (err) { showToast("錯誤"); }
+            } catch (err) { 
+                console.error("Save error:", err);
+                if (err.code === 'permission-denied') permissionWarning.classList.remove('hidden');
+                showToast("儲存失敗"); 
+            }
         };
 
         window.deleteRecord = async (id) => {
             if (!confirm("刪除此紀錄？")) return;
-            try { await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'records', id)); } catch (err) { showToast("錯誤"); }
+            try { 
+                await deleteDoc(doc(db, 'users', currentUser.uid, 'records', id));
+                showToast("已刪除");
+            } catch (err) { showToast("刪除失敗"); }
         };
 
         function showToast(msg) {
@@ -305,7 +358,7 @@
         }
 
         document.getElementById('date').valueAsDate = new Date();
-        initAuth();
+        login();
     </script>
 </body>
 </html>
