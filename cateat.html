@@ -388,7 +388,7 @@
 
 const itemHtml = (list, type) => list.length ? list.map(i => `
     <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded-lg flex justify-between items-start mb-1 py-1.5 px-3">
-        <span class="font-medium text-gray-700 leading-tight pr-2" style="font-size: 16px;">${i.name}</span>
+        <span class="font-medium text-gray-700 leading-tight pr-2" style="font-size: 14px;">${i.name}</span>
         <span class="font-bold text-gray-900 text-[10px] flex-shrink-0 bg-white/50 px-1.5 py-0.5 rounded">${i.avg.toFixed(1)}</span>
     </div>`).join('')  : '<p class="text-gray-300 text-xs text-center py-4 italic">暫無數據</p>';
 
