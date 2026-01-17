@@ -6,127 +6,201 @@
     <title>貓咪進食紀錄</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
-        body { font-family: 'Noto+Sans+TC', sans-serif; background-color: #fdf6f0; font-size: 0.9rem; }
-        .card { background: white; border-radius: 0.75rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); }
-        .btn-primary { background-color: #f97316; color: white; transition: all 0.2s; }
-        .btn-primary:hover { background-color: #ea580c; }
-        .tag { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 0.4rem; font-size: 0.75rem; margin-right: 0.35rem; margin-bottom: 0.35rem; }
-        .tag-like { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .tag-dislike { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        .list-item { border-left: 3px solid transparent; transition: all 0.2s; }
-        .list-safe { border-left-color: #22c55e; background-color: #f0fdf4; }
-        .list-avoid { border-left-color: #ef4444; background-color: #fef2f2; }
-        input, textarea, select { font-size: 0.85rem !important; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        
+        :root {
+            --bg-color: #fcfaf8;
+            --card-bg: #ffffff;
+            --text-main: #374151; /* gray-700 */
+            --text-muted: #6b7280; /* gray-500 */
+            --accent-color: #f97316;
+        }
+
+        body { 
+            font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .card { 
+            background: var(--card-bg); 
+            border-radius: 1rem; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.02);
+        }
+
+        /* 標題加重處理：適度而非過度 */
+        h1, h2, h3 { color: #1f2937; letter-spacing: 0.02em; }
+
+        .btn-primary { 
+            background-color: var(--accent-color); 
+            color: white; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-primary:hover { 
+            background-color: #ea580c; 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+        }
+
+        .tag { 
+            display: inline-block; 
+            padding: 0.2rem 0.6rem; 
+            border-radius: 0.5rem; 
+            font-size: 0.8rem; 
+            margin-right: 0.4rem; 
+            margin-bottom: 0.4rem; 
+            font-weight: 500;
+        }
+        .tag-like { background-color: #f0fdf4; color: #166534; border: 1px solid #dcfce7; }
+        .tag-dislike { background-color: #fef2f2; color: #991b1b; border: 1px solid #fee2e2; }
+
+        .list-item { 
+            border-left: 4px solid transparent; 
+            transition: background 0.2s;
+            padding: 0.75rem;
+        }
+        .list-safe { border-left-color: #86efac; background-color: #f9fafb; }
+        .list-avoid { border-left-color: #fca5a5; background-color: #f9fafb; }
+
+        /* 調整輸入框外觀 */
+        input, textarea, select { 
+            background-color: #f9fafb !important;
+            border: 1px solid #e5e7eb !important;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input:focus, textarea:focus {
+            border-color: #fdba74 !important;
+            box-shadow: 0 0 0 3px rgba(253, 186, 116, 0.2) !important;
+            outline: none;
+        }
     </style>
 </head>
-<body class="p-3 md:p-6">
+<body class="p-4 md:p-8">
     <div class="max-w-5xl mx-auto">
-        <header class="flex items-center justify-between mb-6">
-            <h1 class="text-xl font-bold text-orange-800 flex items-center">
-                <span class="mr-2">🐱</span> 貓咪進食分析器
+        <header class="flex items-center justify-between mb-8">
+            <h1 class="text-2xl font-bold flex items-center tracking-tight text-gray-800">
+                <span class="mr-3 text-3xl">🐾</span> 貓咪進食分析器
             </h1>
-            <div id="authSection" class="flex items-center space-x-3">
-                <div id="userInfo" class="hidden flex items-center space-x-2">
-                    <img id="userAvatar" class="w-8 h-8 rounded-full border border-orange-200" src="" alt="avatar">
-                    <span id="userName" class="text-xs font-medium text-gray-600 hidden md:inline"></span>
-                    <button id="logoutBtn" class="text-[10px] px-2 py-1 bg-gray-200 text-gray-600 rounded hover:bg-gray-300">登出</button>
+            <div id="authSection" class="flex items-center space-x-4">
+                <div id="userInfo" class="hidden flex items-center space-x-3 bg-white p-1 pr-3 rounded-full border border-gray-100 shadow-sm">
+                    <img id="userAvatar" class="w-8 h-8 rounded-full" src="" alt="avatar">
+                    <span id="userName" class="text-sm font-medium text-gray-700 hidden sm:inline"></span>
+                    <button id="logoutBtn" class="text-xs text-gray-400 hover:text-gray-600 transition-colors">登出</button>
                 </div>
-                <button id="loginBtn" class="text-xs px-4 py-1.5 bg-white border border-orange-300 text-orange-600 rounded-full font-bold hover:bg-orange-50 shadow-sm transition-all">
+                <button id="loginBtn" class="text-sm px-5 py-2 bg-white border border-gray-200 text-gray-700 rounded-full font-medium hover:bg-gray-50 hover:border-orange-200 shadow-sm transition-all">
                     Google 登入同步
                 </button>
             </div>
         </header>
 
-        <div id="mainContent" class="grid grid-cols-1 lg:grid-cols-12 gap-5 opacity-50 pointer-events-none transition-opacity duration-300">
+        <div id="mainContent" class="grid grid-cols-1 lg:grid-cols-12 gap-8 opacity-50 pointer-events-none transition-opacity duration-500">
             <!-- 左側：輸入表單 -->
             <div class="lg:col-span-4">
-                <div class="card p-5 sticky top-5">
-                    <h2 class="text-base font-semibold mb-3 text-gray-700">新增紀錄</h2>
-                    <form id="recordForm" class="space-y-3">
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500">日期</label>
-                            <input type="date" id="date" required class="w-full mt-1 p-1.5 border rounded focus:ring-1 focus:ring-orange-300 outline-none">
+                <div class="card p-6 sticky top-8">
+                    <h2 class="text-lg font-bold mb-5 flex items-center text-gray-800">
+                        <span class="mr-2 text-orange-400">📝</span> 新增紀錄
+                    </h2>
+                    <form id="recordForm" class="space-y-4">
+                        <div class="space-y-1">
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">日期</label>
+                            <input type="date" id="date" required class="w-full p-2.5 rounded-lg">
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500">品牌</label>
-                            <input type="text" id="brand" list="brandList" required class="w-full mt-1 p-1.5 border rounded focus:ring-1 focus:ring-orange-300 outline-none">
+                        <div class="space-y-1">
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">品牌</label>
+                            <input type="text" id="brand" list="brandList" placeholder="例如：巔峰" required class="w-full p-2.5 rounded-lg">
                             <datalist id="brandList"></datalist>
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500">系列</label>
-                            <input type="text" id="series" list="seriesList" class="w-full mt-1 p-1.5 border rounded focus:ring-1 focus:ring-orange-300 outline-none">
+                        <div class="space-y-1">
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">系列 / 口味</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="text" id="series" list="seriesList" placeholder="系列" class="w-full p-2.5 rounded-lg">
+                                <input type="text" id="flavor" list="flavorList" placeholder="口味" required class="w-full p-2.5 rounded-lg">
+                            </div>
                             <datalist id="seriesList"></datalist>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500">口味</label>
-                            <input type="text" id="flavor" list="flavorList" required class="w-full mt-1 p-1.5 border rounded focus:ring-1 focus:ring-orange-300 outline-none">
                             <datalist id="flavorList"></datalist>
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500">成分</label>
-                            <textarea id="ingredients" rows="2" class="w-full mt-1 p-1.5 border rounded focus:ring-1 focus:ring-orange-300 outline-none text-xs"></textarea>
+                        <div class="space-y-1">
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">成分明細</label>
+                            <textarea id="ingredients" rows="3" placeholder="貼上成分標籤有助於分析避雷食材..." class="w-full p-2.5 rounded-lg text-sm"></textarea>
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500">喜歡程度 (1-5)</label>
-                            <div class="flex items-center space-x-2 mt-1">
-                                <input type="range" id="rating" min="1" max="5" value="3" class="w-full accent-orange-500">
-                                <span id="ratingVal" class="font-bold text-orange-600 w-4 text-sm">3</span>
+                        <div class="space-y-1">
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">喜愛程度</label>
+                                <span id="ratingVal" class="text-lg font-bold text-orange-500">3</span>
                             </div>
+                            <input type="range" id="rating" min="1" max="5" value="3" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-500">
                         </div>
-                        <button type="submit" class="w-full py-2 btn-primary rounded-lg font-bold text-sm shadow-md shadow-orange-100">儲存</button>
+                        <button type="submit" class="w-full py-3 btn-primary rounded-xl font-bold text-base shadow-sm mt-4">儲存進食心得</button>
                     </form>
                 </div>
             </div>
 
             <!-- 右側：分析與列表 -->
-            <div class="lg:col-span-8 space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div class="card p-4 border-t-2 border-green-400">
-                        <h2 class="text-sm font-bold text-green-700 mb-2 flex items-center">✅ 放心買 <span class="ml-1 text-[10px] font-normal text-gray-400">(≥ 3.7)</span></h2>
-                        <div id="safeBuyList" class="space-y-1"></div>
+            <div class="lg:col-span-8 space-y-8">
+                <!-- 購物清單 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="card p-5">
+                        <h2 class="text-sm font-bold text-green-700 mb-4 flex items-center">
+                            <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span> 推薦清單 (≥ 3.7)
+                        </h2>
+                        <div id="safeBuyList" class="space-y-2"></div>
                     </div>
-                    <div class="card p-4 border-t-2 border-red-400">
-                        <h2 class="text-sm font-bold text-red-700 mb-2 flex items-center">⚠️ 不要買 <span class="ml-1 text-[10px] font-normal text-gray-400">(< 3.3)</span></h2>
-                        <div id="avoidList" class="space-y-1"></div>
-                    </div>
-                </div>
-
-                <div class="card p-4">
-                    <h2 class="text-sm font-semibold mb-3 text-gray-700">食材大數據分析 <span class="text-[10px] font-normal text-gray-400">(自動過濾營養添加劑)</span></h2>
-                    <div id="analysisContent" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div class="p-3 bg-green-50 rounded-lg">
-                            <h3 class="text-[11px] font-bold text-green-700 mb-2">🌟 偏愛食材 <span class="text-[9px] font-normal">(重複2次以上)</span></h3>
-                            <div id="likeIngredients" class="flex flex-wrap"></div>
-                        </div>
-                        <div class="p-3 bg-red-50 rounded-lg">
-                            <h3 class="text-[11px] font-bold text-red-700 mb-2">🚫 避雷食材 <span class="text-[9px] font-normal">(重複2次以上)</span></h3>
-                            <div id="dislikeIngredients" class="flex flex-wrap"></div>
-                        </div>
+                    <div class="card p-5">
+                        <h2 class="text-sm font-bold text-red-700 mb-4 flex items-center">
+                            <span class="w-2 h-2 bg-red-400 rounded-full mr-2"></span> 避雷清單 (< 3.3)
+                        </h2>
+                        <div id="avoidList" class="space-y-2"></div>
                     </div>
                 </div>
 
-                <div class="card p-4">
-                    <h2 class="text-sm font-semibold mb-3 text-gray-700">歷史紀錄 <span class="text-[10px] font-normal text-gray-400">(最近 5 筆)</span></h2>
-                    <div id="historyList" class="space-y-2"></div>
+                <!-- 食材分析 -->
+                <div class="card p-6">
+                    <h2 class="text-base font-bold mb-4 text-gray-800">成分偏好大數據</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-3">
+                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center">
+                                🌟 偏愛成分
+                            </h3>
+                            <div id="likeIngredients" class="flex flex-wrap min-h-[40px]"></div>
+                        </div>
+                        <div class="space-y-3">
+                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center">
+                                🚫 避雷成分
+                            </h3>
+                            <div id="dislikeIngredients" class="flex flex-wrap min-h-[40px]"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 歷史紀錄 -->
+                <div class="card p-6">
+                    <div class="flex justify-between items-center mb-5">
+                        <h2 class="text-base font-bold text-gray-800">最近紀錄</h2>
+                        <span class="text-[10px] text-gray-400 font-medium uppercase tracking-tighter">顯示最近 5 筆</span>
+                    </div>
+                    <div id="historyList" class="space-y-3"></div>
                 </div>
             </div>
         </div>
 
-        <!-- 登入引導提示 -->
-        <div id="loginOverlay" class="mt-20 text-center">
-            <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm mx-auto border border-orange-100">
-                <div class="text-4xl mb-4">☁️</div>
-                <h3 class="text-lg font-bold text-gray-800 mb-2">開啟雲端同步</h3>
-                <p class="text-gray-500 text-sm mb-6">登入後即可在手機與電腦同步您的紀錄，資料永不遺失。</p>
-                <button id="loginBtnLarge" class="w-full py-3 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition-colors shadow-lg shadow-orange-200">
+        <!-- 登入引導 -->
+        <div id="loginOverlay" class="mt-20 text-center animate-pulse">
+            <div class="bg-white p-10 rounded-3xl shadow-2xl max-w-sm mx-auto border border-orange-50">
+                <div class="text-5xl mb-6">☁️</div>
+                <h3 class="text-xl font-bold text-gray-800 mb-3">同步您的雲端數據</h3>
+                <p class="text-gray-500 text-sm leading-relaxed mb-8">透過 Google 登入，即可在所有裝置查看貓咪的飲食喜好分析。</p>
+                <button id="loginBtnLarge" class="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black transition-all shadow-xl shadow-gray-200">
                     使用 Google 帳號登入
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded text-xs shadow-lg transform translate-y-20 transition-transform duration-300 z-50"></div>
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900/90 backdrop-blur-sm text-white px-6 py-3 rounded-full text-sm font-medium shadow-2xl translate-y-24 transition-transform duration-500 z-50"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -152,7 +226,7 @@
         let foodDatabase = {};
         let unsubscribe = null;
 
-        const additiveKeywords = /維生素|維他命|B1|B2|B6|B12|A|D3|E|K3|牛磺酸|礦物質|葡萄糖酸|碳酸|磷酸|硫酸|氯化|葉酸|生物素|菸鹼酸|泛酸|Omega/i;
+        const additiveKeywords = /維生素|維他命|B1|B2|B6|B12|A|D3|E|K3|牛磺酸|礦物質|葡萄糖酸|碳酸|磷酸|硫酸|氯化|葉酸|生物素|菸鹼酸|泛酸|Omega|膠|增稠/i;
 
         // UI Elements
         const mainContent = document.getElementById('mainContent');
@@ -164,14 +238,9 @@
         const userAvatar = document.getElementById('userAvatar');
         const userName = document.getElementById('userName');
 
-        // Login / Logout Logic
         const handleLogin = async () => {
-            try {
-                await signInWithPopup(auth, provider);
-            } catch (error) {
-                console.error("Auth Error:", error);
-                showToast("登入失敗，請確認 Google 驗證已在 Firebase 開啟");
-            }
+            try { await signInWithPopup(auth, provider); } 
+            catch (e) { showToast("登入發生錯誤，請稍後再試"); }
         };
 
         const handleLogout = () => signOut(auth);
@@ -202,92 +271,48 @@
             }
         });
 
-        // Form logic
         const recordForm = document.getElementById('recordForm');
-        const brandInput = document.getElementById('brand');
-        const seriesInput = document.getElementById('series');
-        const flavorInput = document.getElementById('flavor');
-        const ingredientsInput = document.getElementById('ingredients');
         const ratingInput = document.getElementById('rating');
         const ratingVal = document.getElementById('ratingVal');
-        const historyList = document.getElementById('historyList');
-        const safeBuyList = document.getElementById('safeBuyList');
-        const avoidList = document.getElementById('avoidList');
-        const likeIngredientsDiv = document.getElementById('likeIngredients');
-        const dislikeIngredientsDiv = document.getElementById('dislikeIngredients');
 
         ratingInput.oninput = (e) => ratingVal.innerText = e.target.value;
-        brandInput.addEventListener('input', renderDatalists);
-        seriesInput.addEventListener('input', renderDatalists);
-
-        function autoFillData() {
-            const b = brandInput.value.trim();
-            const s = seriesInput.value.trim();
-            const f = flavorInput.value.trim();
-            if (!b || !f) return;
-            const key = `${b}_${s}_${f}`;
-            if (foodDatabase[key] && !ingredientsInput.value) {
-                ingredientsInput.value = foodDatabase[key].ingredients || '';
-            }
-        }
-
-        brandInput.onblur = autoFillData;
-        seriesInput.onblur = autoFillData;
-        flavorInput.onblur = autoFillData;
 
         function setupListeners() {
             if (!currentUser) return;
-            if (unsubscribe) unsubscribe();
-
             const userRecordsRef = collection(db, 'users', currentUser.uid, 'records');
-            
             unsubscribe = onSnapshot(userRecordsRef, (snapshot) => {
                 allRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 allRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
-                
-                foodDatabase = {};
-                allRecords.forEach(r => {
-                    const key = `${r.brand}_${r.series || ''}_${r.flavor}`;
-                    foodDatabase[key] = { ingredients: r.ingredients };
-                });
-
                 renderHistory();
                 renderAnalysis();
                 renderShoppingList();
                 renderDatalists();
-            }, (error) => {
-                console.error("Firestore Listen Error:", error);
-                if (error.code === 'permission-denied') {
-                    showToast("資料庫權限不足，請檢查 Firebase Rules");
-                }
             });
         }
 
         function renderDatalists() {
-            const cb = brandInput.value.trim();
-            const cs = seriesInput.value.trim();
-            document.getElementById('brandList').innerHTML = [...new Set(allRecords.map(r => r.brand))].map(b => `<option value="${b}">`).join('');
-            const filteredSeries = [...new Set(allRecords.filter(r => !cb || r.brand === cb).map(r => r.series).filter(s => s))];
-            document.getElementById('seriesList').innerHTML = filteredSeries.map(s => `<option value="${s}">`).join('');
-            const filteredFlavors = [...new Set(allRecords.filter(r => (!cb || r.brand === cb) && (!cs || (r.series || '') === cs)).map(r => r.flavor))];
-            document.getElementById('flavorList').innerHTML = filteredFlavors.map(f => `<option value="${f}">`).join('');
+            const bList = document.getElementById('brandList');
+            bList.innerHTML = [...new Set(allRecords.map(r => r.brand))].map(b => `<option value="${b}">`).join('');
         }
 
         function renderHistory() {
+            const list = document.getElementById('historyList');
             const recent = allRecords.slice(0, 5);
             if (recent.length === 0) {
-                historyList.innerHTML = `<p class="text-center py-4 text-gray-400 text-xs italic">尚無紀錄</p>`;
+                list.innerHTML = `<p class="text-center py-8 text-gray-400 text-sm italic font-light">尚未建立進食紀錄</p>`;
                 return;
             }
-            historyList.innerHTML = recent.map(r => `
-                <div class="p-2.5 border rounded-lg flex justify-between items-center text-xs">
+            list.innerHTML = recent.map(r => `
+                <div class="p-4 border border-gray-100 rounded-xl flex justify-between items-center hover:bg-gray-50 transition-colors">
                     <div>
-                        <div class="text-[9px] text-gray-400">${r.date}</div>
-                        <div class="font-bold text-gray-700">${r.brand} ${r.series ? `<span class="text-orange-600">[${r.series}]</span>` : ''} ${r.flavor}</div>
+                        <div class="text-[10px] text-gray-400 font-bold mb-1">${r.date}</div>
+                        <div class="font-bold text-gray-700">${r.brand} <span class="font-medium text-gray-500">${r.series ? `(${r.series})` : ''}</span> · ${r.flavor}</div>
                     </div>
-                    <div class="flex flex-col items-end">
-                        <span class="text-orange-500 font-bold">${'★'.repeat(r.rating)}</span>
-                        <button onclick="window.deleteRecord('${r.id}')" class="text-red-300 hover:text-red-500 text-[9px] mt-0.5">刪除</button>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-orange-400 font-black text-sm">${'★'.repeat(r.rating)}<span class="text-gray-200">${'★'.repeat(5-r.rating)}</span></span>
+                        <button onclick="window.deleteRecord('${r.id}')" class="p-2 text-gray-300 hover:text-red-400 transition-colors">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
                     </div>
                 </div>
             `).join('');
@@ -296,7 +321,7 @@
         function renderShoppingList() {
             const stats = {};
             allRecords.forEach(r => {
-                const key = `${r.brand}${r.series ? `(${r.series})` : ''} - ${r.flavor}`;
+                const key = `${r.brand} ${r.series ? `[${r.series}]` : ''} ${r.flavor}`;
                 if (!stats[key]) stats[key] = { total: 0, count: 0 };
                 stats[key].total += r.rating;
                 stats[key].count++;
@@ -305,29 +330,24 @@
             const safe = processed.filter(i => i.avg >= 3.7).sort((a,b) => b.avg - a.avg);
             const avoid = processed.filter(i => i.avg < 3.3).sort((a,b) => a.avg - b.avg);
 
-            const itemHtml = (list, color) => list.length ? list.map(i => `
-                <div class="p-1.5 text-[11px] list-item ${color === 'green' ? 'list-safe' : 'list-avoid'} rounded flex justify-between">
-                    <span class="truncate pr-2">${i.name}</span>
-                    <span class="font-bold">${i.avg.toFixed(1)}</span>
-                </div>`).join('') : '<p class="text-gray-400 text-[10px] italic">無資料</p>';
+            const itemHtml = (list, type) => list.length ? list.map(i => `
+                <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded-lg flex justify-between items-center">
+                    <span class="truncate pr-3 font-medium text-gray-600 text-sm">${i.name}</span>
+                    <span class="font-bold text-gray-800 text-sm">${i.avg.toFixed(1)}</span>
+                </div>`).join('') : '<p class="text-gray-300 text-xs text-center py-4 font-light italic">資料收集中</p>';
 
-            safeBuyList.innerHTML = itemHtml(safe, 'green');
-            avoidList.innerHTML = itemHtml(avoid, 'red');
+            document.getElementById('safeBuyList').innerHTML = itemHtml(safe, 'safe');
+            document.getElementById('avoidList').innerHTML = itemHtml(avoid, 'avoid');
         }
 
         function renderAnalysis() {
             const ingStats = {};
-            const mergeMap = { '雞胸肉': '雞肉', '雞肉絲': '雞肉', '鮪魚肉': '鮪魚' };
-
             allRecords.forEach(r => {
                 if (!r.ingredients) return;
                 const ings = r.ingredients.split(/[，,、\s\n]+/)
                     .map(i => i.trim())
-                    .filter(i => i && !additiveKeywords.test(i))
-                    .map(i => mergeMap[i] || i);
-
-                const uniqueIngsInRecord = [...new Set(ings)];
-                uniqueIngsInRecord.forEach(ing => {
+                    .filter(i => i && !additiveKeywords.test(i));
+                [...new Set(ings)].forEach(ing => {
                     if (!ingStats[ing]) ingStats[ing] = { count: 0, total: 0 };
                     ingStats[ing].count++;
                     ingStats[ing].total += r.rating;
@@ -340,11 +360,11 @@
                 count: ingStats[name].count
             }));
 
-            const likes = sorted.filter(i => i.count >= 2 && i.avg >= 4).sort((a,b) => b.count - a.count).slice(0, 10);
-            const dislikes = sorted.filter(i => i.count >= 2 && i.avg < 3).sort((a,b) => a.count - a.count).slice(0, 10);
+            const likes = sorted.filter(i => i.count >= 2 && i.avg >= 4).sort((a,b) => b.count - a.count).slice(0, 8);
+            const dislikes = sorted.filter(i => i.count >= 2 && i.avg < 3).sort((a,b) => b.count - a.count).slice(0, 8);
 
-            likeIngredientsDiv.innerHTML = likes.length ? likes.map(i => `<span class="tag tag-like">${i.name}</span>`).join('') : '<span class="text-[10px] text-gray-400">尚無重複偏好食材</span>';
-            dislikeIngredientsDiv.innerHTML = dislikes.length ? dislikes.map(i => `<span class="tag tag-dislike">${i.name}</span>`).join('') : '<span class="text-[10px] text-gray-400">尚無重複避雷食材</span>';
+            document.getElementById('likeIngredients').innerHTML = likes.length ? likes.map(i => `<span class="tag tag-like">${i.name}</span>`).join('') : '<span class="text-xs text-gray-300">尚未分析出喜好</span>';
+            document.getElementById('dislikeIngredients').innerHTML = dislikes.length ? dislikes.map(i => `<span class="tag tag-dislike">${i.name}</span>`).join('') : '<span class="text-xs text-gray-300">尚未分析出避雷</span>';
         }
 
         recordForm.onsubmit = async (e) => {
@@ -352,37 +372,34 @@
             if (!currentUser) return;
             const newRecord = {
                 date: document.getElementById('date').value,
-                brand: brandInput.value.trim(),
-                series: seriesInput.value.trim(),
-                flavor: flavorInput.value.trim(),
+                brand: document.getElementById('brand').value.trim(),
+                series: document.getElementById('series').value.trim(),
+                flavor: document.getElementById('flavor').value.trim(),
                 rating: parseInt(ratingInput.value),
-                ingredients: ingredientsInput.value.trim(),
+                ingredients: document.getElementById('ingredients').value.trim(),
                 createdAt: new Date().toISOString()
             };
             try {
                 await addDoc(collection(db, 'users', currentUser.uid, 'records'), newRecord);
-                showToast("已儲存");
-                seriesInput.value = ''; flavorInput.value = ''; ingredientsInput.value = ''; ratingInput.value = '3'; ratingVal.innerText = '3';
-            } catch (err) { 
-                console.error("Save error:", err);
-                showToast("儲存失敗，請檢查網路或權限"); 
-            }
+                showToast("✨ 紀錄已同步儲存");
+                document.getElementById('flavor').value = '';
+                document.getElementById('ingredients').value = '';
+            } catch (err) { showToast("儲存失敗，請檢查權限設定"); }
         };
 
         window.deleteRecord = async (id) => {
-            if (!confirm("刪除此紀錄？")) return;
+            if (!confirm("確定要刪除這筆回憶嗎？")) return;
             try { 
                 await deleteDoc(doc(db, 'users', currentUser.uid, 'records', id));
-                showToast("已刪除");
-            } catch (err) { showToast("刪除失敗"); }
+                showToast("已移除紀錄");
+            } catch (err) { showToast("操作失敗"); }
         };
 
         function showToast(msg) {
             const toast = document.getElementById('toast');
-            if(!toast) return;
             toast.innerText = msg;
-            toast.classList.remove('translate-y-20');
-            setTimeout(() => toast.classList.add('translate-y-20'), 2000);
+            toast.classList.remove('translate-y-24');
+            setTimeout(() => toast.classList.add('translate-y-24'), 2500);
         }
 
         document.getElementById('date').valueAsDate = new Date();
