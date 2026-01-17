@@ -147,7 +147,7 @@
                         </div>
                         <div class="space-y-1">
                             <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">品牌</label>
-                            <input type="text" id="brand" list="brandList" required class="w-full p-2.5 rounded-lg">
+                            <input type="text" id="brand" list="brandList" class="w-full p-2.5 rounded-lg">
                             <datalist id="brandList"></datalist>
                         </div>
                         <div class="space-y-1">
@@ -158,7 +158,7 @@
                             </div>
                         </div>
                         <div class="space-y-1">
-                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">成分明細</label>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">成分</label>
                             <textarea id="ingredients" rows="3" class="w-full p-2.5 rounded-lg text-sm"></textarea>
                         </div>
                         <div class="space-y-1">
@@ -305,6 +305,38 @@
             bList.innerHTML = [...new Set(allRecords.map(r => r.brand))].map(b => `<option value="${b}">`).join('');
         }
 
+        // --- 新增自動填寫邏輯 ---
+        const brandInput = document.getElementById('brand');
+        const flavorInput = document.getElementById('flavor');
+        const seriesInput = document.getElementById('series');
+        const ingredientsInput = document.getElementById('ingredients');
+
+        function attemptAutoFill() {
+            const currentBrand = brandInput.value.trim();
+            const currentFlavor = flavorInput.value.trim();
+
+            if (currentBrand && currentFlavor) {
+                // 從歷史紀錄找出一筆品牌與口味完全相符的紀錄
+                const matched = allRecords.find(r => 
+                    r.brand.toLowerCase() === currentBrand.toLowerCase() && 
+                    r.flavor.toLowerCase() === currentFlavor.toLowerCase()
+                );
+
+                if (matched && matched.ingredients) {
+                    // 如果目前欄位是空的，才自動帶入（避免覆蓋使用者正在輸入的內容）
+                    if (!seriesInput.value) seriesInput.value = matched.series || '';
+                    if (!ingredientsInput.value) {
+                        ingredientsInput.value = matched.ingredients;
+                        showToast("🪄 已自動帶入歷史成分");
+                    }
+                }
+            }
+        }
+
+        brandInput.addEventListener('input', attemptAutoFill);
+        flavorInput.addEventListener('input', attemptAutoFill);
+        // -----------------------
+
         function renderHistory() {
             const list = document.getElementById('historyList');
             if (allRecords.length === 0) {
@@ -379,18 +411,24 @@
             if (!currentUser) return;
             const newRecord = {
                 date: document.getElementById('date').value,
-                brand: document.getElementById('brand').value.trim(),
-                series: document.getElementById('series').value.trim(),
-                flavor: document.getElementById('flavor').value.trim(),
+                brand: brandInput.value.trim(),
+                series: seriesInput.value.trim(),
+                flavor: flavorInput.value.trim(),
                 rating: parseInt(ratingInput.value),
-                ingredients: document.getElementById('ingredients').value.trim(),
+                ingredients: ingredientsInput.value.trim(),
                 createdAt: new Date().toISOString()
             };
             try {
                 await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records'), newRecord);
                 showToast("✅ 已同步至雲端");
-                document.getElementById('flavor').value = '';
-                document.getElementById('ingredients').value = '';
+                
+                // 儲存成功後全清空，方便輸入完全不同的資料
+                brandInput.value = '';
+                seriesInput.value = '';
+                flavorInput.value = '';
+                ingredientsInput.value = '';
+                ratingInput.value = 3;
+                ratingVal.innerText = 3;
             } catch (err) { showToast("儲存失敗，請檢查網路"); }
         };
 
