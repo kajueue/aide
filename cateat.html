@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>貓咪進食紀錄 - 雲端同步版</title>
+    <title>貓咪進食紀錄</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
@@ -25,7 +25,6 @@
             overflow-x: hidden;
         }
 
-        /* 初始狀態隱藏主內容，防止閃爍 */
         #appContainer {
             opacity: 0;
             transition: opacity 0.5s ease;
@@ -76,7 +75,6 @@
             border: 1px solid #e5e7eb !important;
         }
 
-        /* 全螢幕登入遮罩 */
         #loginOverlay {
             position: fixed;
             top: 0;
@@ -96,23 +94,32 @@
             visibility: hidden;
             pointer-events: none;
         }
+
+        .loading-spinner {
+            border: 3px solid rgba(249, 115, 22, 0.1);
+            border-top: 3px solid #f97316;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="p-4 md:p-8">
-    <!-- 優先顯示的全螢幕登入層 -->
     <div id="loginOverlay">
         <div class="bg-white p-8 md:p-12 rounded-[2.5rem] shadow-2xl max-w-sm w-full text-center border border-orange-50 transform transition-all">
             <div class="text-6xl mb-6">☁️</div>
             <h3 class="text-2xl font-bold text-gray-800 mb-3">同步您的紀錄</h3>
-            <p class="text-gray-500 text-sm leading-relaxed mb-10">登入後，您在電腦與手機上的進食數據將即時同步，隨時查看貓咪的偏好。</p>
             <button id="loginBtnLarge" class="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black transition-all shadow-xl shadow-gray-200 flex items-center justify-center space-x-3">
-                <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                <div id="loginLoading" class="loading-spinner"></div>
+                <svg id="googleLogo" class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
                 <span>使用 Google 登入</span>
             </button>
         </div>
     </div>
 
-    <!-- 主程式內容 -->
     <div id="appContainer" class="max-w-5xl mx-auto">
         <header class="flex items-center justify-between mb-8">
             <h1 class="text-2xl font-bold flex items-center tracking-tight text-gray-800">
@@ -128,7 +135,6 @@
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <!-- 左側：輸入表單 -->
             <div class="lg:col-span-4">
                 <div class="card p-6 sticky top-8">
                     <h2 class="text-lg font-bold mb-5 flex items-center text-gray-800">
@@ -153,7 +159,7 @@
                         </div>
                         <div class="space-y-1">
                             <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">成分明細</label>
-                            <textarea id="ingredients" rows="3" placeholder="貼上成分標籤有助於分析避雷食材..." class="w-full p-2.5 rounded-lg text-sm"></textarea>
+                            <textarea id="ingredients" rows="3" placeholder="貼上成分標籤分析避雷食材..." class="w-full p-2.5 rounded-lg text-sm"></textarea>
                         </div>
                         <div class="space-y-1">
                             <div class="flex justify-between items-center">
@@ -167,7 +173,6 @@
                 </div>
             </div>
 
-            <!-- 右側：分析結果 -->
             <div class="lg:col-span-8 space-y-8">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="card p-5">
@@ -185,7 +190,7 @@
                 </div>
 
                 <div class="card p-6">
-                    <h2 class="text-base font-bold mb-4 text-gray-800">成分偏好大數據</h2>
+                    <h2 class="text-base font-bold mb-4 text-gray-800">成分偏好分析</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-3">
                             <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center">🌟 偏愛成分</h3>
@@ -200,8 +205,8 @@
 
                 <div class="card p-6">
                     <div class="flex justify-between items-center mb-5">
-                        <h2 class="text-base font-bold text-gray-800">雲端同步紀錄</h2>
-                        <span class="text-[10px] text-gray-400 font-medium tracking-tighter">LIVE UPDATING</span>
+                        <h2 class="text-base font-bold text-gray-800">歷史紀錄</h2>
+                        <span class="text-[10px] text-gray-400 font-medium tracking-tighter">CLOUD SYNCED</span>
                     </div>
                     <div id="historyList" class="space-y-3"></div>
                 </div>
@@ -237,24 +242,28 @@
 
         const additiveKeywords = /維生素|維他命|B1|B2|B6|B12|A|D3|E|K3|牛磺酸|礦物質|葡萄糖酸|碳酸|磷酸|硫酸|氯化|葉酸|生物素|菸鹼酸|泛酸|Omega|膠|增稠/i;
 
-        // UI 元素
         const loginOverlay = document.getElementById('loginOverlay');
         const appContainer = document.getElementById('appContainer');
         const loginBtnLarge = document.getElementById('loginBtnLarge');
+        const loginLoading = document.getElementById('loginLoading');
+        const googleLogo = document.getElementById('googleLogo');
         const logoutBtn = document.getElementById('logoutBtn');
         const userAvatar = document.getElementById('userAvatar');
         const userName = document.getElementById('userName');
 
-        // 登入功能
         loginBtnLarge.onclick = async () => {
+            loginLoading.style.display = 'block';
+            googleLogo.style.display = 'none';
             try { await signInWithPopup(auth, provider); } 
-            catch (e) { showToast("登入失敗，請重試"); }
+            catch (e) { console.error("Login Fail:", e); } 
+            finally {
+                loginLoading.style.display = 'none';
+                googleLogo.style.display = 'block';
+            }
         };
 
-        // 登出功能
         logoutBtn.onclick = () => signOut(auth);
 
-        // 核心偵測邏輯
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
@@ -276,13 +285,11 @@
         function startSync() {
             if (!currentUser) return;
             const userRecordsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records');
+            if (unsubscribe) unsubscribe();
             unsubscribe = onSnapshot(userRecordsRef, (snapshot) => {
                 allRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 allRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
                 renderUI();
-            }, (error) => {
-                console.error("同步錯誤:", error);
-                showToast("同步中斷，請重新整理");
             });
         }
 
@@ -293,7 +300,6 @@
             renderDatalists();
         }
 
-        // --- 渲染函數 ---
         function renderDatalists() {
             const bList = document.getElementById('brandList');
             bList.innerHTML = [...new Set(allRecords.map(r => r.brand))].map(b => `<option value="${b}">`).join('');
@@ -301,12 +307,11 @@
 
         function renderHistory() {
             const list = document.getElementById('historyList');
-            const recent = allRecords.slice(0, 5);
-            if (recent.length === 0) {
-                list.innerHTML = `<p class="text-center py-8 text-gray-400 text-sm italic">尚無資料，請從左側新增紀錄</p>`;
+            if (allRecords.length === 0) {
+                list.innerHTML = `<p class="text-center py-8 text-gray-400 text-sm italic">目前尚無紀錄</p>`;
                 return;
             }
-            list.innerHTML = recent.map(r => `
+            list.innerHTML = allRecords.slice(0, 15).map(r => `
                 <div class="p-4 border border-gray-100 rounded-xl flex justify-between items-center hover:bg-gray-50 transition-colors">
                     <div>
                         <div class="text-[10px] text-gray-400 font-bold mb-1">${r.date}</div>
@@ -331,14 +336,14 @@
                 stats[key].count++;
             });
             const processed = Object.keys(stats).map(key => ({ name: key, avg: stats[key].total / stats[key].count }));
-            const safe = processed.filter(i => i.avg >= 3.7);
-            const avoid = processed.filter(i => i.avg < 3.3);
+            const safe = processed.filter(i => i.avg >= 3.7).sort((a,b) => b.avg - a.avg);
+            const avoid = processed.filter(i => i.avg < 3.3).sort((a,b) => a.avg - b.avg);
 
             const itemHtml = (list, type) => list.length ? list.map(i => `
                 <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded-lg flex justify-between items-center mb-1">
                     <span class="truncate pr-3 font-medium text-gray-600 text-sm">${i.name}</span>
                     <span class="font-bold text-gray-800 text-sm">${i.avg.toFixed(1)}</span>
-                </div>`).join('') : '<p class="text-gray-300 text-xs text-center py-4 italic">暫無推薦</p>';
+                </div>`).join('') : '<p class="text-gray-300 text-xs text-center py-4 italic">尚無數據</p>';
 
             document.getElementById('safeBuyList').innerHTML = itemHtml(safe, 'safe');
             document.getElementById('avoidList').innerHTML = itemHtml(avoid, 'avoid');
@@ -357,11 +362,11 @@
             });
 
             const sorted = Object.keys(ingStats).map(name => ({ name, avg: ingStats[name].total / ingStats[name].count, count: ingStats[name].count }));
-            const likes = sorted.filter(i => i.count >= 2 && i.avg >= 4).slice(0, 8);
-            const dislikes = sorted.filter(i => i.count >= 2 && i.avg < 3).slice(0, 8);
+            const likes = sorted.filter(i => i.count >= 2 && i.avg >= 4).slice(0, 10);
+            const dislikes = sorted.filter(i => i.count >= 2 && i.avg < 3).slice(0, 10);
 
-            document.getElementById('likeIngredients').innerHTML = likes.map(i => `<span class="tag tag-like">${i.name}</span>`).join('') || '<span class="text-xs text-gray-300">數據不足</span>';
-            document.getElementById('dislikeIngredients').innerHTML = dislikes.map(i => `<span class="tag tag-dislike">${i.name}</span>`).join('') || '<span class="text-xs text-gray-300">數據不足</span>';
+            document.getElementById('likeIngredients').innerHTML = likes.map(i => `<span class="tag tag-like">${i.name}</span>`).join('') || '<span class="text-xs text-gray-300">數據收集中...</span>';
+            document.getElementById('dislikeIngredients').innerHTML = dislikes.map(i => `<span class="tag tag-dislike">${i.name}</span>`).join('') || '<span class="text-xs text-gray-300">數據收集中...</span>';
         }
 
         const recordForm = document.getElementById('recordForm');
@@ -383,18 +388,16 @@
             };
             try {
                 await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records'), newRecord);
-                showToast("✅ 已儲存至雲端");
+                showToast("✅ 已同步至雲端");
                 document.getElementById('flavor').value = '';
                 document.getElementById('ingredients').value = '';
-            } catch (err) { showToast("連線失敗，請檢查網路"); }
+            } catch (err) { showToast("儲存失敗，請檢查網路"); }
         };
 
         window.deleteRecord = async (id) => {
             if (!currentUser || !confirm("確定刪除此紀錄？")) return;
-            try { 
-                await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'records', id));
-                showToast("已從雲端移除");
-            } catch (err) { showToast("刪除失敗"); }
+            try { await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'records', id)); } 
+            catch (err) { showToast("刪除失敗"); }
         };
 
         function showToast(msg) {
