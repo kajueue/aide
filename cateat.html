@@ -363,19 +363,28 @@
         function renderShoppingList() {
             const stats = {};
             allRecords.forEach(r => {
-                const key = `${r.brand} ${r.flavor}`;
+                // 組合完整的名稱：品牌 + (系列) + 口味
+                // 如果有系列才顯示系列，否則只顯示 品牌 + 口味
+                const fullDisplayName = `${r.brand}${r.series ? ` [${r.series}]` : ''} ${r.flavor}`;
+                
+                const key = fullDisplayName;
                 if (!stats[key]) stats[key] = { total: 0, count: 0 };
                 stats[key].total += r.rating;
                 stats[key].count++;
             });
-            const processed = Object.keys(stats).map(key => ({ name: key, avg: stats[key].total / stats[key].count }));
+            
+            const processed = Object.keys(stats).map(key => ({ 
+                name: key, 
+                avg: stats[key].total / stats[key].count 
+            }));
+            
             const safe = processed.filter(i => i.avg >= 3.7).sort((a,b) => b.avg - a.avg);
             const avoid = processed.filter(i => i.avg < 3.3).sort((a,b) => a.avg - b.avg);
 
             const itemHtml = (list, type) => list.length ? list.map(i => `
                 <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded-lg flex justify-between items-center mb-1 py-1.5 px-3">
-                    <span class="truncate pr-3 font-medium text-gray-600 text-xs">${i.name}</span>
-                    <span class="font-bold text-gray-800 text-[10px]">${i.avg.toFixed(1)}</span>
+                    <span class="truncate pr-3 font-medium text-gray-600 text-[11px]">${i.name}</span>
+                    <span class="font-bold text-gray-800 text-[10px] flex-shrink-0">${i.avg.toFixed(1)}</span>
                 </div>`).join('') : '<p class="text-gray-300 text-[10px] text-center py-2 italic">暫無數據</p>';
 
             document.getElementById('safeBuyList').innerHTML = itemHtml(safe, 'safe');
