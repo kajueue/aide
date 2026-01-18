@@ -143,18 +143,19 @@
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">日期</label>
                             <input type="date" id="date" required class="w-full p-2 rounded-lg text-sm">
                         </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">品牌</label>
-                            <input type="text" id="brand" list="brandList" class="w-full p-2 rounded-lg text-sm">
-                            <datalist id="brandList"></datalist>
-                        </div>
-                        <div class="space-y-1">
+<div class="space-y-1">
+    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">品牌</label>
+    <input type="text" id="brand" list="brandList" autocomplete="off" class="w-full p-2 rounded-lg text-sm">
+    <datalist id="brandList"></datalist>
+</div>
+
+<div class="space-y-1">
     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">系列 / 口味</label>
     <div class="grid grid-cols-2 gap-2">
-        <input type="text" id="series" list="seriesList" placeholder="系列" class="w-full p-2 rounded-lg text-sm">
+        <input type="text" id="series" list="seriesList" placeholder="系列" autocomplete="off" class="w-full p-2 rounded-lg text-sm">
         <datalist id="seriesList"></datalist>
         
-        <input type="text" id="flavor" list="flavorList" placeholder="口味" required class="w-full p-2 rounded-lg text-sm">
+        <input type="text" id="flavor" list="flavorList" placeholder="口味" required autocomplete="off" class="w-full p-2 rounded-lg text-sm">
         <datalist id="flavorList"></datalist>
     </div>
 </div>
