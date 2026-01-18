@@ -235,7 +235,7 @@
     let unsubscribe = null;
     const appId = 'cat-food-tracker';
 
-    const additiveKeywords = /維生素|維他命|B1|B2|B6|B12|A|D3|E|K3|牛磺酸|礦物質|葡萄糖酸|碳酸|磷酸|硫酸|氯化|葉酸|生物素|菸鹼酸|泛酸|Omega|寡糖|水|增稠/i;
+    const additiveKeywords = /維生素|維他命|B1|B2|B6|B12|A|D3|E|K3|牛磺酸|礦物質|葡萄糖酸|碳酸|磷酸|硫酸|氯化|葉酸|生物素|菸鹼酸|泛酸|Omega|寡糖|水|水分|增稠/i;
 
     const loginOverlay = document.getElementById('loginOverlay');
     const appContainer = document.getElementById('appContainer');
@@ -359,28 +359,63 @@
         `).join('');
     }
 
-    function renderAnalysis() {
-        const ingredients = { likes: {}, dislikes: {} };
-        allRecords.forEach(r => {
-            const parts = r.ingredients ? r.ingredients.split(/[，,、\s]+/).filter(i => i && !additiveKeywords.test(i)) : [];
-            parts.forEach(p => {
-                if (r.rating >= 4) ingredients.likes[p] = (ingredients.likes[p] || 0) + 1;
-                if (r.rating <= 2) ingredients.dislikes[p] = (ingredients.dislikes[p] || 0) + 1;
-            });
-        });
-        const renderTags = (data, type) => {
-            const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]).slice(0, 10);
-            // 1. 字體改為 16px 2. 移除後方數字
-            return sorted.map(([name, count]) => `
-                <span class="tag ${type === 'like' ? 'tag-like' : 'tag-dislike'} px-3 py-1 text-[16px] mb-1 mr-1">
-                    ${name}
-                </span>
-            `).join('');
-        };
-        document.getElementById('likeIngredients').innerHTML = renderTags(ingredients.likes, 'like') || '<p class="text-gray-300 text-[14px] italic">分析中...</p>';
-        document.getElementById('dislikeIngredients').innerHTML = renderTags(ingredients.dislikes, 'dislike') || '<p class="text-gray-300 text-[14px] italic">分析中...</p>';
-    }
+  function renderAnalysis() {
+    const scoreMap = {}; // 用於存儲加權後的成分得分
 
+    allRecords.forEach(r => {
+        if (!r.ingredients) return;
+        
+        // 1. 拆解成分邏輯 (處理括號：只抓括號內的具體肉種，丟掉統稱)
+        let processedText = r.ingredients
+            .replace(/[^\uff0c,\u3001\s]+[（(]([^）)]+)[）)]/g, '$1') 
+            .replace(/[（()）]/g, '，');
+
+        const parts = processedText.split(/[，,、\s]+/)
+            .map(i => i.trim())
+            .filter(i => i && !additiveKeywords.test(i)); // 這裡已包含排除「水、水分」
+
+        // 2. 評分加權計算
+        let weight = 0;
+        if (r.rating === 5) weight = 2;       // 非常喜歡
+        else if (r.rating === 4) weight = 1;  // 喜歡
+        else if (r.rating === 2) weight = -1; // 不喜歡
+        else if (r.rating === 1) weight = -2; // 非常討厭
+        else weight = 0;                      // 3分不計分
+
+        if (weight === 0) return;
+
+        parts.forEach(p => {
+            if (!scoreMap[p]) scoreMap[p] = 0;
+            scoreMap[p] += weight;
+        });
+    });
+
+    const renderTags = (type) => {
+        // 設定顯示門檻：加權總分絕對值必須 >= 2 才會顯示
+        // (例如：一次5分，或是兩次4分才會上榜)
+        const threshold = 2; 
+        
+        const filtered = Object.entries(scoreMap)
+            .filter(([name, score]) => {
+                if (type === 'like') return score >= threshold;
+                if (type === 'dislike') return score <= -threshold;
+                return false;
+            })
+            // 排序：不論正負值，絕對值越大（影響力越高）的排越前面
+            .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+            .slice(0, 10);
+
+        return filtered.map(([name]) => `
+            <span class="tag ${type === 'like' ? 'tag-like' : 'tag-dislike'} px-3 py-1 text-[16px] mb-1 mr-1">
+                ${name}
+            </span>
+        `).join('');
+    };
+
+    // 渲染到畫面
+    document.getElementById('likeIngredients').innerHTML = renderTags('like') || '<p class="text-gray-300 text-[14px] italic">分析中...</p>';
+    document.getElementById('dislikeIngredients').innerHTML = renderTags('dislike') || '<p class="text-gray-300 text-[14px] italic">分析中...</p>';
+}
     function renderShoppingList() {
         const stats = {};
         allRecords.forEach(r => {
