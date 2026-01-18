@@ -236,7 +236,6 @@
 
     const additiveKeywords = /維生素|維他命|B1|B2|B6|B12|A|D3|E|K3|牛磺酸|礦物質|葡萄糖酸|碳酸|磷酸|硫酸|氯化|葉酸|生物素|菸鹼酸|泛酸|Omega|膠|增稠/i;
 
-    // --- 元素選取 ---
     const loginOverlay = document.getElementById('loginOverlay');
     const appContainer = document.getElementById('appContainer');
     const loginBtnLarge = document.getElementById('loginBtnLarge');
@@ -251,7 +250,6 @@
     const ratingInput = document.getElementById('rating');
     const ratingVal = document.getElementById('ratingVal');
 
-    // --- 登入邏輯 ---
     loginBtnLarge.onclick = async () => {
         try { await signInWithPopup(auth, provider); } 
         catch (e) { console.error("Login Fail:", e); } 
@@ -293,33 +291,24 @@
         renderDatalists();
     }
 
-    // --- 修正：嚴格過濾 Datalist，避免出現非該品牌選項 ---
     function renderDatalists() {
         const currentBrand = brandInput.value.trim();
         const currentSeries = seriesInput.value.trim();
-
-        // 1. 品牌清單
         const bList = document.getElementById('brandList');
         const allBrands = [...new Set(allRecords.map(r => r.brand))].filter(Boolean);
         bList.innerHTML = allBrands.map(b => `<option value="${b}">`).join('');
 
-        // 2. 系列清單 (嚴格過濾品牌)
         const sList = document.getElementById('seriesList');
         sList.innerHTML = ''; 
         if (currentBrand) {
-            const filteredSeries = [...new Set(allRecords
-                .filter(r => r.brand === currentBrand && r.series)
-                .map(r => r.series))];
+            const filteredSeries = [...new Set(allRecords.filter(r => r.brand === currentBrand && r.series).map(r => r.series))];
             sList.innerHTML = filteredSeries.map(s => `<option value="${s}">`).join('');
         }
 
-        // 3. 口味清單 (嚴格過濾品牌與系列)
         const fList = document.getElementById('flavorList');
         fList.innerHTML = '';
         if (currentBrand) {
-            const filteredFlavors = [...new Set(allRecords
-                .filter(r => r.brand === currentBrand && (!currentSeries || r.series === currentSeries))
-                .map(r => r.flavor))];
+            const filteredFlavors = [...new Set(allRecords.filter(r => r.brand === currentBrand && (!currentSeries || r.series === currentSeries)).map(r => r.flavor))];
             fList.innerHTML = filteredFlavors.map(f => `<option value="${f}">`).join('');
         }
     }
@@ -328,14 +317,8 @@
         const currentBrand = brandInput.value.trim();
         const currentSeries = seriesInput.value.trim();
         const currentFlavor = flavorInput.value.trim();
-
         if (currentBrand && currentFlavor) {
-            const matched = allRecords.find(r => 
-                r.brand.toLowerCase() === currentBrand.toLowerCase() && 
-                (r.series || '').toLowerCase() === (currentSeries || '').toLowerCase() &&
-                r.flavor.toLowerCase() === currentFlavor.toLowerCase()
-            );
-
+            const matched = allRecords.find(r => r.brand.toLowerCase() === currentBrand.toLowerCase() && (r.series || '').toLowerCase() === (currentSeries || '').toLowerCase() && r.flavor.toLowerCase() === currentFlavor.toLowerCase());
             if (matched && matched.ingredients && !ingredientsInput.value.trim()) {
                 ingredientsInput.value = matched.ingredients;
                 showToast("🪄 已自動帶入歷史成分");
@@ -343,37 +326,30 @@
         }
     }
 
-    // --- 監聽器 ---
-    brandInput.addEventListener('input', () => {
-        renderDatalists();
-        attemptAutoFill();
-    });
-    seriesInput.addEventListener('input', () => {
-        renderDatalists();
-        attemptAutoFill();
-    });
+    brandInput.addEventListener('input', () => { renderDatalists(); attemptAutoFill(); });
+    seriesInput.addEventListener('input', () => { renderDatalists(); attemptAutoFill(); });
     flavorInput.addEventListener('input', attemptAutoFill);
     ratingInput.oninput = (e) => ratingVal.innerText = e.target.value;
 
-    // --- 各區塊渲染 (保留縮小文字與 10 筆顯示) ---
+    // --- 修正後的渲染功能 ---
+
     function renderHistory() {
         const list = document.getElementById('historyList');
         if (allRecords.length === 0) {
             list.innerHTML = `<p class="text-center py-6 text-gray-300 text-xs italic">尚無歷史紀錄</p>`;
             return;
         }
-        // 限制顯示最近 10 條
+        // 1. 字體改為 16px 2. 移除成分顯示
         list.innerHTML = allRecords.slice(0, 10).map(r => `
             <div class="py-2 flex justify-between items-center group">
                 <div class="min-w-0 flex-1">
-                    <div class="flex items-center space-x-2 mb-0.5">
-                        <span class="text-[10px] font-bold text-gray-400">${r.date.split('-').slice(1).join('/')}</span>
-                        <h3 class="text-sm font-bold text-gray-700 truncate">${r.brand}${r.series ? ` [${r.series}]` : ''} ${r.flavor}</h3>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-[12px] font-bold text-gray-400">${r.date.split('-').slice(1).join('/')}</span>
+                        <h3 class="text-[16px] font-bold text-gray-700 truncate">${r.brand}${r.series ? ` [${r.series}]` : ''} ${r.flavor}</h3>
                     </div>
-                    <p class="text-[10px] text-gray-400 truncate leading-tight">${r.ingredients || '未紀錄成分'}</p>
                 </div>
                 <div class="flex items-center space-x-3 ml-4">
-                    <span class="text-sm font-black ${r.rating >= 4 ? 'text-green-500' : r.rating <= 2 ? 'text-red-400' : 'text-orange-400'}">${r.rating}</span>
+                    <span class="text-[16px] font-black ${r.rating >= 4 ? 'text-green-500' : r.rating <= 2 ? 'text-red-400' : 'text-orange-400'}">${r.rating}</span>
                     <button onclick="deleteRecord('${r.id}')" class="text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
@@ -393,61 +369,60 @@
         });
         const renderTags = (data, type) => {
             const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            // 1. 字體改為 16px 2. 移除後方數字
             return sorted.map(([name, count]) => `
-                <span class="tag ${type === 'like' ? 'tag-like' : 'tag-dislike'} px-2 py-0.5 text-[10px] mb-1 mr-1">
-                    ${name} <span class="opacity-50 text-[9px]">${count}</span>
+                <span class="tag ${type === 'like' ? 'tag-like' : 'tag-dislike'} px-3 py-1 text-[16px] mb-1 mr-1">
+                    ${name}
                 </span>
             `).join('');
         };
-        document.getElementById('likeIngredients').innerHTML = renderTags(ingredients.likes, 'like') || '<p class="text-gray-300 text-[10px] italic">分析中...</p>';
-        document.getElementById('dislikeIngredients').innerHTML = renderTags(ingredients.dislikes, 'dislike') || '<p class="text-gray-300 text-[10px] italic">分析中...</p>';
+        document.getElementById('likeIngredients').innerHTML = renderTags(ingredients.likes, 'like') || '<p class="text-gray-300 text-[14px] italic">分析中...</p>';
+        document.getElementById('dislikeIngredients').innerHTML = renderTags(ingredients.dislikes, 'dislike') || '<p class="text-gray-300 text-[14px] italic">分析中...</p>';
     }
 
-  function renderShoppingList() {
-            const stats = {};
-            allRecords.forEach(r => {
-                const name = `${r.brand}${r.series ? ` [${r.series}]` : ''} ${r.flavor}`;
-                if (!stats[name]) stats[name] = { total: 0, count: 0 };
-                stats[name].total += r.rating;
-                stats[name].count++;
-            });
-            
-            const processed = Object.keys(stats).map(name => ({ name, avg: stats[name].total / stats[name].count }));
-            
-            // 按照品牌名稱排序 (zh-TW)
-            const safe = processed.filter(i => i.avg >= 3.7).sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
-            const avoid = processed.filter(i => i.avg < 3.3).sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+    function renderShoppingList() {
+        const stats = {};
+        allRecords.forEach(r => {
+            const name = `${r.brand}${r.series ? ` [${r.series}]` : ''} ${r.flavor}`;
+            if (!stats[name]) stats[name] = { total: 0, count: 0 };
+            stats[name].total += r.rating;
+            stats[name].count++;
+        });
+        const processed = Object.keys(stats).map(name => ({ name, avg: stats[name].total / stats[name].count }));
+        const safe = processed.filter(i => i.avg >= 3.7).sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+        const avoid = processed.filter(i => i.avg < 3.3).sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
 
-            const itemHtml = (list, type) => list.length ? list.map(i => `
-                <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded flex justify-between items-center mb-0.5 py-1 px-3">
-                    <span class="font-medium text-gray-700 truncate pr-2 text-sm">${i.name}</span>
-                    <span class="font-bold text-gray-900 text-[11px] bg-white/60 px-1 rounded">${i.avg.toFixed(1)}</span>
-                </div>`).join('') : '<p class="text-gray-300 text-xs text-center py-4 italic">暫無數據</p>';
+        // 項目字體改為 16px
+        const itemHtml = (list, type) => list.length ? list.map(i => `
+            <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded flex justify-between items-center mb-0.5 py-1 px-3">
+                <span class="font-medium text-gray-700 truncate pr-2 text-[16px]">${i.name}</span>
+                <span class="font-bold text-gray-900 text-[14px] bg-white/60 px-1 rounded">${i.avg.toFixed(1)}</span>
+            </div>`).join('') : '<p class="text-gray-300 text-xs text-center py-4 italic">暫無數據</p>';
 
-            // 移除 open 屬性，使其預設為關閉
-            document.getElementById('safeBuyList').innerHTML = `
-                <details class="group">
-                    <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
-                        <h2 class="text-xs font-bold text-green-700 flex items-center uppercase tracking-wider">
-                            <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-2"></span> 推薦清單 (${safe.length})
-                        </h2>
-                        <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
-                    </summary>
-                    <div class="max-h-[250px] overflow-y-auto pr-1 mt-2">${itemHtml(safe, 'safe')}</div>
-                </details>`;
+        // 移除 open 屬性（預設關閉），標題字體也加大
+        document.getElementById('safeBuyList').innerHTML = `
+            <details class="group">
+                <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
+                    <h2 class="text-[16px] font-bold text-green-700 flex items-center uppercase tracking-wider">
+                        <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-2"></span> 推薦清單 (${safe.length})
+                    </h2>
+                    <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
+                </summary>
+                <div class="max-h-[250px] overflow-y-auto pr-1 mt-2">${itemHtml(safe, 'safe')}</div>
+            </details>`;
 
-            document.getElementById('avoidList').innerHTML = `
-                <details class="group">
-                    <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
-                        <h2 class="text-xs font-bold text-red-700 flex items-center uppercase tracking-wider">
-                            <span class="w-1.5 h-1.5 bg-red-400 rounded-full mr-2"></span> 避雷清單 (${avoid.length})
-                        </h2>
-                        <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
-                    </summary>
-                    <div class="max-h-[250px] overflow-y-auto pr-1 mt-2">${itemHtml(avoid, 'avoid')}</div>
-                </details>`;
-        }
-    // --- 表單提交 ---
+        document.getElementById('avoidList').innerHTML = `
+            <details class="group">
+                <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
+                    <h2 class="text-[16px] font-bold text-red-700 flex items-center uppercase tracking-wider">
+                        <span class="w-1.5 h-1.5 bg-red-400 rounded-full mr-2"></span> 避雷清單 (${avoid.length})
+                    </h2>
+                    <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
+                </summary>
+                <div class="max-h-[250px] overflow-y-auto pr-1 mt-2">${itemHtml(avoid, 'avoid')}</div>
+            </details>`;
+    }
+
     recordForm.onsubmit = async (e) => {
         e.preventDefault();
         if (!currentUser) return;
@@ -487,7 +462,6 @@
         t.classList.remove('translate-y-24');
         setTimeout(() => t.classList.add('translate-y-24'), 3000);
     }
-
     document.getElementById('date').valueAsDate = new Date();
 </script>
 </body>
