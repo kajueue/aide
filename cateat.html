@@ -384,7 +384,7 @@
             document.getElementById('dislikeIngredients').innerHTML = dislikes.map(i => `<span class="tag tag-dislike" style="${tagStyle}">${i.name}</span>`).join('') || '<span class="text-xs text-gray-300">數據收集中...</span>';
         }
 
-        function renderShoppingList() {
+function renderShoppingList() {
             const stats = {};
             allRecords.forEach(r => {
                 const fullDisplayName = `${r.brand}${r.series ? ` [${r.series}]` : ''} ${r.flavor}`;
@@ -397,14 +397,41 @@
             const safe = processed.filter(i => i.avg >= 3.7).sort((a,b) => b.avg - a.avg);
             const avoid = processed.filter(i => i.avg < 3.3).sort((a,b) => a.avg - b.avg);
 
-const itemHtml = (list, type) => list.length ? list.map(i => `
-    <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded flex justify-between items-center mb-0.5 py-1 px-3">
-        <span class="font-medium text-gray-700 truncate pr-2" style="font-size: 16px; line-height: 1.1;">${i.name}</span>
-        <span class="font-bold text-gray-900 text-[11px] flex-shrink-0 bg-white/60 px-1 rounded">${i.avg.toFixed(1)}</span>
-    </div>`).join('')  : '<p class="text-gray-300 text-xs text-center py-4 italic">暫無數據</p>';
+            const itemHtml = (list, type) => list.length ? list.map(i => `
+                <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded flex justify-between items-center mb-0.5 py-1 px-3">
+                    <span class="font-medium text-gray-700 truncate pr-2" style="font-size: 16px; line-height: 1.1;">${i.name}</span>
+                    <span class="font-bold text-gray-900 text-[11px] flex-shrink-0 bg-white/60 px-1 rounded">${i.avg.toFixed(1)}</span>
+                </div>`).join('') : '<p class="text-gray-300 text-xs text-center py-4 italic">暫無數據</p>';
 
-            document.getElementById('safeBuyList').innerHTML = itemHtml(safe, 'safe');
-            document.getElementById('avoidList').innerHTML = itemHtml(avoid, 'avoid');
+            // 推薦清單 - 預設收起
+            document.getElementById('safeBuyList').innerHTML = `
+                <details class="group">
+                    <summary class="list-none cursor-pointer flex justify-between items-center py-1">
+                        <h2 class="text-xs font-bold text-green-700 flex items-center uppercase tracking-wider">
+                            <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-2"></span> 推薦清單 (${safe.length})
+                        </h2>
+                        <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
+                    </summary>
+                    <div class="max-h-[300px] overflow-y-auto pr-1 pt-2">
+                        ${itemHtml(safe, 'safe')}
+                    </div>
+                </details>
+            `;
+
+            // 避雷清單 - 預設收起
+            document.getElementById('avoidList').innerHTML = `
+                <details class="group">
+                    <summary class="list-none cursor-pointer flex justify-between items-center py-1">
+                        <h2 class="text-xs font-bold text-red-700 flex items-center uppercase tracking-wider">
+                            <span class="w-1.5 h-1.5 bg-red-400 rounded-full mr-2"></span> 避雷清單 (${avoid.length})
+                        </h2>
+                        <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
+                    </summary>
+                    <div class="max-h-[300px] overflow-y-auto pr-1 pt-2">
+                        ${itemHtml(avoid, 'avoid')}
+                    </div>
+                </details>
+            `;
         }
 
         // --- 表單提交與刪除 ---
@@ -433,7 +460,7 @@ const itemHtml = (list, type) => list.length ? list.map(i => `
             try { await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'records', id)); } 
             catch (err) { showToast("刪除失敗"); }
         };
-
+        
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.innerText = msg;
