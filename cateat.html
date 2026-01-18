@@ -235,7 +235,7 @@
     let unsubscribe = null;
     const appId = 'cat-food-tracker';
 
-    const additiveKeywords = /維生素|維他命|B1|B2|B6|B12|A|D3|E|K3|牛磺酸|礦物質|葡萄糖酸|碳酸|磷酸|硫酸|氯化|葉酸|生物素|菸鹼酸|泛酸|Omega|寡糖|水|水分|增稠/i;
+    const additiveKeywords = /維生素|維他命|B1|B2|B6|B12|A|D3|E|K3|牛磺酸|礦物質|葡萄糖酸|碳酸|磷酸|硫酸|氯化|葉酸|生物素|菸鹼酸|泛酸|Omega|寡糖|澱粉|酵母|甘氨酸|中鏈脂肪酸油|水|水分|增稠/i;
 
     const loginOverlay = document.getElementById('loginOverlay');
     const appContainer = document.getElementById('appContainer');
@@ -370,9 +370,11 @@
             .replace(/[^\uff0c,\u3001\s]+[（(]([^）)]+)[）)]/g, '$1') 
             .replace(/[（()）]/g, '，');
 
-        const parts = processedText.split(/[，,、\s]+/)
-            .map(i => i.trim())
-            .filter(i => i && !additiveKeywords.test(i)); // 這裡已包含排除「水、水分」
+const parts = processedText.split(/[，,、\s]+/)
+            .map(i => i.trim()
+                .replace(/(提取物|萃取物|粉)$/, '') // 這裡會把結尾的 提取物、萃取物、粉 給去掉
+            )
+            .filter(i => i && !additiveKeywords.test(i));
 
         // 2. 評分加權計算
         let weight = 0;
