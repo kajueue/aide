@@ -293,37 +293,40 @@
             renderDatalists();
         }
 
-        function renderDatalists() {
-            const currentBrand = brandInput.value.trim();
-            const currentSeries = seriesInput.value.trim();
+function renderDatalists() {
+    const currentBrand = brandInput.value.trim();
+    const currentSeries = seriesInput.value.trim();
 
-            // 1. 品牌清單
-            const bList = document.getElementById('brandList');
-            const allBrands = [...new Set(allRecords.map(r => r.brand))];
-            bList.innerHTML = allBrands.map(b => `<option value="${b}">`).join('');
+    // 1. 品牌清單 (維持顯示所有品牌)
+    const bList = document.getElementById('brandList');
+    const allBrands = [...new Set(allRecords.map(r => r.brand))].filter(Boolean);
+    bList.innerHTML = allBrands.map(b => `<option value="${b}">`).join('');
 
-            // 2. 系列清單
-            const sList = document.getElementById('seriesList');
-            if (currentBrand) {
-                const filteredSeries = [...new Set(allRecords
-                    .filter(r => r.brand === currentBrand && r.series)
-                    .map(r => r.series))];
-                sList.innerHTML = filteredSeries.map(s => `<option value="${s}">`).join('');
-            } else {
-                sList.innerHTML = '';
-            }
+    // 2. 系列清單 (嚴格過濾：必須匹配當前品牌)
+    const sList = document.getElementById('seriesList');
+    sList.innerHTML = ''; // 先清空，防止舊選項殘留
+    if (currentBrand) {
+        // 只抓取 brand 欄位完全符合的系列
+        const filteredSeries = [...new Set(allRecords
+            .filter(r => r.brand === currentBrand && r.series)
+            .map(r => r.series))];
+        sList.innerHTML = filteredSeries.map(s => `<option value="${s}">`).join('');
+    }
 
-            // 3. 口味清單
-            const fList = document.getElementById('flavorList');
-            if (currentBrand) {
-                const filteredFlavors = [...new Set(allRecords
-                    .filter(r => r.brand === currentBrand && (!currentSeries || r.series === currentSeries))
-                    .map(r => r.flavor))];
-                fList.innerHTML = filteredFlavors.map(f => `<option value="${f}">`).join('');
-            } else {
-                fList.innerHTML = '';
-            }
-        }
+    // 3. 口味清單 (嚴格過濾：必須匹配品牌，如果有系列則也要匹配系列)
+    const fList = document.getElementById('flavorList');
+    fList.innerHTML = ''; // 先清空
+    if (currentBrand) {
+        const filteredFlavors = [...new Set(allRecords
+            .filter(r => {
+                const matchBrand = r.brand === currentBrand;
+                const matchSeries = !currentSeries || r.series === currentSeries;
+                return matchBrand && matchSeries;
+            })
+            .map(r => r.flavor))];
+        fList.innerHTML = filteredFlavors.map(f => `<option value="${f}">`).join('');
+    }
+}
 
         function attemptAutoFill() {
             const currentBrand = brandInput.value.trim();
