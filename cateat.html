@@ -334,15 +334,20 @@
 
     // --- 修正後的渲染功能 ---
 
-    function renderHistory() {
+   function renderHistory() {
         const list = document.getElementById('historyList');
         if (allRecords.length === 0) {
             list.innerHTML = `<p class="text-center py-6 text-gray-300 text-xs italic">尚無歷史紀錄</p>`;
             return;
         }
-        // 1. 字體改為 16px 2. 移除成分顯示
-        list.innerHTML = allRecords.slice(0, 10).map(r => `
-            <div class="py-2 flex justify-between items-center group">
+
+        // 前 5 筆直接顯示
+        const firstFive = allRecords.slice(0, 5);
+        // 5 筆之後的紀錄
+        const remaining = allRecords.slice(5);
+
+        const recordToHtml = (r) => `
+            <div class="py-2 flex justify-between items-center group border-b border-gray-50 last:border-0">
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center space-x-2">
                         <span class="text-[12px] font-bold text-gray-400">${r.date.split('-').slice(1).join('/')}</span>
@@ -355,8 +360,25 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
                 </div>
-            </div>
-        `).join('');
+            </div>`;
+
+        let html = firstFive.map(recordToHtml).join('');
+
+        // 如果超過 5 筆，加上收合區塊
+        if (remaining.length > 0) {
+            html += `
+                <details class="group">
+                    <summary class="list-none cursor-pointer py-3 text-center outline-none">
+                        <span class="text-gray-400 text-[14px] font-bold group-open:hidden">查看更多歷史紀錄 (+${remaining.length})</span>
+                        <span class="text-gray-400 text-[14px] font-bold hidden group-open:inline">收合紀錄</span>
+                    </summary>
+                    <div class="pb-2">
+                        ${remaining.map(recordToHtml).join('')}
+                    </div>
+                </details>`;
+        }
+
+        list.innerHTML = html;
     }
 
   function renderAnalysis() {
@@ -446,7 +468,7 @@ const parts = processedText.split(/[，,、\s]+/)
                     </h2>
                     <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
                 </summary>
-                <div class="max-h-[250px] overflow-y-auto pr-1 mt-2">${itemHtml(safe, 'safe')}</div>
+                <div class="max-h-[350px] overflow-y-auto pr-1 mt-2">${itemHtml(safe, 'safe')}</div>
             </details>`;
 
         document.getElementById('avoidList').innerHTML = `
@@ -457,7 +479,7 @@ const parts = processedText.split(/[，,、\s]+/)
                     </h2>
                     <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
                 </summary>
-                <div class="max-h-[250px] overflow-y-auto pr-1 mt-2">${itemHtml(avoid, 'avoid')}</div>
+                <div class="max-h-[350px] overflow-y-auto pr-1 mt-2">${itemHtml(avoid, 'avoid')}</div>
             </details>`;
     }
 
