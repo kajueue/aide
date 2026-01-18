@@ -372,7 +372,7 @@
 
 const parts = processedText.split(/[，,、\s]+/)
             .map(i => i.trim()
-                .replace(/(提取物|萃取物|粉)$/, '') // 這裡會把結尾的 提取物、萃取物、粉 給去掉
+                .replace(/(提取物|萃取物|抽出物|粉)$/, '') // 這裡會把結尾的 提取物、萃取物、粉 給去掉
             )
             .filter(i => i && !additiveKeywords.test(i));
 
