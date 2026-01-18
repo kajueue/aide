@@ -325,7 +325,7 @@
                 return;
             }
 
-    list.innerHTML = allRecords.slice(0, 15).map(r => `
+    list.innerHTML = allRecords.slice(0, 10).map(r => `
         <div class="py-1 flex justify-between items-center group border-b border-gray-50 last:border-0 hover:bg-gray-50 px-1">
             <div class="flex items-center space-x-2 overflow-hidden"> <span class="text-[10px] text-gray-400 font-medium tabular-nums flex-shrink-0 w-9">${r.date.split('-').slice(1).join('/')}</span>
                 <div class="text-gray-700 truncate" style="font-size: 16px; line-height: 1.2;"> <span class="font-bold text-gray-400 mr-1">${r.brand}</span>
