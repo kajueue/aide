@@ -149,12 +149,15 @@
                             <datalist id="brandList"></datalist>
                         </div>
                         <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">系列 / 口味</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <input type="text" id="series" placeholder="系列" class="w-full p-2 rounded-lg text-sm">
-                                <input type="text" id="flavor" placeholder="口味" required class="w-full p-2 rounded-lg text-sm">
-                            </div>
-                        </div>
+    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">系列 / 口味</label>
+    <div class="grid grid-cols-2 gap-2">
+        <input type="text" id="series" list="seriesList" placeholder="系列" class="w-full p-2 rounded-lg text-sm">
+        <datalist id="seriesList"></datalist>
+        
+        <input type="text" id="flavor" list="flavorList" placeholder="口味" required class="w-full p-2 rounded-lg text-sm">
+        <datalist id="flavorList"></datalist>
+    </div>
+</div>
                         <div class="space-y-1">
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">成分明細</label>
                             <textarea id="ingredients" rows="2" class="w-full p-2 rounded-lg text-xs"></textarea>
@@ -207,7 +210,7 @@
             </div> </div> </div> 
     <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900/90 backdrop-blur-sm text-white px-6 py-2 rounded-full text-xs font-medium shadow-2xl translate-y-24 transition-transform duration-500 z-50"></div>
     
-    <script type="module">
+  <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
         import { getFirestore, collection, doc, addDoc, onSnapshot, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
@@ -291,53 +294,90 @@
         }
 
         function renderDatalists() {
+            const currentBrand = brandInput.value.trim();
+            const currentSeries = seriesInput.value.trim();
+
+            // 1. 品牌清單
             const bList = document.getElementById('brandList');
-            bList.innerHTML = [...new Set(allRecords.map(r => r.brand))].map(b => `<option value="${b}">`).join('');
+            const allBrands = [...new Set(allRecords.map(r => r.brand))];
+            bList.innerHTML = allBrands.map(b => `<option value="${b}">`).join('');
+
+            // 2. 系列清單
+            const sList = document.getElementById('seriesList');
+            if (currentBrand) {
+                const filteredSeries = [...new Set(allRecords
+                    .filter(r => r.brand === currentBrand && r.series)
+                    .map(r => r.series))];
+                sList.innerHTML = filteredSeries.map(s => `<option value="${s}">`).join('');
+            } else {
+                sList.innerHTML = '';
+            }
+
+            // 3. 口味清單
+            const fList = document.getElementById('flavorList');
+            if (currentBrand) {
+                const filteredFlavors = [...new Set(allRecords
+                    .filter(r => r.brand === currentBrand && (!currentSeries || r.series === currentSeries))
+                    .map(r => r.flavor))];
+                fList.innerHTML = filteredFlavors.map(f => `<option value="${f}">`).join('');
+            } else {
+                fList.innerHTML = '';
+            }
         }
 
-        // --- 自動帶入功能 ---
         function attemptAutoFill() {
             const currentBrand = brandInput.value.trim();
+            const currentSeries = seriesInput.value.trim();
             const currentFlavor = flavorInput.value.trim();
+
             if (currentBrand && currentFlavor) {
                 const matched = allRecords.find(r => 
                     r.brand.toLowerCase() === currentBrand.toLowerCase() && 
+                    (r.series || '').toLowerCase() === (currentSeries || '').toLowerCase() &&
                     r.flavor.toLowerCase() === currentFlavor.toLowerCase()
                 );
-                if (matched && matched.ingredients) {
-                    if (!seriesInput.value) seriesInput.value = matched.series || '';
-                    if (!ingredientsInput.value) {
-                        ingredientsInput.value = matched.ingredients;
-                        showToast("🪄 已自動帶入歷史成分");
-                    }
+
+                if (matched && matched.ingredients && !ingredientsInput.value.trim()) {
+                    ingredientsInput.value = matched.ingredients;
+                    showToast("🪄 已自動帶入歷史成分");
                 }
             }
         }
-        brandInput.addEventListener('input', attemptAutoFill);
+
+        // --- 監聽器 ---
+        brandInput.addEventListener('input', () => {
+            renderDatalists();
+            attemptAutoFill();
+        });
+
+        seriesInput.addEventListener('input', () => {
+            renderDatalists();
+            attemptAutoFill();
+        });
+
         flavorInput.addEventListener('input', attemptAutoFill);
         ratingInput.oninput = (e) => ratingVal.innerText = e.target.value;
 
-        // --- 各區塊渲染渲染 ---
-       function renderHistory() {
+        // --- 渲染函式 ---
+        function renderHistory() {
             const list = document.getElementById('historyList');
             if (allRecords.length === 0) {
                 list.innerHTML = `<p class="text-center py-6 text-gray-300 text-xs italic">尚無歷史紀錄</p>`;
                 return;
             }
-
-    list.innerHTML = allRecords.slice(0, 10).map(r => `
-        <div class="py-1 flex justify-between items-center group border-b border-gray-50 last:border-0 hover:bg-gray-50 px-1">
-            <div class="flex items-center space-x-2 overflow-hidden"> <span class="text-[10px] text-gray-400 font-medium tabular-nums flex-shrink-0 w-9">${r.date.split('-').slice(1).join('/')}</span>
-                <div class="text-gray-700 truncate" style="font-size: 16px; line-height: 1.2;"> <span class="font-bold text-gray-400 mr-1">${r.brand}</span>
-                    ${r.series ? `<span class="text-gray-500 font-medium">[${r.series}]</span>` : ''}
-                    <span class="text-gray-600">${r.flavor}</span>
-                </div>
-            </div>
-
-                    <div class="flex items-center space-x-2 flex-shrink-0">
-                        <span class="text-[10px] font-bold ${r.rating >= 4 ? 'text-orange-500' : 'text-gray-300'}">${'★'.repeat(r.rating)}</span>
-                        <button onclick="window.deleteRecord('${r.id}')" class="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-400 transition-all">
-                           <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            list.innerHTML = allRecords.slice(0, 10).map(r => `
+                <div class="py-2 flex justify-between items-center group">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center space-x-2 mb-0.5">
+                            <span class="text-[10px] font-bold text-gray-400">${r.date.split('-').slice(1).join('/')}</span>
+                            <h3 class="text-sm font-bold text-gray-700 truncate">${r.brand}${r.series ? ` [${r.series}]` : ''} ${r.flavor}</h3>
+                        </div>
+                        <p class="text-[10px] text-gray-400 truncate leading-tight">${r.ingredients || '未紀錄成分'}</p>
+                    </div>
+                    <div class="flex items-center space-x-3 ml-4">
+                        <span class="text-sm font-black ${r.rating >= 4 ? 'text-green-500' : r.rating <= 2 ? 'text-red-400' : 'text-orange-400'}">${r.rating}</span>
+                        <button onclick="deleteRecord('${r.id}')" class="text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
                     </div>
                 </div>
@@ -345,120 +385,108 @@
         }
 
         function renderAnalysis() {
-            const ingStats = {};
-            const ingredientMapping = {
-                '雞肉': ['雞肉絲', '雞胸肉', '雞里肌', '雞腿肉', '新鮮雞肉', '脫水雞肉'],
-                '鮪魚': ['黃鰭鮪', '鮪魚肉', '鮪魚片', '白身鮪魚'],
-                '鮭魚': ['鮮鮭魚', '鮭魚肉', '鮭魚片'],
-            };
-
+            const ingredients = { likes: {}, dislikes: {} };
             allRecords.forEach(r => {
-                if (!r.ingredients) return;
-                let ings = r.ingredients.split(/[，,、\s\n]+/).map(i => i.trim()).filter(i => i && !additiveKeywords.test(i));
-                ings = ings.map(ing => {
-                    for (const [standard, aliases] of Object.entries(ingredientMapping)) {
-                        if (aliases.includes(ing) || ing === standard) return standard;
-                    }
-                    return ing;
-                });
-
-                [...new Set(ings)].forEach(ing => {
-                    if (!ingStats[ing]) ingStats[ing] = { count: 0, total: 0 };
-                    ingStats[ing].count++;
-                    ingStats[ing].total += r.rating;
+                const parts = r.ingredients ? r.ingredients.split(/[，,、\s]+/).filter(i => i && !additiveKeywords.test(i)) : [];
+                parts.forEach(p => {
+                    if (r.rating >= 4) ingredients.likes[p] = (ingredients.likes[p] || 0) + 1;
+                    if (r.rating <= 2) ingredients.dislikes[p] = (ingredients.dislikes[p] || 0) + 1;
                 });
             });
 
-            const sorted = Object.keys(ingStats).map(name => ({ name, avg: ingStats[name].total / ingStats[name].count, count: ingStats[name].count }));
-            const likes = sorted.filter(i => i.count >= 2 && i.avg >= 4).slice(0, 10);
-            const dislikes = sorted.filter(i => i.count >= 2 && i.avg < 3).slice(0, 10);
+            const renderTags = (data, type) => {
+                const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]).slice(0, 10);
+                return sorted.map(([name, count]) => `
+                    <span class="tag ${type === 'like' ? 'tag-like' : 'tag-dislike'} px-2 py-0.5 text-[10px] mb-1 mr-1">
+                        ${name} <span class="opacity-50 text-[9px]">${count}</span>
+                    </span>
+                `).join('');
+            };
 
-            const tagStyle = "font-size: 16px; padding: 4px 10px; margin-right: 6px; margin-bottom: 6px;";
-            document.getElementById('likeIngredients').innerHTML = likes.map(i => `<span class="tag tag-like" style="${tagStyle}">${i.name}</span>`).join('') || '<span class="text-xs text-gray-300">數據收集中...</span>';
-            document.getElementById('dislikeIngredients').innerHTML = dislikes.map(i => `<span class="tag tag-dislike" style="${tagStyle}">${i.name}</span>`).join('') || '<span class="text-xs text-gray-300">數據收集中...</span>';
+            document.getElementById('likeIngredients').innerHTML = renderTags(ingredients.likes, 'like') || '<p class="text-gray-300 text-[10px] italic">分析中...</p>';
+            document.getElementById('dislikeIngredients').innerHTML = renderTags(ingredients.dislikes, 'dislike') || '<p class="text-gray-300 text-[10px] italic">分析中...</p>';
         }
 
         function renderShoppingList() {
             const stats = {};
             allRecords.forEach(r => {
-                const fullDisplayName = `${r.brand}${r.series ? ` [${r.series}]` : ''} ${r.flavor}`;
-                if (!stats[fullDisplayName]) stats[fullDisplayName] = { total: 0, count: 0 };
-                stats[fullDisplayName].total += r.rating;
-                stats[fullDisplayName].count++;
+                const name = `${r.brand}${r.series ? ` [${r.series}]` : ''} ${r.flavor}`;
+                if (!stats[name]) stats[name] = { total: 0, count: 0 };
+                stats[name].total += r.rating;
+                stats[name].count++;
             });
-            
             const processed = Object.keys(stats).map(name => ({ name, avg: stats[name].total / stats[name].count }));
-            
-            // --- 這裡改成了按名稱排序，方便採買時查看同品牌的產品 ---
             const safe = processed.filter(i => i.avg >= 3.7).sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
             const avoid = processed.filter(i => i.avg < 3.3).sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
 
             const itemHtml = (list, type) => list.length ? list.map(i => `
                 <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded flex justify-between items-center mb-0.5 py-1 px-3">
-                    <span class="font-medium text-gray-700 truncate pr-2" style="font-size: 16px; line-height: 1.1;">${i.name}</span>
-                    <span class="font-bold text-gray-900 text-[11px] flex-shrink-0 bg-white/60 px-1 rounded">${i.avg.toFixed(1)}</span>
+                    <span class="font-medium text-gray-700 truncate pr-2 text-sm">${i.name}</span>
+                    <span class="font-bold text-gray-900 text-[11px] bg-white/60 px-1 rounded">${i.avg.toFixed(1)}</span>
                 </div>`).join('') : '<p class="text-gray-300 text-xs text-center py-4 italic">暫無數據</p>';
 
             document.getElementById('safeBuyList').innerHTML = `
-                <details class="group">
+                <details class="group" open>
                     <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
                         <h2 class="text-xs font-bold text-green-700 flex items-center uppercase tracking-wider">
                             <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-2"></span> 推薦清單 (${safe.length})
                         </h2>
                         <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
                     </summary>
-                    <div class="max-h-[300px] overflow-y-auto pr-1 mt-3">
-                        ${itemHtml(safe, 'safe')}
-                    </div>
-                </details>
-            `;
+                    <div class="max-h-[250px] overflow-y-auto pr-1 mt-2">${itemHtml(safe, 'safe')}</div>
+                </details>`;
 
             document.getElementById('avoidList').innerHTML = `
-                <details class="group">
+                <details class="group" open>
                     <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
                         <h2 class="text-xs font-bold text-red-700 flex items-center uppercase tracking-wider">
                             <span class="w-1.5 h-1.5 bg-red-400 rounded-full mr-2"></span> 避雷清單 (${avoid.length})
                         </h2>
                         <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
                     </summary>
-                    <div class="max-h-[300px] overflow-y-auto pr-1 mt-3">
-                        ${itemHtml(avoid, 'avoid')}
-                    </div>
-                </details>
-            `;
+                    <div class="max-h-[250px] overflow-y-auto pr-1 mt-2">${itemHtml(avoid, 'avoid')}</div>
+                </details>`;
         }
-        // --- 表單提交與刪除 ---
+
+        // --- 表單提交 ---
         recordForm.onsubmit = async (e) => {
             e.preventDefault();
             if (!currentUser) return;
-            const newRecord = {
-                date: document.getElementById('date').value,
-                brand: brandInput.value.trim(),
-                series: seriesInput.value.trim(),
-                flavor: flavorInput.value.trim(),
-                rating: parseInt(ratingInput.value),
-                ingredients: ingredientsInput.value.trim(),
-                createdAt: new Date().toISOString()
-            };
+            const btn = recordForm.querySelector('button');
+            btn.disabled = true;
             try {
-                await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records'), newRecord);
-                showToast("✅ 已同步至雲端");
-                brandInput.value = ''; seriesInput.value = ''; flavorInput.value = ''; ingredientsInput.value = '';
-                ratingInput.value = 3; ratingVal.innerText = 3;
-            } catch (err) { showToast("儲存失敗"); }
+                const userRecordsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records');
+                await addDoc(userRecordsRef, {
+                    date: document.getElementById('date').value,
+                    brand: brandInput.value.trim(),
+                    series: seriesInput.value.trim(),
+                    flavor: flavorInput.value.trim(),
+                    ingredients: ingredientsInput.value.trim(),
+                    rating: parseInt(ratingInput.value),
+                    createdAt: new Date().toISOString()
+                });
+                recordForm.reset();
+                ratingVal.innerText = "3";
+                document.getElementById('date').valueAsDate = new Date();
+                showToast("✅ 紀錄已成功儲存");
+            } catch (e) { showToast("❌ 儲存失敗"); }
+            finally { btn.disabled = false; }
         };
 
         window.deleteRecord = async (id) => {
-            if (!currentUser || !confirm("確定刪除？")) return;
-            try { await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'records', id)); } 
-            catch (err) { showToast("刪除失敗"); }
+            if (!confirm('確定要刪除這條紀錄嗎？')) return;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'records', id);
+                await deleteDoc(docRef);
+                showToast("🗑️ 紀錄已刪除");
+            } catch (e) { showToast("❌ 刪除失敗"); }
         };
-        
+
         function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.classList.remove('translate-y-24');
-            setTimeout(() => toast.classList.add('translate-y-24'), 2500);
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.remove('translate-y-24');
+            setTimeout(() => t.classList.add('translate-y-24'), 3000);
         }
 
         document.getElementById('date').valueAsDate = new Date();
