@@ -170,21 +170,16 @@
                 </div>
             </div>
 
-            <div class="lg:col-span-8 space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="card p-4">
-                        <h2 class="text-xs font-bold text-green-700 mb-3 flex items-center uppercase tracking-wider">
-                            <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-2"></span> 推薦清單 (≥ 3.7)
-                        </h2>
-                        <div id="safeBuyList" class="space-y-1"></div>
-                    </div>
-                    <div class="card p-4">
-                        <h2 class="text-xs font-bold text-red-700 mb-3 flex items-center uppercase tracking-wider">
-                            <span class="w-1.5 h-1.5 bg-red-400 rounded-full mr-2"></span> 避雷清單 (< 3.3)
-                        </h2>
-                        <div id="avoidList" class="space-y-1"></div>
-                    </div>
-                </div>
+<div class="lg:col-span-8 space-y-2"> <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="card p-3"> <div id="safeBuyList"></div>
+        </div>
+        
+        <div class="card p-3">
+            <div id="avoidList"></div>
+        </div>
+    </div>
+    
+    </div>
 
                 <div class="card p-4">
                     <h2 class="text-sm font-bold mb-3 text-gray-800">成分偏好</h2>
@@ -384,7 +379,7 @@
             document.getElementById('dislikeIngredients').innerHTML = dislikes.map(i => `<span class="tag tag-dislike" style="${tagStyle}">${i.name}</span>`).join('') || '<span class="text-xs text-gray-300">數據收集中...</span>';
         }
 
-function renderShoppingList() {
+        function renderShoppingList() {
             const stats = {};
             allRecords.forEach(r => {
                 const fullDisplayName = `${r.brand}${r.series ? ` [${r.series}]` : ''} ${r.flavor}`;
@@ -403,31 +398,30 @@ function renderShoppingList() {
                     <span class="font-bold text-gray-900 text-[11px] flex-shrink-0 bg-white/60 px-1 rounded">${i.avg.toFixed(1)}</span>
                 </div>`).join('') : '<p class="text-gray-300 text-xs text-center py-4 italic">暫無數據</p>';
 
-            // 推薦清單 - 預設收起
+            // 直接把 details 標籤當作整張卡片的內容
             document.getElementById('safeBuyList').innerHTML = `
                 <details class="group">
-                    <summary class="list-none cursor-pointer flex justify-between items-center py-1">
+                    <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
                         <h2 class="text-xs font-bold text-green-700 flex items-center uppercase tracking-wider">
                             <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-2"></span> 推薦清單 (${safe.length})
                         </h2>
                         <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
                     </summary>
-                    <div class="max-h-[300px] overflow-y-auto pr-1 pt-2">
+                    <div class="max-h-[300px] overflow-y-auto pr-1 mt-3">
                         ${itemHtml(safe, 'safe')}
                     </div>
                 </details>
             `;
 
-            // 避雷清單 - 預設收起
             document.getElementById('avoidList').innerHTML = `
                 <details class="group">
-                    <summary class="list-none cursor-pointer flex justify-between items-center py-1">
+                    <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
                         <h2 class="text-xs font-bold text-red-700 flex items-center uppercase tracking-wider">
                             <span class="w-1.5 h-1.5 bg-red-400 rounded-full mr-2"></span> 避雷清單 (${avoid.length})
                         </h2>
                         <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
                     </summary>
-                    <div class="max-h-[300px] overflow-y-auto pr-1 pt-2">
+                    <div class="max-h-[300px] overflow-y-auto pr-1 mt-3">
                         ${itemHtml(avoid, 'avoid')}
                     </div>
                 </details>
