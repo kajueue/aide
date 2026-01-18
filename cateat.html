@@ -388,8 +388,10 @@
             });
             
             const processed = Object.keys(stats).map(name => ({ name, avg: stats[name].total / stats[name].count }));
-            const safe = processed.filter(i => i.avg >= 3.7).sort((a,b) => b.avg - a.avg);
-            const avoid = processed.filter(i => i.avg < 3.3).sort((a,b) => a.avg - b.avg);
+            
+            // --- 這裡改成了按名稱排序，方便採買時查看同品牌的產品 ---
+            const safe = processed.filter(i => i.avg >= 3.7).sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+            const avoid = processed.filter(i => i.avg < 3.3).sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
 
             const itemHtml = (list, type) => list.length ? list.map(i => `
                 <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded flex justify-between items-center mb-0.5 py-1 px-3">
@@ -397,7 +399,6 @@
                     <span class="font-bold text-gray-900 text-[11px] flex-shrink-0 bg-white/60 px-1 rounded">${i.avg.toFixed(1)}</span>
                 </div>`).join('') : '<p class="text-gray-300 text-xs text-center py-4 italic">暫無數據</p>';
 
-            // 直接把 details 標籤當作整張卡片的內容
             document.getElementById('safeBuyList').innerHTML = `
                 <details class="group">
                     <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
@@ -426,7 +427,6 @@
                 </details>
             `;
         }
-
         // --- 表單提交與刪除 ---
         recordForm.onsubmit = async (e) => {
             e.preventDefault();
