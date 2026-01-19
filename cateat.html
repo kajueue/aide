@@ -441,47 +441,106 @@ const parts = processedText.split(/[，,、\s]+/)
     document.getElementById('dislikeIngredients').innerHTML = renderTags('dislike') || '<p class="text-gray-300 text-[14px] italic">分析中...</p>';
 }
     function renderShoppingList() {
-        const stats = {};
-        allRecords.forEach(r => {
-            const name = `${r.brand}${r.series ? ` [${r.series}]` : ''} ${r.flavor}`;
-            if (!stats[name]) stats[name] = { total: 0, count: 0 };
-            stats[name].total += r.rating;
-            stats[name].count++;
-        });
-        const processed = Object.keys(stats).map(name => ({ name, avg: stats[name].total / stats[name].count }));
-        const safe = processed.filter(i => i.avg >= 3.7).sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
-        const avoid = processed.filter(i => i.avg < 3.3).sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+    const stats = {};
+    const brandData = {}; // 用於儲存品牌的統計資訊
 
-        // 項目字體改為 16px
-        const itemHtml = (list, type) => list.length ? list.map(i => `
-            <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded flex justify-between items-center mb-0.5 py-1 px-3">
-                <span class="font-medium text-gray-700 truncate pr-2 text-[16px]">${i.name}</span>
-                <span class="font-bold text-gray-900 text-[14px] bg-white/60 px-1 rounded">${i.avg.toFixed(1)}</span>
-            </div>`).join('') : '<p class="text-gray-300 text-xs text-center py-4 italic">暫無數據</p>';
+    // 1. 整理各別單品的平均分，同時初步統計品牌的資訊
+    allRecords.forEach(r => {
+        const brandName = r.brand;
+        const fullName = `${r.brand}${r.series ? ` [${r.series}]` : ''} ${r.flavor}`;
+        
+        if (!stats[fullName]) {
+            stats[fullName] = { name: fullName, brand: brandName, total: 0, count: 0 };
+        }
+        stats[fullName].total += r.rating;
+        stats[fullName].count++;
+    });
 
-        // 移除 open 屬性（預設關閉），標題字體也加大
-        document.getElementById('safeBuyList').innerHTML = `
-            <details class="group">
-                <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
-                    <h2 class="text-[16px] font-bold text-green-700 flex items-center uppercase tracking-wider">
-                        <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-2"></span> 推薦清單 (${safe.length})
-                    </h2>
-                    <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
-                </summary>
-                <div class="max-h-[350px] overflow-y-auto pr-1 mt-2">${itemHtml(safe, 'safe')}</div>
-            </details>`;
+    const processed = Object.keys(stats).map(name => ({
+        ...stats[name],
+        avg: stats[name].total / stats[name].count
+    }));
 
-        document.getElementById('avoidList').innerHTML = `
-            <details class="group">
-                <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
-                    <h2 class="text-[16px] font-bold text-red-700 flex items-center uppercase tracking-wider">
-                        <span class="w-1.5 h-1.5 bg-red-400 rounded-full mr-2"></span> 避雷清單 (${avoid.length})
-                    </h2>
-                    <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
-                </summary>
-                <div class="max-h-[350px] overflow-y-auto pr-1 mt-2">${itemHtml(avoid, 'avoid')}</div>
-            </details>`;
-    }
+    // 2. 計算每個品牌的「最高平均分」與「在清單中的品項總數」
+    const brandMaxScore = {};
+    const brandItemCount = {};
+
+    processed.forEach(item => {
+        // 紀錄該品牌出現過的最高分
+        if (!brandMaxScore[item.brand] || item.avg > brandMaxScore[item.brand]) {
+            brandMaxScore[item.brand] = item.avg;
+        }
+        // 統計該品牌總共有多少款產品
+        brandItemCount[item.brand] = (brandItemCount[item.brand] || 0) + 1;
+    });
+
+// 3. 建立兩個不同的排序邏輯
+
+    // 【推薦清單排序】：品牌最高分越高越前面
+    const safeSortLogic = (a, b) => {
+        if (brandMaxScore[b.brand] !== brandMaxScore[a.brand]) {
+            return brandMaxScore[b.brand] - brandMaxScore[a.brand]; // 5分領先
+        }
+        if (brandItemCount[b.brand] !== brandItemCount[a.brand]) {
+            return brandItemCount[b.brand] - brandItemCount[a.brand];
+        }
+        return b.avg - a.avg;
+    };
+
+    // 【避雷清單排序】：品牌最低分越低越前面 (最雷優先)
+    // 我們需要先找出每個品牌的「最低分」
+    const brandMinScore = {};
+    processed.forEach(item => {
+        if (!brandMinScore[item.brand] || item.avg < brandMinScore[item.brand]) {
+            brandMinScore[item.brand] = item.avg;
+        }
+    });
+
+    const avoidSortLogic = (a, b) => {
+        // 第一層：依照品牌的最低分排序 (1分比2分更前面)
+        if (brandMinScore[a.brand] !== brandMinScore[b.brand]) {
+            return brandMinScore[a.brand] - brandMinScore[b.brand]; // 分數小的排前面
+        }
+        // 第二層：品項數量多的品牌排前面 (代表踩雷次數多，更雷)
+        if (brandItemCount[b.brand] !== brandItemCount[a.brand]) {
+            return brandItemCount[b.brand] - brandItemCount[a.brand];
+        }
+        // 第三層：同品牌內部，分數最低的排最上面
+        return a.avg - b.avg;
+    };
+
+    const safe = processed.filter(i => i.avg >= 3.7).sort(safeSortLogic);
+    const avoid = processed.filter(i => i.avg < 3.3).sort(avoidSortLogic);
+
+    // 渲染 HTML
+    const itemHtml = (list, type) => list.length ? list.map(i => `
+        <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded flex justify-between items-center mb-0.5 py-1 px-3">
+            <span class="font-medium text-gray-700 truncate pr-2 text-[16px]">${i.name}</span>
+            <span class="font-bold text-gray-900 text-[14px] bg-white/60 px-1 rounded">${i.avg.toFixed(1)}</span>
+        </div>`).join('') : '<p class="text-gray-300 text-xs text-center py-4 italic">暫無數據</p>';
+
+    document.getElementById('safeBuyList').innerHTML = `
+        <details class="group">
+            <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
+                <h2 class="text-[16px] font-bold text-green-700 flex items-center uppercase tracking-wider">
+                    <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-2"></span> 推薦清單 (${safe.length})
+                </h2>
+                <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
+            </summary>
+            <div class="max-h-[500px] overflow-y-auto pr-1 mt-2">${itemHtml(safe, 'safe')}</div>
+        </details>`;
+
+    document.getElementById('avoidList').innerHTML = `
+        <details class="group">
+            <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
+                <h2 class="text-[16px] font-bold text-red-700 flex items-center uppercase tracking-wider">
+                    <span class="w-1.5 h-1.5 bg-red-400 rounded-full mr-2"></span> 避雷清單 (${avoid.length})
+                </h2>
+                <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
+            </summary>
+            <div class="max-h-[500px] overflow-y-auto pr-1 mt-2">${itemHtml(avoid, 'avoid')}</div>
+        </details>`;
+}
 
     recordForm.onsubmit = async (e) => {
         e.preventDefault();
