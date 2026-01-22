@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌠</text></svg>">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>塔羅之源</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
+            color: #1e293b;
+            overflow-x: hidden;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+
+        /* 自定義捲軸 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #e2e8f0; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* 牌背設計樣式 - 灰藍色調 */
+        .card-back-pattern {
+            background: repeating-conic-gradient(from 0deg, transparent 0 10deg, rgba(255, 255, 255, 0.05) 10deg 20deg);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-6 flex flex-col items-center">
+
+    <header class="text-center mb-10 pt-4">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-600/10 border border-slate-600/20 text-slate-700 text-[10px] font-black tracking-[0.4em] uppercase shadow-sm">
+            Celestial Guidance
+        </div>
+    </header>
+
+    <!-- 控制面板 -->
+    <section class="bg-white/70 border border-white p-3.5 rounded-3xl w-full max-w-xl mb-12 backdrop-blur-xl shadow-xl flex flex-col md:flex-row gap-4 items-center justify-between ring-1 ring-slate-300/50">
+        <div class="flex bg-slate-200/60 p-1 rounded-xl border border-slate-200">
+            <button id="btn-spread" onclick="setMode('spread')" class="px-5 py-2 rounded-lg text-[13px] font-bold transition-all duration-300 bg-slate-600 text-white shadow-md">
+                四元素牌陣
+            </button>
+            <button id="btn-free" onclick="setMode('free')" class="px-5 py-2 rounded-lg text-[13px] font-bold transition-all duration-300 text-slate-500 hover:text-slate-800">
+                自由抽牌
+            </button>
+        </div>
+
+        <div id="free-count-container" class="hidden flex items-center gap-3 bg-white/40 px-3 py-1.5 rounded-lg border border-slate-200">
+            <input type="range" min="1" max="10" value="1" id="free-range" oninput="updateFreeCount(this.value)" class="w-16 h-1 bg-slate-300 rounded-lg appearance-none cursor-pointer accent-slate-600">
+            <span id="free-count-display" class="text-slate-600 font-mono text-[11px] font-bold w-8 text-right">1</span>
+        </div>
+
+        <!-- 開啟啟示按鈕 - 調整為沉穩大地色 (Stone/Amber 深色調) -->
+        <button onclick="shuffleAndDraw()" id="btn-draw" class="w-full md:w-auto px-8 py-2.5 bg-[#78350f] text-white hover:bg-[#451a03] font-black rounded-xl transition-all duration-300 flex items-center justify-center gap-2 uppercase text-[12px] tracking-widest shadow-lg active:scale-95 ring-1 ring-amber-900/20">
+            <span id="draw-text">開啟啟示</span>
+        </button>
+    </section>
+
+    <!-- 牌組顯示區域 -->
+    <main id="card-container" class="w-full max-w-6xl flex flex-wrap gap-x-8 gap-y-10 justify-center items-start pb-16 px-4">
+        <div class="h-48 flex flex-col items-center justify-center text-slate-500/60">
+            <div class="w-px h-16 bg-gradient-to-b from-slate-500/40 via-slate-500/10 to-transparent mb-6"></div>
+            <p class="text-[10px] tracking-[0.5em] uppercase font-bold">靜候宇宙指引</p>
+        </div>
+    </main>
+
+    <footer class="mt-auto pb-6 text-center text-[10px] text-slate-500 tracking-[0.4em] uppercase font-bold">
+        © 2026 Cosmic Oracle
+    </footer>
+
+    <script>
+        // --- 核心資料 ---
+        const MAJOR_ARCANA = [
+            { id: 0, name: "愚者", path: "ar00", meaning: "開始、自由、純真、冒險。" },
+            { id: 1, name: "魔術師", path: "ar01", meaning: "創造力、行動、專注、掌控。" },
+            { id: 2, name: "女祭司", path: "ar02", meaning: "直覺、潛意識、神祕、內省。" },
+            { id: 3, name: "女皇", path: "ar03", meaning: "豐收、母性、感官、自然。" },
+            { id: 4, name: "皇帝", path: "ar04", meaning: "權威、結構、穩定、領導。" },
+            { id: 5, name: "教皇", path: "ar05", meaning: "傳統、信仰、導師、體制。" },
+            { id: 6, name: "戀人", path: "ar06", meaning: "選擇、伴侶、合一、價值觀。" },
+            { id: 7, name: "戰車", path: "ar07", meaning: "意志力、勝利、前進、自律。" },
+            { id: 8, name: "力量", path: "ar08", meaning: "勇氣、耐心、內在力量、溫柔。" },
+            { id: 9, name: "隱士", path: "ar09", meaning: "內省、孤獨、尋求真相、指引。" },
+            { id: 10, name: "命運之輪", path: "ar10", meaning: "週期、命運、重大轉變、機會。" },
+            { id: 11, name: "正義", path: "ar11", meaning: "公平、真相、因果、法律。" },
+            { id: 12, name: "倒吊人", path: "ar12", meaning: "犧牲、新觀點、停滯、覺醒。" },
+            { id: 13, name: "死神", path: "ar13", meaning: "結束、轉化、新生、必經之路。" },
+            { id: 14, name: "節制", path: "ar14", meaning: "平衡、調和、耐心、融合。" },
+            { id: 15, name: "惡魔", path: "ar15", meaning: "束縛、欲念、執著、陰影。" },
+            { id: 16, name: "高塔", path: "ar16", meaning: "劇變、啟示、破壞、震驚。" },
+            { id: 17, name: "星星", path: "ar17", meaning: "希望、靈感、寧靜、療癒。" },
+            { id: 18, name: "月亮", path: "ar18", meaning: "不安、幻象、直覺、迷惘。" },
+            { id: 19, name: "太陽", path: "ar19", meaning: "快樂、成功、活力、自信。" },
+            { id: 20, name: "審判", path: "ar20", meaning: "覺醒、評估、重生、呼喚。" },
+            { id: 21, name: "世界", path: "ar21", meaning: "圓滿、完成、整合、成功。" }
+        ];
+
+        const SUITS = {
+            w: { name: '權杖', path: 'wa', meanings: { 1: "新開端、行動力、熱情。", 2: "規劃、決策、遠見。", 3: "擴張、前進、探索。", 4: "穩定、慶祝、和諧。", 5: "競爭、衝突、混亂。", 6: "勝利、認可、成功。", 7: "防禦、堅持、挑戰。", 8: "快速、訊息、進展。", 9: "警惕、韌性、最後衝刺。", 10: "負擔、壓力、極限。", pa: "消息、好奇、新計畫。", kn: "衝勁、大膽、行動。", qu: "自信、熱忱、獨立。", ki: "領袖、遠見、掌控。" } },
+            c: { name: '聖杯', path: 'cu', meanings: { 1: "情感、直覺、喜悅。", 2: "結合、平等、關係。", 3: "社交、友誼、慶祝。", 4: "倦怠、冷漠、沉思。", 5: "失落、悲傷、遺憾。", 6: "回憶、純真、贈與。", 7: "幻想、選擇、迷惘。", 8: "離去、尋求、捨棄。", 9: "滿意、願望、享受。", 10: "圓滿、家庭、幸福。", pa: "感性、消息、想像。", kn: "浪漫、理想、邀約。", qu: "直覺、溫柔、關懷。", ki: "穩定、寬容、心理成熟。" } },
+            s: { name: '寶劍', path: 'sw', meanings: { 1: "理智、突破、真相。", 2: "僵局、猶豫、平衡。", 3: "心碎、痛苦、背叛。", 4: "休息、冥想、復原。", 5: "自私、失敗、衝突。", 6: "過渡、療癒、平穩。", 7: "策略、欺瞞、逃避。", 8: "受困、孤立、限制。", 9: "焦慮、失眠、憂鬱。", 10: "終結、谷底、解脫。", pa: "警覺、學習、觀察。", kn: "急速、果斷、衝突。", qu: "獨立、冷靜、公正。", ki: "專業、邏輯、權威。" } },
+            p: { name: '五芒星', path: 'pe', meanings: { 1: "繁榮、物質、實際。", 2: "平衡、適應、多變。", 3: "團隊、技能、認可。", 4: "保守、控制、佔有。", 5: "貧困、孤立、考驗。", 6: "慷慨、回報、資源。", 7: "收穫、評估、耐心。", 8: "勤奮、精進、工匠。", 9: "獨立、豐足、高雅。", 10: "傳承、家族、穩固。", pa: "務實、勤學、機會。", kn: "可靠、耐力、保守。", qu: "孕育、實務、慷慨。", ki: "成功、豐盛、管理。" } }
+        };
+
+        const ALL_CARDS = [];
+        ALL_CARDS.push(...MAJOR_ARCANA);
+        ['w', 'c', 's', 'p'].forEach(sKey => {
+            const suit = SUITS[sKey];
+            Object.keys(suit.meanings).forEach(key => {
+                let cardName, pathId;
+                if (isNaN(key)) {
+                    const courtMap = { pa: "侍者", kn: "騎士", qu: "皇后", ki: "國王" };
+                    cardName = `${suit.name}${courtMap[key]}`;
+                    pathId = `${suit.path}${key}`;
+                } else {
+                    const num = parseInt(key);
+                    cardName = `${suit.name}${num === 1 ? '首領' : num}`;
+                    pathId = `${suit.path}${num < 10 ? '0' + num : num}`;
+                }
+                ALL_CARDS.push({ id: `${sKey}${key}`, name: cardName, path: pathId, meaning: suit.meanings[key] });
+            });
+        });
+
+        let drawMode = 'spread';
+        let freeCount = 1;
+        let isShuffling = false;
+
+        function setMode(mode) {
+            drawMode = mode;
+            const btnSpread = document.getElementById('btn-spread');
+            const btnFree = document.getElementById('btn-free');
+            const freeContainer = document.getElementById('free-count-container');
+
+            if (mode === 'spread') {
+                btnSpread.className = "px-5 py-2 rounded-lg text-[13px] font-bold transition-all duration-300 bg-slate-600 text-white shadow-md";
+                btnFree.className = "px-5 py-2 rounded-lg text-[13px] font-bold transition-all duration-300 text-slate-500 hover:text-slate-800";
+                freeContainer.classList.add('hidden');
+            } else {
+                btnFree.className = "px-5 py-2 rounded-lg text-[13px] font-bold transition-all duration-300 bg-slate-600 text-white shadow-md";
+                btnSpread.className = "px-5 py-2 rounded-lg text-[13px] font-bold transition-all duration-300 text-slate-500 hover:text-slate-800";
+                freeContainer.classList.remove('hidden');
+            }
+        }
+
+        function updateFreeCount(val) {
+            freeCount = parseInt(val);
+            document.getElementById('free-count-display').innerText = val;
+        }
+
+        function shuffleAndDraw() {
+            if (isShuffling) return;
+            isShuffling = true;
+            
+            const btnDraw = document.getElementById('btn-draw');
+            const drawText = document.getElementById('draw-text');
+            const container = document.getElementById('card-container');
+            
+            drawText.innerText = "占卜中...";
+            btnDraw.style.opacity = "0.7";
+            container.innerHTML = `<div class="h-48 flex items-center justify-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div></div>`;
+
+            setTimeout(() => {
+                const shuffled = [...ALL_CARDS].sort(() => Math.random() - 0.5);
+                const count = drawMode === 'spread' ? 4 : freeCount;
+                const labels = ["過去", "現在", "未來", "建議"];
+                const drawn = shuffled.slice(0, count);
+                
+                renderCards(drawn, labels);
+                
+                isShuffling = false;
+                drawText.innerText = "開啟啟示";
+                btnDraw.style.opacity = "1";
+            }, 800);
+        }
+
+        function renderCards(drawn, labels) {
+            const container = document.getElementById('card-container');
+            container.innerHTML = '';
+
+            drawn.forEach((card, index) => {
+                const labelText = drawMode === 'spread' ? labels[index] : `NO. ${index + 1}`;
+                const cardHtml = `
+                    <div class="flex flex-col items-center gap-4 w-48 md:w-52">
+                        <!-- 標籤 -->
+                        <div class="text-white font-black text-sm tracking-[0.3em] bg-slate-600 px-6 py-2 rounded-full border border-slate-500 shadow-lg uppercase">
+                            ${labelText}
+                        </div>
+
+                        <!-- 卡牌 -->
+                        <div class="relative w-40 h-64 md:w-44 md:h-68 cursor-pointer perspective-1000 group shrink-0" onclick="flipCard(this)">
+                            <div class="card-inner relative w-full h-full transition-transform duration-700 transform-style-3d">
+                                <!-- 牌背 - 統一灰藍色 -->
+                                <div class="absolute inset-0 backface-hidden rounded-2xl border-4 border-slate-400/50 shadow-xl overflow-hidden bg-[#475569]">
+                                    <div class="relative w-full h-full flex items-center justify-center p-4">
+                                        <div class="relative w-full h-full border-2 border-white/20 rounded-lg flex items-center justify-center overflow-hidden">
+                                            <div class="absolute w-full h-full card-back-pattern"></div>
+                                            <div class="absolute w-24 h-24 border border-white/10 rounded-full"></div>
+                                            <div class="absolute w-20 h-20 border-2 border-white/5 rounded-full flex items-center justify-center">
+                                                <div class="w-12 h-12 border border-amber-300/20" style="transform: rotate(45deg)"></div>
+                                                <div class="absolute w-12 h-12 border border-amber-300/20" style="transform: rotate(-45deg)"></div>
+                                                <div class="w-2 h-2 bg-amber-200/40 rounded-full"></div>
+                                            </div>
+                                            <div class="absolute top-2 left-2 w-4 h-4 border-t border-l border-white/20"></div>
+                                            <div class="absolute top-2 right-2 w-4 h-4 border-t border-r border-white/20"></div>
+                                            <div class="absolute bottom-2 left-2 w-4 h-4 border-b border-l border-white/20"></div>
+                                            <div class="absolute bottom-2 right-2 w-4 h-4 border-b border-r border-white/20"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 牌面 -->
+                                <div class="absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border-2 border-white shadow-xl bg-white overflow-hidden flex flex-col">
+                                    <div class="relative flex-grow flex items-center justify-center overflow-hidden p-2 bg-white">
+                                        <img src="https://www.sacred-texts.com/tarot/pkt/img/${card.path}.jpg" 
+                                             alt="${card.name}" 
+                                             class="h-full w-full object-contain"
+                                             onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23cbd5e1%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Crect x=%223%22 y=%223%22 width=%2218%22 height=%2218%22 rx=%222%22 ry=%222%22%3E%3C/rect%3E%3Ccircle cx=%228.5%22 cy=%228.5%22 r=%221.5%22%3E%3C/circle%3E%3Cpolyline points=%2221 15 16 10 5 21%22%3E%3C/polyline%3E%3C/svg%3E';">
+                                    </div>
+                                    <div class="py-2.5 bg-slate-50 border-t border-slate-100 flex flex-col items-center">
+                                       <span class="text-slate-800 font-black text-[13px] tracking-wider">${card.name}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 解釋 -->
+                        <div class="card-meaning transition-all duration-500 ease-out overflow-hidden max-h-0 opacity-0">
+                            <div class="bg-slate-600 border border-slate-500 px-5 py-3 rounded-2xl shadow-xl text-center mx-2 backdrop-blur-md">
+                               <p class="text-white text-[13px] font-bold tracking-wider leading-relaxed">
+                                 ${card.meaning}
+                               </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += cardHtml;
+            });
+        }
+
+        function flipCard(el) {
+            const inner = el.querySelector('.card-inner');
+            const meaning = el.parentElement.querySelector('.card-meaning');
+            
+            if (!inner.classList.contains('rotate-y-180')) {
+                inner.classList.add('rotate-y-180');
+                meaning.classList.remove('max-h-0', 'opacity-0');
+                meaning.classList.add('max-h-28', 'opacity-100');
+            }
+        }
+    </script>
+</body>
+</html>
