@@ -543,7 +543,7 @@ const parts = processedText.split(/[，,、\s]+/)
         </details>`;
 }
 
-    recordForm.onsubmit = async (e) => {
+recordForm.onsubmit = async (e) => {
         e.preventDefault();
         if (!currentUser) return;
         const btn = recordForm.querySelector('button');
@@ -559,21 +559,31 @@ const parts = processedText.split(/[，,、\s]+/)
                 rating: parseInt(ratingInput.value),
                 createdAt: new Date().toISOString()
             });
-            recordForm.reset();
-            ratingVal.innerText = "3";
-            document.getElementById('date').valueAsDate = new Date();
-            showToast("✅ 紀錄已成功儲存");
-        } catch (e) { showToast("❌ 儲存失敗"); }
-        finally { btn.disabled = false; }
-    };
 
-    window.deleteRecord = async (id) => {
-        if (!confirm('確定要刪除這條紀錄嗎？')) return;
-        try {
-            const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'records', id);
-            await deleteDoc(docRef);
-            showToast("🗑️ 紀錄已刪除");
-        } catch (e) { showToast("❌ 刪除失敗"); }
+            // --- 儲存成功後的重整 ---
+            
+            // 1. 先重置整個表單 (這會清空所有文字輸入)
+            recordForm.reset();
+            
+            // 2. 重新校準日期為「現在」 (解決跨夜問題)
+            // 使用 valueAsDate 是最快且支援手機版的方法
+            document.getElementById('date').valueAsDate = new Date();
+            
+            // 3. 重置評分顯示數字
+            ratingVal.innerText = "3";
+
+            // 4. 重新渲染畫面
+            renderHistory();
+            renderAnalysis();
+            renderShoppingList();
+            
+            showToast("✅ 紀錄已成功儲存");
+        } catch (e) { 
+            console.error(e);
+            showToast("❌ 儲存失敗"); 
+        } finally { 
+            btn.disabled = false; 
+        }
     };
 
     function showToast(msg) {
