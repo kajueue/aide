@@ -585,7 +585,31 @@ recordForm.onsubmit = async (e) => {
             btn.disabled = false; 
         }
     };
+// 確保 deleteRecord 被掛載到 window，這樣 HTML 的 onclick 才找得到它
+window.deleteRecord = async (id) => {
+    // 1. 彈出確認視窗，避免手滑
+    if (!confirm('確定要刪除這條紀錄嗎？')) return;
 
+    try {
+        // 2. 從 Firebase 雲端刪除
+        const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'records', id);
+        await deleteDoc(docRef);
+
+        // 3. 重要：同步更新本地資料 (allRecords)
+        // 這樣 render 函式才會知道這筆資料已經不見了
+        allRecords = allRecords.filter(r => r.id !== id);
+
+        // 4. 重新渲染所有畫面組件
+        renderHistory();
+        renderAnalysis();
+        renderShoppingList();
+
+        showToast("🗑️ 紀錄已刪除");
+    } catch (e) {
+        console.error("刪除失敗細節：", e);
+        showToast("❌ 刪除失敗");
+    }
+};
     function showToast(msg) {
         const t = document.getElementById('toast');
         t.innerText = msg;
