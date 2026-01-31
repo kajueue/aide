@@ -544,72 +544,53 @@ const parts = processedText.split(/[，,、\s]+/)
 }
 
 recordForm.onsubmit = async (e) => {
-        e.preventDefault();
-        if (!currentUser) return;
-        const btn = recordForm.querySelector('button');
-        btn.disabled = true;
-        try {
-            const userRecordsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records');
-            await addDoc(userRecordsRef, {
-                date: document.getElementById('date').value,
-                brand: brandInput.value.trim(),
-                series: seriesInput.value.trim(),
-                flavor: flavorInput.value.trim(),
-                ingredients: ingredientsInput.value.trim(),
-                rating: parseInt(ratingInput.value),
-                createdAt: new Date().toISOString()
-            });
+        e.preventDefault();
+        if (!currentUser) return;
+        const btn = recordForm.querySelector('button');
+        btn.disabled = true;
+        
+        try {
+            const userRecordsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records');
+            await addDoc(userRecordsRef, {
+                date: document.getElementById('date').value,
+                brand: brandInput.value.trim(),
+                series: seriesInput.value.trim(),
+                flavor: flavorInput.value.trim(),
+                ingredients: ingredientsInput.value.trim(),
+                rating: parseInt(ratingInput.value),
+                createdAt: new Date().toISOString()
+            });
 
-            // --- 儲存成功後的重整 ---
-            
-            // 1. 先重置整個表單 (這會清空所有文字輸入)
-            recordForm.reset();
-            
-            // 2. 重新校準日期為「現在」 (解決跨夜問題)
-            // 使用 valueAsDate 是最快且支援手機版的方法
-            document.getElementById('date').valueAsDate = new Date();
-            
-            // 3. 重置評分顯示數字
-            ratingVal.innerText = "3";
+            // --- 儲存成功後的重置與校準 ---
+            
+            // 1. 重置表單 (這會清空輸入內容，但可能會把日期重置回當初網頁打開的那一天)
+            recordForm.reset();
+            
+            // 2. 關鍵：強制將日期設定為「當下的今天」
+            // 這樣即使跨夜沒重整，存完一筆後，下一筆的預設日期就會跳到今天
+            document.getElementById('date').valueAsDate = new Date();
 
-            // 4. 重新渲染畫面
-            renderHistory();
-            renderAnalysis();
-            renderShoppingList();
-            
-            showToast("✅ 紀錄已成功儲存");
-        } catch (e) { 
-            console.error(e);
-            showToast("❌ 儲存失敗"); 
-        } finally { 
-            btn.disabled = false; 
-        }
-    };
-// 確保 deleteRecord 被掛載到 window，這樣 HTML 的 onclick 才找得到它
-window.deleteRecord = async (id) => {
-    // 1. 彈出確認視窗，避免手滑
-    if (!confirm('確定要刪除這條紀錄嗎？')) return;
+            // 3. 重置評分顯示數字
+            ratingVal.innerText = "3";
 
-    try {
-        // 2. 從 Firebase 雲端刪除
-        const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'records', id);
-        await deleteDoc(docRef);
-
-        // 3. 重要：同步更新本地資料 (allRecords)
-        // 這樣 render 函式才會知道這筆資料已經不見了
-        allRecords = allRecords.filter(r => r.id !== id);
-
-        // 4. 重新渲染所有畫面組件
-        renderHistory();
-        renderAnalysis();
-        renderShoppingList();
-
-        showToast("🗑️ 紀錄已刪除");
-    } catch (e) {
-        console.error("刪除失敗細節：", e);
-        showToast("❌ 刪除失敗");
-    }
+            // 4. 重新渲染畫面 (這部分你原本應該就有)
+            renderHistory();
+            renderAnalysis();
+            renderShoppingList();
+            
+            showToast("✅ 紀錄已成功儲存");
+        } catch (e) { 
+            console.error(e);
+            showToast("❌ 儲存失敗"); 
+        } finally { 
+            btn.disabled = false; 
+        }
+    };
+// 當你切換 App 回來或重新點擊這個分頁時，自動更新日期
+window.onfocus = () => {
+    document.getElementById('date').valueAsDate = new Date();
 };
+
     function showToast(msg) {
         const t = document.getElementById('toast');
         t.innerText = msg;
