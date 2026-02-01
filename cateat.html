@@ -543,53 +543,61 @@ const parts = processedText.split(/[，,、\s]+/)
         </details>`;
 }
 
+// 1. 先定義一個通用的日期更新功能
+function refreshDate() {
+    const dateInput = document.getElementById('date');
+    if (dateInput) {
+        dateInput.valueAsDate = new Date();
+    }
+}
+
+// 2. 這是你的儲存邏輯 (已更新日期處理方式)
 recordForm.onsubmit = async (e) => {
-        e.preventDefault();
-        if (!currentUser) return;
-        const btn = recordForm.querySelector('button');
-        btn.disabled = true;
-        
-        try {
-            const userRecordsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records');
-            await addDoc(userRecordsRef, {
-                date: document.getElementById('date').value,
-                brand: brandInput.value.trim(),
-                series: seriesInput.value.trim(),
-                flavor: flavorInput.value.trim(),
-                ingredients: ingredientsInput.value.trim(),
-                rating: parseInt(ratingInput.value),
-                createdAt: new Date().toISOString()
-            });
+    e.preventDefault();
+    if (!currentUser) return;
+    const btn = recordForm.querySelector('button');
+    btn.disabled = true;
+    
+    try {
+        const userRecordsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records');
+        await addDoc(userRecordsRef, {
+            date: document.getElementById('date').value,
+            brand: brandInput.value.trim(),
+            series: seriesInput.value.trim(),
+            flavor: flavorInput.value.trim(),
+            ingredients: ingredientsInput.value.trim(),
+            rating: parseInt(ratingInput.value),
+            createdAt: new Date().toISOString()
+        });
 
-            // --- 儲存成功後的重置與校準 ---
-            
-            // 1. 重置表單 (這會清空輸入內容，但可能會把日期重置回當初網頁打開的那一天)
-            recordForm.reset();
-            
-            // 2. 關鍵：強制將日期設定為「當下的今天」
-            // 這樣即使跨夜沒重整，存完一筆後，下一筆的預設日期就會跳到今天
-            document.getElementById('date').valueAsDate = new Date();
-
-            // 3. 重置評分顯示數字
-            ratingVal.innerText = "3";
-
-            // 4. 重新渲染畫面 (這部分你原本應該就有)
-            renderHistory();
-            renderAnalysis();
-            renderShoppingList();
-            
-            showToast("✅ 紀錄已成功儲存");
-        } catch (e) { 
-            console.error(e);
-            showToast("❌ 儲存失敗"); 
-        } finally { 
-            btn.disabled = false; 
-        }
-    };
-// 當你切換 App 回來或重新點擊這個分頁時，自動更新日期
-window.onfocus = () => {
-    document.getElementById('date').valueAsDate = new Date();
+        // 儲存成功後的重置
+        recordForm.reset(); 
+        refreshDate(); // 使用剛定義的功能來確保日期最新
+        
+        ratingVal.innerText = "3";
+        renderHistory();
+        renderAnalysis();
+        renderShoppingList();
+        
+        showToast("✅ 紀錄已成功儲存");
+    } catch (e) { 
+        console.error(e);
+        showToast("❌ 儲存失敗"); 
+    } finally { 
+        btn.disabled = false; 
+    }
 };
+
+// 3. 雙重保險：取代原本的 window.onfocus
+// 當網頁從背景切換回前台（例如手機解鎖）時，自動對時
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        refreshDate();
+    }
+});
+
+// 4. 網頁初始載入時也執行一次
+refreshDate();
 
     function showToast(msg) {
         const t = document.getElementById('toast');
