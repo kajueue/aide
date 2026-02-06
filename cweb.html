@@ -137,11 +137,20 @@
                 showToast('尚未輸入內容');
                 return;
             }
+            
+            // 選擇文字
             urlInput.select();
             urlInput.setSelectionRange(0, 99999);
+            
             try {
+                // 執行複製
                 const successful = document.execCommand('copy');
-                if (successful) showToast('已複製成功');
+                if (successful) {
+                    showToast('已複製成功');
+                }
+                // 關鍵：複製完立即取消選取狀態，維持畫面乾淨
+                window.getSelection().removeAllRanges();
+                urlInput.blur(); 
             } catch (err) {
                 showToast('複製失敗');
             }
