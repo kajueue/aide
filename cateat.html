@@ -282,8 +282,23 @@ const additiveKeywords = /維生素|維他命|B1|B2|B6|B12|A|D3|E|K3|牛磺酸|�
         const userRecordsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records');
         unsubscribe = onSnapshot(userRecordsRef, (snapshot) => {
             allRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            allRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
-            renderUI();
+           // 對 allRecords 進行多層級排序
+allRecords.sort((a, b) => {
+    // 1. 先比分數 (從高到低)
+    if (b.rating !== a.rating) {
+        return b.rating - a.rating;
+    }
+    
+    // 2. 分數相同時，比品牌 (字母/中文順序)
+    if (a.brand !== b.brand) {
+        return a.brand.localeCompare(b.brand, 'zh-Hant');
+    }
+    
+    // 3. 品牌也相同時，比系列 (讓「能量補給」靠在一起)
+    return a.series.localeCompare(b.series, 'zh-Hant');
+});
+
+renderUI();
         });
     }
 
