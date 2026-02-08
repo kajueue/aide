@@ -283,26 +283,8 @@ const additiveKeywords = /維生素|維他命|B1|B2|B6|B12|A|D3|E|K3|牛磺酸|�
         unsubscribe = onSnapshot(userRecordsRef, (snapshot) => {
             allRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
            // 對 allRecords 進行多層級排序
-allRecords.sort((a, b) => {
-    // 1. 先比分數 (從高到低)
-    if (b.rating !== a.rating) {
-        return b.rating - a.rating;
-    }
-    
-    // 2. 分數相同時，比品牌 (字母/中文順序)
-    if (a.brand !== b.brand) {
-        return a.brand.localeCompare(b.brand, 'zh-Hant');
-    }
-    
-    // 3. 品牌也相同時，比系列 (讓「能量補給」靠在一起)
-    return a.series.localeCompare(b.series, 'zh-Hant');
-});
 
-renderUI();
-        });
-    }
-
-    function renderUI() {
+function renderUI() {
         renderHistory();
         renderAnalysis();
         renderShoppingList();
@@ -352,51 +334,58 @@ renderUI();
     // --- 修正後的渲染功能 ---
 
    function renderHistory() {
-        const list = document.getElementById('historyList');
-        if (allRecords.length === 0) {
-            list.innerHTML = `<p class="text-center py-6 text-gray-300 text-xs italic">尚無歷史紀錄</p>`;
-            return;
-        }
-
-        // 前 5 筆直接顯示
-        const firstFive = allRecords.slice(0, 5);
-        // 5 筆之後的紀錄
-        const remaining = allRecords.slice(5);
-
-        const recordToHtml = (r) => `
-            <div class="py-2 flex justify-between items-center group border-b border-gray-50 last:border-0">
-                <div class="min-w-0 flex-1">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-[12px] font-bold text-gray-400">${r.date.split('-').slice(1).join('/')}</span>
-                        <h3 class="text-[16px] font-bold text-gray-700 truncate">${r.brand}${r.series ? ` [${r.series}]` : ''} ${r.flavor}</h3>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-3 ml-4">
-                    <span class="text-[16px] font-black ${r.rating >= 4 ? 'text-green-500' : r.rating <= 2 ? 'text-red-400' : 'text-orange-400'}">${r.rating}</span>
-                    <button onclick="deleteRecord('${r.id}')" class="text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    </button>
-                </div>
-            </div>`;
-
-        let html = firstFive.map(recordToHtml).join('');
-
-        // 如果超過 5 筆，加上收合區塊
-        if (remaining.length > 0) {
-            html += `
-                <details class="group">
-                    <summary class="list-none cursor-pointer py-3 text-center outline-none">
-                        <span class="text-gray-400 text-[14px] font-bold group-open:hidden">查看更多歷史紀錄 (+${remaining.length})</span>
-                        <span class="text-gray-400 text-[14px] font-bold hidden group-open:inline">收合紀錄</span>
-                    </summary>
-                    <div class="pb-2">
-                        ${remaining.map(recordToHtml).join('')}
-                    </div>
-                </details>`;
-        }
-
-        list.innerHTML = html;
+    const list = document.getElementById('historyList');
+    if (allRecords.length === 0) {
+        list.innerHTML = `<p class="text-center py-6 text-gray-300 text-xs italic">尚無歷史紀錄</p>`;
+        return;
     }
+
+    // --- 關鍵修改：先排序，產生一個專門給歷史紀錄顯示用的副本 ---
+    const displayData = [...allRecords].sort((a, b) => {
+        // 第一優先：日期由新到舊
+        const dateDiff = new Date(b.date) - new Date(a.date);
+        if (dateDiff !== 0) return dateDiff;
+        // 第二優先：日期相同時，按品牌排序（這樣同一天的會聚在一起）
+        return a.brand.localeCompare(b.brand, 'zh-Hant');
+    });
+
+    // 接下來所有動作都針對「排序過的 displayData」
+    const firstFive = displayData.slice(0, 5); // 改用 displayData
+    const remaining = displayData.slice(5);     // 改用 displayData
+
+    const recordToHtml = (r) => `
+        <div class="py-2 flex justify-between items-center group border-b border-gray-50 last:border-0">
+            <div class="min-w-0 flex-1">
+                <div class="flex items-center space-x-2">
+                    <span class="text-[12px] font-bold text-gray-400">${r.date.split('-').slice(1).join('/')}</span>
+                    <h3 class="text-[16px] font-bold text-gray-700 truncate">${r.brand}${r.series ? ` [${r.series}]` : ''} ${r.flavor}</h3>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 ml-4">
+                <span class="text-[16px] font-black ${r.rating >= 4 ? 'text-green-500' : r.rating <= 2 ? 'text-red-400' : 'text-orange-400'}">${r.rating}</span>
+                <button onclick="deleteRecord('${r.id}')" class="text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+            </div>
+        </div>`;
+
+    let html = firstFive.map(recordToHtml).join('');
+
+    if (remaining.length > 0) {
+        html += `
+            <details class="group">
+                <summary class="list-none cursor-pointer py-3 text-center outline-none">
+                    <span class="text-gray-400 text-[14px] font-bold group-open:hidden">查看更多歷史紀錄 (+${remaining.length})</span>
+                    <span class="text-gray-400 text-[14px] font-bold hidden group-open:inline">收合紀錄</span>
+                </summary>
+                <div class="pb-2">
+                    ${remaining.map(recordToHtml).join('')}
+                </div>
+            </details>`;
+    }
+
+    list.innerHTML = html;
+}
 
   function renderAnalysis() {
     const scoreMap = {}; // 用於存儲加權後的成分得分
