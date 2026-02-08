@@ -277,12 +277,27 @@ const additiveKeywords = /維生素|維他命|B1|B2|B6|B12|A|D3|E|K3|牛磺酸|�
         }
     });
 
-    function startSync() {
+function startSync() {
         if (!currentUser) return;
+        
+        // 建立指向該使用者的資料路徑
         const userRecordsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records');
+        
+        // 開始監聽資料庫變動
         unsubscribe = onSnapshot(userRecordsRef, (snapshot) => {
+            // 1. 更新全域變數 allRecords
             allRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-           // 對 allRecords 進行多層級排序
+            
+            // 2. 核心：資料一有變動（或初次載入完成），立即刷新畫面
+            renderUI(); 
+            
+            console.log("資料同步成功，共有", allRecords.length, "筆紀錄");
+        }, (error) => {
+            // 如果安全規則 (Rules) 沒設好，這裡會報錯
+            console.error("Firestore 監聽失敗，請檢查權限設定:", error);
+            showToast("⚠️ 同步失敗，請檢查網路或權限");
+        });
+    }
 
 function renderUI() {
         renderHistory();
