@@ -236,8 +236,7 @@
     let unsubscribe = null;
     const appId = 'cat-food-tracker';
 
-    // 修改後的部分（注意 \b 或排除邏輯）
-const additiveKeywords = /維生素|維他命|B1|B2|B6|B12|A|D3|E|K3|牛磺酸|礦物質|葡萄糖酸|碳酸|磷酸|硫酸|氯化|葉酸|生物素|菸鹼酸|泛酸|Omega|寡糖|酵母|菌|甘氨酸|中鏈脂肪酸油|^水$|^水分$|增稠/i;
+    const additiveKeywords = /維生素|維他命|B1|B2|B6|B12|A|D3|E|K3|牛磺酸|礦物質|葡萄糖酸|碳酸|磷酸|硫酸|氯化|葉酸|生物素|菸鹼酸|泛酸|Omega|寡糖|酵母|菌|甘氨酸|中鏈脂肪酸油|^水$|^水分$|增稠/i;
 
     const loginOverlay = document.getElementById('loginOverlay');
     const appContainer = document.getElementById('appContainer');
@@ -277,29 +276,19 @@ const additiveKeywords = /維生素|維他命|B1|B2|B6|B12|A|D3|E|K3|牛磺酸|�
         }
     });
 
-function startSync() {
+    function startSync() {
         if (!currentUser) return;
-        
-        // 建立指向該使用者的資料路徑
         const userRecordsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records');
-        
-        // 開始監聽資料庫變動
         unsubscribe = onSnapshot(userRecordsRef, (snapshot) => {
-            // 1. 更新全域變數 allRecords
             allRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            // 2. 核心：資料一有變動（或初次載入完成），立即刷新畫面
             renderUI(); 
-            
-            console.log("資料同步成功，共有", allRecords.length, "筆紀錄");
         }, (error) => {
-            // 如果安全規則 (Rules) 沒設好，這裡會報錯
-            console.error("Firestore 監聽失敗，請檢查權限設定:", error);
-            showToast("⚠️ 同步失敗，請檢查網路或權限");
+            console.error("Firestore Error:", error);
+            showToast("⚠️ 同步失敗");
         });
     }
 
-function renderUI() {
+    function renderUI() {
         renderHistory();
         renderAnalysis();
         renderShoppingList();
@@ -341,298 +330,219 @@ function renderUI() {
         }
     }
 
-brandInput.addEventListener('input', () => { renderDatalists(); attemptAutoFill(); });
+    brandInput.addEventListener('input', () => { renderDatalists(); attemptAutoFill(); });
     seriesInput.addEventListener('input', () => { renderDatalists(); attemptAutoFill(); });
     flavorInput.addEventListener('input', attemptAutoFill);
-ratingInput.oninput = (e) => ratingVal.innerText = e.target.value;
+    ratingInput.oninput = (e) => ratingVal.innerText = e.target.value;
 
-        // --- 這裡之前少了一個結束括號，我幫你補上了 ---
-        }); 
-    } else {
-        window.location.href = "index.html";
-    }
-}); 
-
-// --- 修正後的渲染功能 ---
-function renderHistory() {
-    const list = document.getElementById('historyList');
-    if (allRecords.length === 0) {
-        list.innerHTML = `<p class="text-center py-6 text-gray-300 text-xs italic">尚無歷史紀錄</p>`;
-        return;
+    // --- 刪除功能定義 ---
+    window.deleteRecord = async function(docId) {
+        if (!confirm('確定要刪除這筆紀錄嗎？')) return;
+        try {
+            const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'records', docId);
+            await deleteDoc(docRef);
+            showToast("✅ 紀錄已成功刪除");
+        } catch (e) {
+            console.error(e);
+            showToast("❌ 刪除失敗");
+        }
     }
 
-    // --- 關鍵修改：先排序，產生一個專門給歷史紀錄顯示用的副本 ---
-    const displayData = [...allRecords].sort((a, b) => {
-        // 第一優先：日期由新到舊
-        const dateDiff = new Date(b.date) - new Date(a.date);
-        if (dateDiff !== 0) return dateDiff;
-        // 第二優先：日期相同時，按品牌排序（這樣同一天的會聚在一起）
-        return a.brand.localeCompare(b.brand, 'zh-Hant');
-    });
+    function renderHistory() {
+        const list = document.getElementById('historyList');
+        if (allRecords.length === 0) {
+            list.innerHTML = `<p class="text-center py-6 text-gray-300 text-xs italic">尚無歷史紀錄</p>`;
+            return;
+        }
 
-    // 接下來所有動作都針對「排序過的 displayData」
-    const firstFive = displayData.slice(0, 5); // 改用 displayData
-    const remaining = displayData.slice(5);     // 改用 displayData
+        const displayData = [...allRecords].sort((a, b) => {
+            const dateDiff = new Date(b.date) - new Date(a.date);
+            if (dateDiff !== 0) return dateDiff;
+            return a.brand.localeCompare(b.brand, 'zh-Hant');
+        });
 
-    const recordToHtml = (r) => `
-        <div class="py-2 flex justify-between items-center group border-b border-gray-50 last:border-0">
-            <div class="min-w-0 flex-1">
-                <div class="flex items-center space-x-2">
-                    <span class="text-[12px] font-bold text-gray-400">${r.date.split('-').slice(1).join('/')}</span>
-                    <h3 class="text-[16px] font-bold text-gray-700 truncate">${r.brand}${r.series ? ` [${r.series}]` : ''} ${r.flavor}</h3>
+        const firstFive = displayData.slice(0, 5);
+        const remaining = displayData.slice(5);
+
+        const recordToHtml = (r) => `
+            <div class="py-2 flex justify-between items-center group border-b border-gray-50 last:border-0">
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-[12px] font-bold text-gray-400">${r.date.split('-').slice(1).join('/')}</span>
+                        <h3 class="text-[16px] font-bold text-gray-700 truncate">${r.brand}${r.series ? ` [${r.series}]` : ''} ${r.flavor}</h3>
+                    </div>
                 </div>
-            </div>
-            <div class="flex items-center space-x-3 ml-4">
-                <span class="text-[16px] font-black ${r.rating >= 4 ? 'text-green-500' : r.rating <= 2 ? 'text-red-400' : 'text-orange-400'}">${r.rating}</span>
-                <button onclick="deleteRecord('${r.id}')" class="text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                </button>
-            </div>
-        </div>`;
+                <div class="flex items-center space-x-3 ml-4">
+                    <span class="text-[16px] font-black ${r.rating >= 4 ? 'text-green-500' : r.rating <= 2 ? 'text-red-400' : 'text-orange-400'}">${r.rating}</span>
+                    <button onclick="deleteRecord('${r.id}')" class="text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                </div>
+            </div>`;
 
-    let html = firstFive.map(recordToHtml).join('');
+        let html = firstFive.map(recordToHtml).join('');
+        if (remaining.length > 0) {
+            html += `
+                <details class="group">
+                    <summary class="list-none cursor-pointer py-3 text-center outline-none">
+                        <span class="text-gray-400 text-[14px] font-bold group-open:hidden">查看更多歷史紀錄 (+${remaining.length})</span>
+                        <span class="text-gray-400 text-[14px] font-bold hidden group-open:inline">收合紀錄</span>
+                    </summary>
+                    <div class="pb-2">${remaining.map(recordToHtml).join('')}</div>
+                </details>`;
+        }
+        list.innerHTML = html;
+    }
 
-    if (remaining.length > 0) {
-        html += `
-            <details class="group">
-                <summary class="list-none cursor-pointer py-3 text-center outline-none">
-                    <span class="text-gray-400 text-[14px] font-bold group-open:hidden">查看更多歷史紀錄 (+${remaining.length})</span>
-                    <span class="text-gray-400 text-[14px] font-bold hidden group-open:inline">收合紀錄</span>
+    function renderAnalysis() {
+        const scoreMap = {};
+        allRecords.forEach(r => {
+            if (!r.ingredients) return;
+            let processedText = r.ingredients
+                .replace(/[^\uff0c,\u3001\s]+[（(]([^）)]+)[）)]/g, '$1') 
+                .replace(/[（()）]/g, '，');
+
+            const parts = processedText.split(/[，,、\s]+/)
+                .map(i => i.trim().replace(/(提取物|萃取物|抽出物)$/, ''))
+                .filter(i => i && !additiveKeywords.test(i));
+
+            let weight = 0;
+            if (r.rating === 5) weight = 2;
+            else if (r.rating === 4) weight = 1;
+            else if (r.rating === 2) weight = -1;
+            else if (r.rating === 1) weight = -2;
+
+            if (weight === 0) return;
+            parts.forEach(p => {
+                if (!scoreMap[p]) scoreMap[p] = 0;
+                scoreMap[p] += weight;
+            });
+        });
+
+        const renderTags = (type) => {
+            const threshold = 2; 
+            const filtered = Object.entries(scoreMap)
+                .filter(([name, score]) => type === 'like' ? score >= threshold : score <= -threshold)
+                .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+                .slice(0, 10);
+
+            return filtered.map(([name]) => `
+                <span class="tag ${type === 'like' ? 'tag-like' : 'tag-dislike'} px-3 py-1 text-[16px] mb-1 mr-1">
+                    ${name}
+                </span>`).join('');
+        };
+
+        document.getElementById('likeIngredients').innerHTML = renderTags('like') || '<p class="text-gray-300 text-[14px] italic">分析中...</p>';
+        document.getElementById('dislikeIngredients').innerHTML = renderTags('dislike') || '<p class="text-gray-300 text-[14px] italic">分析中...</p>';
+    }
+
+    function renderShoppingList() {
+        const stats = {};
+        allRecords.forEach(r => {
+            const fullName = `${r.brand}${r.series ? ` [${r.series}]` : ''} ${r.flavor}`;
+            if (!stats[fullName]) {
+                stats[fullName] = { name: fullName, brand: r.brand, total: 0, count: 0 };
+            }
+            stats[fullName].total += r.rating;
+            stats[fullName].count++;
+        });
+
+        const processed = Object.keys(stats).map(name => ({
+            ...stats[name],
+            avg: stats[name].total / stats[name].count
+        }));
+
+        const brandMaxScore = {};
+        const brandMinScore = {};
+        const brandItemCount = {};
+
+        processed.forEach(item => {
+            if (!brandMaxScore[item.brand] || item.avg > brandMaxScore[item.brand]) brandMaxScore[item.brand] = item.avg;
+            if (!brandMinScore[item.brand] || item.avg < brandMinScore[item.brand]) brandMinScore[item.brand] = item.avg;
+            brandItemCount[item.brand] = (brandItemCount[item.brand] || 0) + 1;
+        });
+
+        const safeSortLogic = (a, b) => {
+            if (brandMaxScore[b.brand] !== brandMaxScore[a.brand]) return brandMaxScore[b.brand] - brandMaxScore[a.brand];
+            if (brandItemCount[b.brand] !== brandItemCount[a.brand]) return brandItemCount[b.brand] - brandItemCount[a.brand];
+            if (b.avg !== a.avg) return b.avg - a.avg;
+            return a.name.localeCompare(b.name, 'zh-Hant');
+        };
+
+        const avoidSortLogic = (a, b) => {
+            if (brandMinScore[a.brand] !== brandMinScore[b.brand]) return brandMinScore[a.brand] - brandMinScore[b.brand];
+            if (brandItemCount[b.brand] !== brandItemCount[a.brand]) return brandItemCount[b.brand] - brandItemCount[a.brand];
+            if (a.avg !== b.avg) return a.avg - b.avg;
+            return a.name.localeCompare(b.name, 'zh-Hant');
+        };
+            
+        const safe = processed.filter(i => i.avg >= 3.7).sort(safeSortLogic);
+        const avoid = processed.filter(i => i.avg < 3.3).sort(avoidSortLogic);
+
+        const itemHtml = (list, type) => list.length ? list.map(i => `
+            <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded flex justify-between items-center mb-0.5 py-1 px-3">
+                <span class="font-medium text-gray-700 truncate pr-2 text-[16px]">${i.name}</span>
+                <span class="font-bold text-gray-900 text-[14px] bg-white/60 px-1 rounded">${i.avg.toFixed(1)}</span>
+            </div>`).join('') : '<p class="text-gray-300 text-xs text-center py-4 italic">暫無數據</p>';
+
+        document.getElementById('safeBuyList').innerHTML = `
+            <details class="group" open>
+                <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
+                    <h2 class="text-[16px] font-bold text-green-700 flex items-center uppercase tracking-wider">
+                        <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-2"></span> 推薦清單 (${safe.length})
+                    </h2>
+                    <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
                 </summary>
-                <div class="pb-2">
-                    ${remaining.map(recordToHtml).join('')}
-                </div>
+                <div class="max-h-[500px] overflow-y-auto pr-1 mt-2">${itemHtml(safe, 'safe')}</div>
+            </details>`;
+
+        document.getElementById('avoidList').innerHTML = `
+            <details class="group" open>
+                <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
+                    <h2 class="text-[16px] font-bold text-red-700 flex items-center uppercase tracking-wider">
+                        <span class="w-1.5 h-1.5 bg-red-400 rounded-full mr-2"></span> 避雷清單 (${avoid.length})
+                    </h2>
+                    <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
+                </summary>
+                <div class="max-h-[500px] overflow-y-auto pr-1 mt-2">${itemHtml(avoid, 'avoid')}</div>
             </details>`;
     }
 
-    list.innerHTML = html;
-}
+    function refreshDate() {
+        const dateInput = document.getElementById('date');
+        if (dateInput) dateInput.valueAsDate = new Date();
+    }
 
-  function renderAnalysis() {
-    const scoreMap = {}; // 用於存儲加權後的成分得分
-
-    allRecords.forEach(r => {
-        if (!r.ingredients) return;
+    recordForm.onsubmit = async (e) => {
+        e.preventDefault();
+        if (!currentUser) return;
+        const btn = recordForm.querySelector('button');
+        btn.disabled = true;
         
-        // 1. 拆解成分邏輯 (處理括號：只抓括號內的具體肉種，丟掉統稱)
-        let processedText = r.ingredients
-            .replace(/[^\uff0c,\u3001\s]+[（(]([^）)]+)[）)]/g, '$1') 
-            .replace(/[（()）]/g, '，');
-
-const parts = processedText.split(/[，,、\s]+/)
-            .map(i => i.trim()
-                .replace(/(提取物|萃取物|抽出物)$/, '') // 這裡會把結尾的 提取物、萃取物、粉 給去掉
-            )
-            .filter(i => i && !additiveKeywords.test(i));
-
-        // 2. 評分加權計算
-        let weight = 0;
-        if (r.rating === 5) weight = 2;       // 非常喜歡
-        else if (r.rating === 4) weight = 1;  // 喜歡
-        else if (r.rating === 2) weight = -1; // 不喜歡
-        else if (r.rating === 1) weight = -2; // 非常討厭
-        else weight = 0;                      // 3分不計分
-
-        if (weight === 0) return;
-
-        parts.forEach(p => {
-            if (!scoreMap[p]) scoreMap[p] = 0;
-            scoreMap[p] += weight;
-        });
-    });
-
-    const renderTags = (type) => {
-        // 設定顯示門檻：加權總分絕對值必須 >= 2 才會顯示
-        // (例如：一次5分，或是兩次4分才會上榜)
-        const threshold = 2; 
-        
-        const filtered = Object.entries(scoreMap)
-            .filter(([name, score]) => {
-                if (type === 'like') return score >= threshold;
-                if (type === 'dislike') return score <= -threshold;
-                return false;
-            })
-            // 排序：不論正負值，絕對值越大（影響力越高）的排越前面
-            .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
-            .slice(0, 10);
-
-        return filtered.map(([name]) => `
-            <span class="tag ${type === 'like' ? 'tag-like' : 'tag-dislike'} px-3 py-1 text-[16px] mb-1 mr-1">
-                ${name}
-            </span>
-        `).join('');
+        try {
+            const userRecordsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records');
+            await addDoc(userRecordsRef, {
+                date: document.getElementById('date').value,
+                brand: brandInput.value.trim(),
+                series: seriesInput.value.trim(),
+                flavor: flavorInput.value.trim(),
+                ingredients: ingredientsInput.value.trim(),
+                rating: parseInt(ratingInput.value),
+                createdAt: new Date().toISOString()
+            });
+            recordForm.reset(); 
+            refreshDate();
+            ratingVal.innerText = "3";
+            showToast("✅ 紀錄已成功儲存");
+        } catch (e) { 
+            console.error(e);
+            showToast("❌ 儲存失敗"); 
+        } finally { btn.disabled = false; }
     };
 
-    // 渲染到畫面
-    document.getElementById('likeIngredients').innerHTML = renderTags('like') || '<p class="text-gray-300 text-[14px] italic">分析中...</p>';
-    document.getElementById('dislikeIngredients').innerHTML = renderTags('dislike') || '<p class="text-gray-300 text-[14px] italic">分析中...</p>';
-}
-    function renderShoppingList() {
-    const stats = {};
-    const brandData = {}; // 用於儲存品牌的統計資訊
-
-    // 1. 整理各別單品的平均分，同時初步統計品牌的資訊
-    allRecords.forEach(r => {
-        const brandName = r.brand;
-        const fullName = `${r.brand}${r.series ? ` [${r.series}]` : ''} ${r.flavor}`;
-        
-        if (!stats[fullName]) {
-            stats[fullName] = { name: fullName, brand: brandName, total: 0, count: 0 };
-        }
-        stats[fullName].total += r.rating;
-        stats[fullName].count++;
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') refreshDate();
     });
-
-    const processed = Object.keys(stats).map(name => ({
-        ...stats[name],
-        avg: stats[name].total / stats[name].count
-    }));
-
-    // 2. 計算每個品牌的「最高平均分」與「在清單中的品項總數」
-    const brandMaxScore = {};
-    const brandItemCount = {};
-
-    processed.forEach(item => {
-        // 紀錄該品牌出現過的最高分
-        if (!brandMaxScore[item.brand] || item.avg > brandMaxScore[item.brand]) {
-            brandMaxScore[item.brand] = item.avg;
-        }
-        // 統計該品牌總共有多少款產品
-        brandItemCount[item.brand] = (brandItemCount[item.brand] || 0) + 1;
-    });
-
-// 3. 建立兩個不同的排序邏輯
-
-    // 【推薦清單排序】：品牌最高分越高越前面
-const safeSortLogic = (a, b) => {
-    // A. 品牌實力優先 (最高分 & 品項數)
-    if (brandMaxScore[b.brand] !== brandMaxScore[a.brand]) {
-        return brandMaxScore[b.brand] - brandMaxScore[a.brand];
-    }
-    if (brandItemCount[b.brand] !== brandItemCount[a.brand]) {
-        return brandItemCount[b.brand] - brandItemCount[a.brand];
-    }
-
-    // B. 同品牌內部：先看分數
-    if (b.avg !== a.avg) return b.avg - a.avg;
-
-    // C. 分數也相同：按系列排在一起 (利用 localeCompare)
-    return a.name.localeCompare(b.name, 'zh-Hant');
-};
-
-    // 【避雷清單排序】：品牌最低分越低越前面 (最雷優先)
-    // 我們需要先找出每個品牌的「最低分」
-    const brandMinScore = {};
-    processed.forEach(item => {
-        if (!brandMinScore[item.brand] || item.avg < brandMinScore[item.brand]) {
-            brandMinScore[item.brand] = item.avg;
-        }
-    });
-
-    const avoidSortLogic = (a, b) => {
-    // A. 雷度優先 (最低分 & 踩雷次數)
-    if (brandMinScore[a.brand] !== brandMinScore[b.brand]) {
-        return brandMinScore[a.brand] - brandMinScore[b.brand];
-    }
-    if (brandItemCount[b.brand] !== brandItemCount[a.brand]) {
-        return brandItemCount[b.brand] - brandItemCount[a.brand];
-    }
-
-    // B. 同品牌內部：分數越低越前面
-    if (a.avg !== b.avg) return a.avg - b.avg;
-
-    // C. 讓同系列的雷罐頭靠在一起
-    return a.name.localeCompare(b.name, 'zh-Hant');
-};
-        
-    const safe = processed.filter(i => i.avg >= 3.7).sort(safeSortLogic);
-    const avoid = processed.filter(i => i.avg < 3.3).sort(avoidSortLogic);
-
-    // 渲染 HTML
-    const itemHtml = (list, type) => list.length ? list.map(i => `
-        <div class="list-item ${type === 'safe' ? 'list-safe' : 'list-avoid'} rounded flex justify-between items-center mb-0.5 py-1 px-3">
-            <span class="font-medium text-gray-700 truncate pr-2 text-[16px]">${i.name}</span>
-            <span class="font-bold text-gray-900 text-[14px] bg-white/60 px-1 rounded">${i.avg.toFixed(1)}</span>
-        </div>`).join('') : '<p class="text-gray-300 text-xs text-center py-4 italic">暫無數據</p>';
-
-    document.getElementById('safeBuyList').innerHTML = `
-        <details class="group">
-            <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
-                <h2 class="text-[16px] font-bold text-green-700 flex items-center uppercase tracking-wider">
-                    <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-2"></span> 推薦清單 (${safe.length})
-                </h2>
-                <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
-            </summary>
-            <div class="max-h-[500px] overflow-y-auto pr-1 mt-2">${itemHtml(safe, 'safe')}</div>
-        </details>`;
-
-    document.getElementById('avoidList').innerHTML = `
-        <details class="group">
-            <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
-                <h2 class="text-[16px] font-bold text-red-700 flex items-center uppercase tracking-wider">
-                    <span class="w-1.5 h-1.5 bg-red-400 rounded-full mr-2"></span> 避雷清單 (${avoid.length})
-                </h2>
-                <span class="text-gray-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
-            </summary>
-            <div class="max-h-[500px] overflow-y-auto pr-1 mt-2">${itemHtml(avoid, 'avoid')}</div>
-        </details>`;
-}
-
-// 1. 先定義一個通用的日期更新功能
-function refreshDate() {
-    const dateInput = document.getElementById('date');
-    if (dateInput) {
-        dateInput.valueAsDate = new Date();
-    }
-}
-
-// 2. 這是你的儲存邏輯 (已更新日期處理方式)
-recordForm.onsubmit = async (e) => {
-    e.preventDefault();
-    if (!currentUser) return;
-    const btn = recordForm.querySelector('button');
-    btn.disabled = true;
-    
-    try {
-        const userRecordsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'records');
-        await addDoc(userRecordsRef, {
-            date: document.getElementById('date').value,
-            brand: brandInput.value.trim(),
-            series: seriesInput.value.trim(),
-            flavor: flavorInput.value.trim(),
-            ingredients: ingredientsInput.value.trim(),
-            rating: parseInt(ratingInput.value),
-            createdAt: new Date().toISOString()
-        });
-
-        // 儲存成功後的重置
-        recordForm.reset(); 
-        refreshDate(); // 使用剛定義的功能來確保日期最新
-        
-        ratingVal.innerText = "3";
-        renderHistory();
-        renderAnalysis();
-        renderShoppingList();
-        
-        showToast("✅ 紀錄已成功儲存");
-    } catch (e) { 
-        console.error(e);
-        showToast("❌ 儲存失敗"); 
-    } finally { 
-        btn.disabled = false; 
-    }
-};
-
-// 3. 雙重保險：取代原本的 window.onfocus
-// 當網頁從背景切換回前台（例如手機解鎖）時，自動對時
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-        refreshDate();
-    }
-});
-
-// 4. 網頁初始載入時也執行一次
-refreshDate();
 
     function showToast(msg) {
         const t = document.getElementById('toast');
@@ -640,7 +550,8 @@ refreshDate();
         t.classList.remove('translate-y-24');
         setTimeout(() => t.classList.add('translate-y-24'), 3000);
     }
-    document.getElementById('date').valueAsDate = new Date();
+
+    refreshDate();
 </script>
 </body>
 </html>
