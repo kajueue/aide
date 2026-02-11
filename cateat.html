@@ -346,16 +346,14 @@ brandInput.addEventListener('input', () => { renderDatalists(); attemptAutoFill(
     flavorInput.addEventListener('input', attemptAutoFill);
 ratingInput.oninput = (e) => ratingVal.innerText = e.target.value;
 
-        }); // 關閉 onSnapshot
     } else {
         // 如果沒登入，踢回首頁
         window.location.href = "index.html";
     }
-}); // 關閉 auth.onAuthStateChanged
+}); 
 
 // --- 修正後的渲染功能 ---
-
-   function renderHistory() {
+function renderHistory() {
     const list = document.getElementById('historyList');
     if (allRecords.length === 0) {
         list.innerHTML = `<p class="text-center py-6 text-gray-300 text-xs italic">尚無歷史紀錄</p>`;
