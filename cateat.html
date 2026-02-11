@@ -341,16 +341,19 @@ function renderUI() {
         }
     }
 
-    brandInput.addEventListener('input', () => { renderDatalists(); attemptAutoFill(); });
+brandInput.addEventListener('input', () => { renderDatalists(); attemptAutoFill(); });
     seriesInput.addEventListener('input', () => { renderDatalists(); attemptAutoFill(); });
     flavorInput.addEventListener('input', attemptAutoFill);
-    ratingInput.oninput = (e) => ratingVal.innerText = e.target.value;
-}); 
+ratingInput.oninput = (e) => ratingVal.innerText = e.target.value;
+
+        }); // 關閉 onSnapshot
     } else {
+        // 如果沒登入，踢回首頁
         window.location.href = "index.html";
     }
-});
-    // --- 修正後的渲染功能 ---
+}); // 關閉 auth.onAuthStateChanged
+
+// --- 修正後的渲染功能 ---
 
    function renderHistory() {
     const list = document.getElementById('historyList');
