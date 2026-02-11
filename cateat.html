@@ -498,15 +498,21 @@ const parts = processedText.split(/[，,、\s]+/)
 // 3. 建立兩個不同的排序邏輯
 
     // 【推薦清單排序】：品牌最高分越高越前面
-    const safeSortLogic = (a, b) => {
-        if (brandMaxScore[b.brand] !== brandMaxScore[a.brand]) {
-            return brandMaxScore[b.brand] - brandMaxScore[a.brand]; // 5分領先
-        }
-        if (brandItemCount[b.brand] !== brandItemCount[a.brand]) {
-            return brandItemCount[b.brand] - brandItemCount[a.brand];
-        }
-        return b.avg - a.avg;
-    };
+const safeSortLogic = (a, b) => {
+    // A. 品牌實力優先 (最高分 & 品項數)
+    if (brandMaxScore[b.brand] !== brandMaxScore[a.brand]) {
+        return brandMaxScore[b.brand] - brandMaxScore[a.brand];
+    }
+    if (brandItemCount[b.brand] !== brandItemCount[a.brand]) {
+        return brandItemCount[b.brand] - brandItemCount[a.brand];
+    }
+
+    // B. 同品牌內部：先看分數
+    if (b.avg !== a.avg) return b.avg - a.avg;
+
+    // C. 分數也相同：按系列排在一起 (利用 localeCompare)
+    return a.name.localeCompare(b.name, 'zh-Hant');
+};
 
     // 【避雷清單排序】：品牌最低分越低越前面 (最雷優先)
     // 我們需要先找出每個品牌的「最低分」
@@ -518,18 +524,21 @@ const parts = processedText.split(/[，,、\s]+/)
     });
 
     const avoidSortLogic = (a, b) => {
-        // 第一層：依照品牌的最低分排序 (1分比2分更前面)
-        if (brandMinScore[a.brand] !== brandMinScore[b.brand]) {
-            return brandMinScore[a.brand] - brandMinScore[b.brand]; // 分數小的排前面
-        }
-        // 第二層：品項數量多的品牌排前面 (代表踩雷次數多，更雷)
-        if (brandItemCount[b.brand] !== brandItemCount[a.brand]) {
-            return brandItemCount[b.brand] - brandItemCount[a.brand];
-        }
-        // 第三層：同品牌內部，分數最低的排最上面
-        return a.avg - b.avg;
-    };
+    // A. 雷度優先 (最低分 & 踩雷次數)
+    if (brandMinScore[a.brand] !== brandMinScore[b.brand]) {
+        return brandMinScore[a.brand] - brandMinScore[b.brand];
+    }
+    if (brandItemCount[b.brand] !== brandItemCount[a.brand]) {
+        return brandItemCount[b.brand] - brandItemCount[a.brand];
+    }
 
+    // B. 同品牌內部：分數越低越前面
+    if (a.avg !== b.avg) return a.avg - b.avg;
+
+    // C. 讓同系列的雷罐頭靠在一起
+    return a.name.localeCompare(b.name, 'zh-Hant');
+};
+        
     const safe = processed.filter(i => i.avg >= 3.7).sort(safeSortLogic);
     const avoid = processed.filter(i => i.avg < 3.3).sort(avoidSortLogic);
 
