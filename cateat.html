@@ -346,6 +346,8 @@ brandInput.addEventListener('input', () => { renderDatalists(); attemptAutoFill(
     flavorInput.addEventListener('input', attemptAutoFill);
 ratingInput.oninput = (e) => ratingVal.innerText = e.target.value;
 
+        // --- 這裡之前少了一個結束括號，我幫你補上了 ---
+        }); 
     } else {
         window.location.href = "index.html";
     }
