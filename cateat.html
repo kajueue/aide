@@ -486,7 +486,7 @@
             </div>`).join('') : '<p class="text-gray-300 text-xs text-center py-4 italic">暫無數據</p>';
 
         document.getElementById('safeBuyList').innerHTML = `
-            <details class="group" open>
+            <details class="group">
                 <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
                     <h2 class="text-[16px] font-bold text-green-700 flex items-center uppercase tracking-wider">
                         <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-2"></span> 推薦清單 (${safe.length})
@@ -497,7 +497,7 @@
             </details>`;
 
         document.getElementById('avoidList').innerHTML = `
-            <details class="group" open>
+            <details class="group">
                 <summary class="list-none cursor-pointer flex justify-between items-center outline-none">
                     <h2 class="text-[16px] font-bold text-red-700 flex items-center uppercase tracking-wider">
                         <span class="w-1.5 h-1.5 bg-red-400 rounded-full mr-2"></span> 避雷清單 (${avoid.length})
