@@ -23,16 +23,16 @@
 </head>
 <body class="bg-slate-50 text-slate-800">
 
-    <div id="app" class="min-h-screen p-2 md:p-6">
+    <div id="app" class="min-h-screen p-2 md:p-4 lg:p-6">
         <div class="max-w-6xl mx-auto">
             <!-- Header -->
-            <header class="mb-3 flex items-center justify-between">
-                <h1 class="text-lg md:text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    <i data-lucide="calendar" class="text-amber-800 w-6 h-6"></i>
+            <header class="mb-2 md:mb-4 flex items-center justify-between">
+                <h1 class="text-lg md:text-xl lg:text-2xl font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="calendar" class="text-amber-800 w-5 h-5 md:w-6 md:h-6"></i>
                     會談預約一覽表 (Cloud Sync)
                 </h1>
                 <div id="status-indicator" class="flex items-center gap-2 text-xs font-medium text-slate-400">
-                    <span id="status-dot" class="w-2.5 h-2.5 rounded-full bg-slate-300 transition-colors"></span>
+                    <span id="status-dot" class="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-slate-300 transition-colors"></span>
                     <span id="status-text">連線中...</span>
                 </div>
             </header>
@@ -52,7 +52,7 @@
                     <table class="w-full border-collapse table-fixed compact-table min-w-[650px]">
                         <thead>
                             <tr class="bg-slate-100">
-                                <th class="p-2 border-b border-r text-xs md:text-sm font-semibold text-slate-500 w-14 md:w-28">時段</th>
+                                <th class="p-1.5 md:p-2 border-b border-r text-xs md:text-sm font-semibold text-slate-500 w-14 md:w-24">時段</th>
                                 <th class="p-1 border-b text-sm md:text-base font-bold text-slate-700">週一</th>
                                 <th class="p-1 border-b text-sm md:text-base font-bold text-slate-700">週二</th>
                                 <th class="p-1 border-b text-sm md:text-base font-bold text-slate-700">週三</th>
@@ -66,7 +66,7 @@
                     </table>
                 </div>
             </div>
-            <p class="mt-3 text-center text-[10px] text-slate-400 md:hidden">提示：左右滑動可查看完整週五內容</p>
+            <p class="mt-2 text-center text-[10px] text-slate-400 md:hidden">提示：左右滑動可查看完整週五內容</p>
         </div>
 
         <!-- Modal -->
@@ -161,7 +161,7 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                document.getElementById('status-dot').className = "w-2.5 h-2.5 rounded-full bg-green-500";
+                document.getElementById('status-dot').className = "w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-green-500";
                 document.getElementById('status-text').innerText = "雲端同步中";
                 setupRealtimeListeners();
             }
@@ -196,8 +196,8 @@
                 if (['noon', 'morning'].includes(slot.id)) tr.className = 'bg-slate-50/50';
                 
                 let tdHtml = `<td class="p-1 border-b border-r text-center align-middle bg-slate-50/30">
-                    <div class="font-bold text-amber-900 text-[10px] md:text-sm">${slot.label}</div>
-                    <div class="text-[9px] md:text-[11px] text-slate-500 font-mono mt-0.5">${slot.time}</div>
+                    <div class="font-bold text-amber-900 text-[10px] md:text-xs lg:text-sm">${slot.label}</div>
+                    <div class="text-[9px] md:text-[10px] text-slate-500 font-mono mt-0.5">${slot.time}</div>
                 </td>`;
 
                 days.forEach(day => {
@@ -216,20 +216,22 @@
                                 bgColor = 'bg-[#EFEBE9]'; textColor = 'text-amber-900 font-semibold';
                                 text = data.note || '已預約'; 
                                 const icon = data.animalIndex !== undefined ? animals[data.animalIndex % animals.length] : '👤';
-                                content = `<span class="text-lg md:text-2xl mb-0.5">${icon}</span>`;
+                                // 電腦版圖示縮小為 text-xl
+                                content = `<span class="text-lg md:text-xl mb-0.5">${icon}</span>`;
                                 break;
                             case 'busy':
                                 bgColor = 'bg-rose-50'; textColor = 'text-rose-700 font-semibold text-[10px] md:text-xs';
-                                text = data.note || ''; content = '<i data-lucide="x-circle" class="w-4 h-4 text-rose-400 mb-0.5"></i>';
+                                text = data.note || ''; content = '<i data-lucide="x-circle" class="w-4 h-4 md:w-3.5 md:h-3.5 text-rose-400 mb-0.5"></i>';
                                 break;
                             case 'pending':
                                 bgColor = 'bg-amber-50'; textColor = 'text-amber-700 font-semibold text-[10px] md:text-xs';
-                                text = data.note || '暫定'; content = '<i data-lucide="minus-circle" class="w-4 h-4 text-amber-500 mb-0.5"></i>';
+                                text = data.note || '暫定'; content = '<i data-lucide="minus-circle" class="w-4 h-4 md:w-3.5 md:h-3.5 text-amber-500 mb-0.5"></i>';
                                 break;
                         }
                     }
                     
-                    tdHtml += `<td onclick="handleCellClick('${day}', '${slot.id}')" class="p-0.5 border-b border-r transition-all h-14 md:h-24 ${locked ? '' : 'cursor-pointer hover:bg-slate-50'} ${bgColor}">
+                    // 縮減電腦版高度，從 h-24 調整為 md:h-16
+                    tdHtml += `<td onclick="handleCellClick('${day}', '${slot.id}')" class="p-0.5 border-b border-r transition-all h-14 md:h-16 ${locked ? '' : 'cursor-pointer hover:bg-slate-50'} ${bgColor}">
                         <div class="flex flex-col items-center justify-center h-full px-0.5">
                             ${content}
                             <span class="text-[10px] md:text-xs text-center line-clamp-2 leading-tight ${textColor}">${text}</span>
@@ -264,7 +266,6 @@
             } else {
                 const cellData = { status, note: note || "" };
                 
-                // 只有「已預約」才需要分配或維持動物索引
                 if (status === 'booked') {
                     if (newApps[selectedCellId]?.animalIndex === undefined) {
                         newIdx++;
@@ -273,14 +274,11 @@
                         cellData.animalIndex = newApps[selectedCellId].animalIndex;
                     }
                 }
-                // 確保其他狀態不包含 undefined 的 animalIndex
                 newApps[selectedCellId] = cellData;
             }
 
             try {
-                // 在傳輸前確保物件中沒有 undefined
                 const sanitizedData = JSON.parse(JSON.stringify(newApps));
-                
                 await setDoc(getMainDocRef(), { 
                     data: sanitizedData,
                     lastIndex: newIdx, 
