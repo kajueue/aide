@@ -23,12 +23,12 @@
         <div class="max-w-6xl mx-auto">
             <!-- Header -->
             <header class="mb-3 flex items-center justify-between">
-                <h1 class="text-lg md:text-xl font-bold text-slate-900 flex items-center gap-2">
-                    <i data-lucide="calendar" class="text-amber-800 w-5 h-5"></i>
+                <h1 class="text-lg md:text-2xl font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="calendar" class="text-amber-800 w-6 h-6"></i>
                     會談預約一覽表 (Cloud Sync)
                 </h1>
-                <div id="status-indicator" class="flex items-center gap-2 text-[10px] font-medium text-slate-400">
-                    <span id="status-dot" class="w-2 h-2 rounded-full bg-slate-300 transition-colors"></span>
+                <div id="status-indicator" class="flex items-center gap-2 text-xs font-medium text-slate-400">
+                    <span id="status-dot" class="w-2.5 h-2.5 rounded-full bg-slate-300 transition-colors"></span>
                     <span id="status-text">連線中...</span>
                 </div>
             </header>
@@ -39,20 +39,20 @@
                 <div id="loading-overlay" class="absolute inset-0 bg-white/90 z-10 flex items-center justify-center transition-opacity duration-300">
                     <div class="flex flex-col items-center gap-2 text-center px-4">
                         <div id="loader-icon" class="loader"></div>
-                        <span id="loader-text" class="text-xs text-amber-900 font-medium">同步雲端資料中，請稍候...</span>
+                        <span id="loader-text" class="text-sm text-amber-900 font-medium">同步雲端資料中，請稍候...</span>
                     </div>
                 </div>
 
                 <div class="overflow-x-auto">
-                    <table class="w-full border-collapse table-fixed min-w-[600px]">
+                    <table class="w-full border-collapse table-fixed min-w-[700px]">
                         <thead>
                             <tr class="bg-slate-100">
-                                <th class="p-1.5 border-b border-r text-[10px] md:text-xs font-semibold text-slate-500 w-16 md:w-24">時段</th>
-                                <th class="p-1.5 border-b text-xs md:text-sm font-bold text-slate-700">週一</th>
-                                <th class="p-1.5 border-b text-xs md:text-sm font-bold text-slate-700">週二</th>
-                                <th class="p-1.5 border-b text-xs md:text-sm font-bold text-slate-700">週三</th>
-                                <th class="p-1.5 border-b text-xs md:text-sm font-bold text-slate-700">週四</th>
-                                <th class="p-1.5 border-b text-xs md:text-sm font-bold text-slate-700">週五</th>
+                                <th class="p-2 border-b border-r text-xs md:text-sm font-semibold text-slate-500 w-20 md:w-28">時段</th>
+                                <th class="p-2 border-b text-sm md:text-base font-bold text-slate-700">週一</th>
+                                <th class="p-2 border-b text-sm md:text-base font-bold text-slate-700">週二</th>
+                                <th class="p-2 border-b text-sm md:text-base font-bold text-slate-700">週三</th>
+                                <th class="p-2 border-b text-sm md:text-base font-bold text-slate-700">週四</th>
+                                <th class="p-2 border-b text-sm md:text-base font-bold text-slate-700">週五</th>
                             </tr>
                         </thead>
                         <tbody id="table-body">
@@ -61,14 +61,14 @@
                     </table>
                 </div>
             </div>
-            <p class="mt-3 text-center text-[10px] text-slate-400 md:hidden">提示：左右滑動查看完整週曆表格</p>
+            <p class="mt-3 text-center text-xs text-slate-400 md:hidden">提示：左右滑動查看完整週曆表格</p>
         </div>
 
         <!-- Modal -->
         <div id="modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
             <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div class="p-4 border-b flex justify-between items-center bg-[#EFEBE9]">
-                    <h3 id="modal-title" class="font-bold text-base text-amber-900 flex items-center gap-2"></h3>
+                    <h3 id="modal-title" class="font-bold text-lg text-amber-900 flex items-center gap-2"></h3>
                     <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-1">
                         <i data-lucide="x-circle"></i>
                     </button>
@@ -77,28 +77,27 @@
                 <div class="p-5 space-y-5">
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">備註內容</label>
-                        <!-- 移除 placeholder 並加入 autocomplete="off" -->
-                        <input id="note-input" type="text" autocomplete="off" class="w-full px-3 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-amber-800 focus:border-amber-800 outline-none transition-all text-sm">
+                        <input id="note-input" type="text" autocomplete="off" class="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-amber-800 focus:border-amber-800 outline-none transition-all text-base">
                     </div>
 
                     <div class="grid grid-cols-2 gap-2">
-                        <button onclick="updateStatus('booked')" class="flex flex-col items-center justify-center gap-2 p-3 rounded-lg border border-amber-100 bg-[#F5F5F5] text-amber-900 text-xs font-bold hover:border-amber-800 transition-colors">
-                            <span class="text-xl">✨</span> 標記已約
+                        <button onclick="updateStatus('booked')" class="flex flex-col items-center justify-center gap-2 p-3 rounded-lg border border-amber-100 bg-[#F5F5F5] text-amber-900 text-sm font-bold hover:border-amber-800 transition-colors">
+                            <span class="text-2xl">✨</span> 標記已約
                         </button>
-                        <button onclick="updateStatus('busy')" class="flex flex-col items-center justify-center gap-2 p-3 rounded-lg border border-rose-100 bg-rose-50 text-rose-700 text-xs font-bold hover:border-rose-500 transition-colors">
-                            <i data-lucide="x-circle" class="w-5 h-5"></i> 不開放
+                        <button onclick="updateStatus('busy')" class="flex flex-col items-center justify-center gap-2 p-3 rounded-lg border border-rose-100 bg-rose-50 text-rose-700 text-sm font-bold hover:border-rose-500 transition-colors">
+                            <i data-lucide="x-circle" class="w-6 h-6"></i> 不開放
                         </button>
-                        <button onclick="updateStatus('pending')" class="flex flex-col items-center justify-center gap-2 p-3 rounded-lg border border-amber-500/20 bg-amber-50 text-amber-700 text-xs font-bold hover:border-amber-500 transition-colors">
-                            <i data-lucide="minus-circle" class="w-5 h-5"></i> 暫定
+                        <button onclick="updateStatus('pending')" class="flex flex-col items-center justify-center gap-2 p-3 rounded-lg border border-amber-500/20 bg-amber-50 text-amber-700 text-sm font-bold hover:border-amber-500 transition-colors">
+                            <i data-lucide="minus-circle" class="w-6 h-6"></i> 暫定
                         </button>
-                        <button onclick="updateStatus('empty')" class="flex flex-col items-center justify-center gap-2 p-3 rounded-lg border border-slate-100 bg-white text-slate-500 text-xs font-bold hover:border-slate-400 transition-colors">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i> 清除/開放
+                        <button onclick="updateStatus('empty')" class="flex flex-col items-center justify-center gap-2 p-3 rounded-lg border border-slate-100 bg-white text-slate-500 text-sm font-bold hover:border-slate-400 transition-colors">
+                            <i data-lucide="trash-2" class="w-6 h-6"></i> 清除/開放
                         </button>
                     </div>
                 </div>
 
                 <div class="p-3 bg-slate-50 flex gap-2">
-                    <button onclick="closeModal()" class="flex-1 py-2 text-sm rounded-lg bg-slate-200 text-slate-700 font-bold">取消</button>
+                    <button onclick="closeModal()" class="flex-1 py-2.5 text-sm rounded-lg bg-slate-200 text-slate-700 font-bold">取消</button>
                 </div>
             </div>
         </div>
@@ -128,18 +127,18 @@
         let selectedCellId = null;
         let currentUser = null;
 
-        const animals = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆', ' eagles', '🦉', '🦇', '🐺'];
+        const animals = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆', '🦅', '🦉', '🦇', '🐺'];
         const days = ['週一', '週二', '週三', '週四', '週五'];
         const timeSlots = [
-            { id: 'morning', label: '早休', time: '07:55-08:35' },
-            { id: '1', label: '1', time: '08:40-09:20' },
-            { id: '2', label: '2', time: '09:30-10:10' },
-            { id: '3', label: '3', time: '10:30-11:10' },
-            { id: '4', label: '4', time: '11:20-12:00' },
-            { id: 'noon', label: '午休', time: '12:40-13:20' },
-            { id: '5', label: '5', time: '13:30-14:10' },
-            { id: '6', label: '6', time: '14:20-15:00' },
-            { id: '7', label: '7', time: '15:10-15:50' },
+            { id: 'morning', label: '早休', time: '07:55' },
+            { id: '1', label: '1', time: '08:40' },
+            { id: '2', label: '2', time: '09:30' },
+            { id: '3', label: '3', time: '10:30' },
+            { id: '4', label: '4', time: '11:20' },
+            { id: 'noon', label: '午休', time: '12:40' },
+            { id: '5', label: '5', time: '13:30' },
+            { id: '6', label: '6', time: '14:20' },
+            { id: '7', label: '7', time: '15:10' },
         ];
 
         const getMainDocRef = () => doc(db, 'artifacts', appId, 'public', 'data', 'config', 'appointments_main');
@@ -157,7 +156,7 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                document.getElementById('status-dot').className = "w-2 h-2 rounded-full bg-green-500";
+                document.getElementById('status-dot').className = "w-2.5 h-2.5 rounded-full bg-green-500";
                 document.getElementById('status-text').innerText = "雲端同步中";
                 setupRealtimeListeners();
             }
@@ -190,42 +189,45 @@
             timeSlots.forEach(slot => {
                 const tr = document.createElement('tr');
                 if (['noon', 'morning'].includes(slot.id)) tr.className = 'bg-slate-50/50';
-                let tdHtml = `<td class="p-1 border-b border-r text-center align-middle bg-slate-50/30">
-                    <div class="font-bold text-amber-900 text-[10px] md:text-xs">${slot.label}</div>
-                    <div class="text-[8px] text-slate-400 font-mono">${slot.time}</div>
+                
+                let tdHtml = `<td class="p-1.5 border-b border-r text-center align-middle bg-slate-50/30">
+                    <div class="font-bold text-amber-900 text-xs md:text-sm">${slot.label}</div>
+                    <div class="text-[10px] md:text-[11px] text-slate-500 font-mono mt-0.5">${slot.time}</div>
                 </td>`;
+
                 days.forEach(day => {
                     const cellId = `${day}-${slot.id}`;
                     const locked = isLockedSlot(day, slot.id);
                     const data = appointments[cellId];
                     let content = '', bgColor = 'bg-white', textColor = 'text-slate-300', text = '可預約';
+                    
                     if (locked) {
                         bgColor = 'bg-slate-50';
-                        content = '<i data-lucide="lock" class="w-3 h-3 text-slate-200"></i>';
+                        content = '<i data-lucide="lock" class="w-4 h-4 text-slate-200"></i>';
                         text = '';
                     } else if (data) {
                         switch (data.status) {
                             case 'booked':
-                                bgColor = 'bg-[#EFEBE9]'; textColor = 'text-amber-900 font-medium';
+                                bgColor = 'bg-[#EFEBE9]'; textColor = 'text-amber-900 font-semibold';
                                 text = data.note || '已預約'; 
-                                // 修正顯示邏輯：使用儲存在資料中的索引，若無則顯示預設圖標
                                 const icon = data.animalIndex !== undefined ? animals[data.animalIndex % animals.length] : '👤';
-                                content = `<span class="text-base">${icon}</span>`;
+                                content = `<span class="text-xl md:text-2xl mb-1">${icon}</span>`;
                                 break;
                             case 'busy':
-                                bgColor = 'bg-rose-50'; textColor = 'text-rose-700 font-medium';
-                                text = data.note || ''; content = '<i data-lucide="x-circle" class="w-3.5 h-3.5 text-rose-400"></i>';
+                                bgColor = 'bg-rose-50'; textColor = 'text-rose-700 font-semibold';
+                                text = data.note || ''; content = '<i data-lucide="x-circle" class="w-5 h-5 text-rose-400 mb-1"></i>';
                                 break;
                             case 'pending':
-                                bgColor = 'bg-amber-50'; textColor = 'text-amber-700 font-medium';
-                                text = data.note || '暫定'; content = '<i data-lucide="minus-circle" class="w-3.5 h-3.5 text-amber-500"></i>';
+                                bgColor = 'bg-amber-50'; textColor = 'text-amber-700 font-semibold';
+                                text = data.note || '暫定'; content = '<i data-lucide="minus-circle" class="w-5 h-5 text-amber-500 mb-1"></i>';
                                 break;
                         }
                     }
-                    tdHtml += `<td onclick="handleCellClick('${day}', '${slot.id}')" class="p-0.5 border-b border-r transition-all h-12 md:h-20 ${locked ? '' : 'cursor-pointer hover:bg-slate-50'} ${bgColor}">
-                        <div class="flex flex-col items-center justify-center h-full">
+                    
+                    tdHtml += `<td onclick="handleCellClick('${day}', '${slot.id}')" class="p-1 border-b border-r transition-all h-16 md:h-24 ${locked ? '' : 'cursor-pointer hover:bg-slate-50'} ${bgColor}">
+                        <div class="flex flex-col items-center justify-center h-full px-1">
                             ${content}
-                            <span class="text-[10px] md:text-[11px] text-center line-clamp-2 ${textColor}">${text}</span>
+                            <span class="text-[11px] md:text-xs text-center line-clamp-2 leading-tight ${textColor}">${text}</span>
                         </div>
                     </td>`;
                 });
@@ -258,12 +260,10 @@
                 const cellData = { status, note: note || "" };
                 
                 if (status === 'booked') {
-                    // 如果該格子原本沒有動物索引，才分配新的
                     if (newApps[selectedCellId]?.animalIndex === undefined) {
-                        newIdx++; // 遞增全局索引
+                        newIdx++;
                         cellData.animalIndex = newIdx;
                     } else {
-                        // 保留原本的動物索引
                         cellData.animalIndex = newApps[selectedCellId].animalIndex;
                     }
                 }
@@ -276,7 +276,6 @@
                     lastIndex: newIdx, 
                     lastUpdated: new Date().toISOString() 
                 });
-                // 更新本地的 lastUsedAnimalIndex，確保下一次操作使用正確的基準
                 lastUsedAnimalIndex = newIdx;
                 closeModal();
             } catch (err) { 
