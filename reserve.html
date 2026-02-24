@@ -37,9 +37,9 @@
             <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden relative">
                 <!-- Loading Overlay -->
                 <div id="loading-overlay" class="absolute inset-0 bg-white/90 z-10 flex items-center justify-center transition-opacity duration-300">
-                    <div class="flex flex-col items-center gap-2">
-                        <div class="loader"></div>
-                        <span class="text-xs text-amber-900 font-medium">同步雲端資料...</span>
+                    <div class="flex flex-col items-center gap-2 text-center px-4">
+                        <div id="loader-icon" class="loader"></div>
+                        <span id="loader-text" class="text-xs text-amber-900 font-medium">同步雲端資料中，請稍候...</span>
                     </div>
                 </div>
 
@@ -105,19 +105,23 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase 設定與環境變數
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        const firebaseConfig = {
+            apiKey: "AIzaSyB5Tmo44c4MWfedGpmjG_Pu_JzhCQST-9o",
+            authDomain: "reserve-bacf9.firebaseapp.com",
+            projectId: "reserve-bacf9",
+            storageBucket: "reserve-bacf9.firebasestorage.app",
+            messagingSenderId: "860021558334",
+            appId: "1:860021558334:web:aea28bc6cb952382f3956f"
+        };
 
+        const appId = "reserve-bacf9";
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // 資料狀態
         let appointments = {};
         let lastUsedAnimalIndex = -1;
         let selectedCellId = null;
@@ -137,47 +141,29 @@
             { id: '7', label: '7', time: '15:10-15:50' },
         ];
 
-        // 取得主要文件的 Reference
-        const getMainDocRef = () => doc(db, 'artifacts', appId, 'public', 'data', 'app_config', 'appointments_main');
+        // 修正路徑：補足為 6 段 (artifacts -> {appId} -> public -> data -> config -> appointments_main)
+        const getMainDocRef = () => doc(db, 'artifacts', appId, 'public', 'data', 'config', 'appointments_main');
 
-        // 登入邏輯（含重試機制）
         async function startSystem() {
-            let retries = 5;
-            let delay = 1000;
-
-            const attemptSignIn = async () => {
-                try {
-                    if (initialAuthToken) {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                } catch (err) {
-                    if (retries > 0) {
-                        retries--;
-                        setTimeout(attemptSignIn, delay);
-                        delay *= 2; // 指數退避
-                    } else {
-                        console.error("Auth Final Failure:", err);
-                        document.getElementById('status-text').innerText = "連線失敗";
-                    }
-                }
-            };
-            attemptSignIn();
+            try {
+                await signInAnonymously(auth);
+            } catch (err) {
+                console.error("Auth Error:", err);
+                document.getElementById('loader-text').innerText = "登入失敗：請確認 Firebase Authentication 的「匿名登入」已開啟，且「授權網域」已加入您的 GitHub 網址。";
+                document.getElementById('loader-text').className = "text-xs text-rose-500 font-bold px-4";
+            }
         }
 
         onAuthStateChanged(auth, (user) => {
-            currentUser = user;
             if (user) {
+                currentUser = user;
                 document.getElementById('status-dot').className = "w-2 h-2 rounded-full bg-green-500";
                 document.getElementById('status-text').innerText = "雲端同步中";
                 setupRealtimeListeners();
             }
         });
 
-        // 監聽雲端資料更新
         function setupRealtimeListeners() {
-            if (!currentUser) return;
             const appRef = getMainDocRef();
             onSnapshot(appRef, (docSnap) => {
                 if (docSnap.exists()) {
@@ -185,12 +171,11 @@
                     lastUsedAnimalIndex = docSnap.data().lastIndex || -1;
                 }
                 renderTable();
-                // 隱藏載入畫面
-                const overlay = document.getElementById('loading-overlay');
-                overlay.classList.add('opacity-0');
-                setTimeout(() => overlay.classList.add('hidden'), 300);
+                document.getElementById('loading-overlay').classList.add('hidden');
             }, (error) => {
-                console.error("Firestore Sync Error:", error);
+                console.error("Firestore Error:", error);
+                document.getElementById('loader-text').innerText = "同步失敗：" + error.message;
+                document.getElementById('loader-text').className = "text-xs text-rose-500 font-bold px-4";
             });
         }
 
@@ -201,28 +186,18 @@
         window.renderTable = function() {
             const tbody = document.getElementById('table-body');
             tbody.innerHTML = '';
-
             timeSlots.forEach(slot => {
                 const tr = document.createElement('tr');
                 if (['noon', 'morning'].includes(slot.id)) tr.className = 'bg-slate-50/50';
-
-                let tdHtml = `
-                    <td class="p-1 border-b border-r text-center align-middle bg-slate-50/30">
-                        <div class="font-bold text-amber-900 text-[10px] md:text-xs leading-tight">${slot.label}</div>
-                        <div class="text-[8px] text-slate-400 leading-tight font-mono">${slot.time}</div>
-                    </td>
-                `;
-
+                let tdHtml = `<td class="p-1 border-b border-r text-center align-middle bg-slate-50/30">
+                    <div class="font-bold text-amber-900 text-[10px] md:text-xs">${slot.label}</div>
+                    <div class="text-[8px] text-slate-400 font-mono">${slot.time}</div>
+                </td>`;
                 days.forEach(day => {
                     const cellId = `${day}-${slot.id}`;
                     const locked = isLockedSlot(day, slot.id);
                     const data = appointments[cellId];
-                    
-                    let content = '';
-                    let bgColor = 'bg-white';
-                    let textColor = 'text-slate-300';
-                    let text = '可預約';
-
+                    let content = '', bgColor = 'bg-white', textColor = 'text-slate-300', text = '可預約';
                     if (locked) {
                         bgColor = 'bg-slate-50';
                         content = '<i data-lucide="lock" class="w-3 h-3 text-slate-200"></i>';
@@ -230,102 +205,65 @@
                     } else if (data) {
                         switch (data.status) {
                             case 'booked':
-                                const icon = data.animalIndex !== undefined ? animals[data.animalIndex] : '👤';
-                                bgColor = 'bg-[#EFEBE9]';
-                                textColor = 'text-amber-900 font-medium';
-                                text = data.note || '已預約';
-                                content = `<span class="text-base">${icon}</span>`;
+                                bgColor = 'bg-[#EFEBE9]'; textColor = 'text-amber-900 font-medium';
+                                text = data.note || '已預約'; content = `<span class="text-base">${data.animalIndex !== undefined ? animals[data.animalIndex] : '👤'}</span>`;
                                 break;
                             case 'busy':
-                                bgColor = 'bg-rose-50';
-                                textColor = 'text-rose-700 font-medium';
-                                text = data.note || '';
-                                content = '<i data-lucide="x-circle" class="w-3.5 h-3.5 text-rose-400"></i>';
+                                bgColor = 'bg-rose-50'; textColor = 'text-rose-700 font-medium';
+                                text = data.note || ''; content = '<i data-lucide="x-circle" class="w-3.5 h-3.5 text-rose-400"></i>';
                                 break;
                             case 'pending':
-                                bgColor = 'bg-amber-50';
-                                textColor = 'text-amber-700 font-medium';
-                                text = data.note || '暫定';
-                                content = '<i data-lucide="minus-circle" class="w-3.5 h-3.5 text-amber-500"></i>';
+                                bgColor = 'bg-amber-50'; textColor = 'text-amber-700 font-medium';
+                                text = data.note || '暫定'; content = '<i data-lucide="minus-circle" class="w-3.5 h-3.5 text-amber-500"></i>';
                                 break;
                         }
                     }
-
-                    tdHtml += `
-                        <td onclick="handleCellClick('${day}', '${slot.id}')" 
-                            class="p-0.5 border-b border-r last:border-r-0 transition-all relative h-12 md:h-20 ${locked ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-slate-100/50'} ${bgColor}">
-                            <div class="flex flex-col items-center justify-center h-full gap-0 px-0.5 leading-tight">
-                                ${content}
-                                <span class="text-[10px] md:text-[11px] text-center line-clamp-2 leading-tight ${textColor}">${text}</span>
-                            </div>
-                        </td>
-                    `;
+                    tdHtml += `<td onclick="handleCellClick('${day}', '${slot.id}')" class="p-0.5 border-b border-r transition-all h-12 md:h-20 ${locked ? '' : 'cursor-pointer hover:bg-slate-50'} ${bgColor}">
+                        <div class="flex flex-col items-center justify-center h-full">
+                            ${content}
+                            <span class="text-[10px] md:text-[11px] text-center line-clamp-2 ${textColor}">${text}</span>
+                        </div>
+                    </td>`;
                 });
-
                 tr.innerHTML = tdHtml;
                 tbody.appendChild(tr);
             });
             lucide.createIcons();
         }
 
-        window.handleCellClick = function(day, slotId) {
+        window.handleCellClick = (day, slotId) => {
             if (isLockedSlot(day, slotId)) return;
             selectedCellId = `${day}-${slotId}`;
             const data = appointments[selectedCellId];
-            
-            document.getElementById('modal-title').innerHTML = `<i data-lucide="clock" class="w-5 h-5"></i> ${day} 第 ${slotId === 'morning' ? '早休' : slotId === 'noon' ? '午休' : slotId} 節`;
+            document.getElementById('modal-title').innerText = `${day} 第 ${slotId} 節`;
             document.getElementById('note-input').value = data?.note || '';
             document.getElementById('modal').style.display = 'flex';
-            lucide.createIcons();
-        }
+        };
 
-        window.closeModal = function() {
-            document.getElementById('modal').style.display = 'none';
-            selectedCellId = null;
-        }
+        window.closeModal = () => document.getElementById('modal').style.display = 'none';
 
-        window.updateStatus = async function(status) {
+        window.updateStatus = async (status) => {
             if (!selectedCellId || !currentUser) return;
             const note = document.getElementById('note-input').value;
-            
-            let newAppointments = { ...appointments };
-            let newLastIndex = lastUsedAnimalIndex;
-
-            if (status === 'empty') {
-                delete newAppointments[selectedCellId];
-            } else {
-                let currentData = newAppointments[selectedCellId];
-                let animalIndex = currentData?.animalIndex;
-
+            let newApps = { ...appointments };
+            let newIdx = lastUsedAnimalIndex;
+            if (status === 'empty') delete newApps[selectedCellId];
+            else {
+                let animalIndex = newApps[selectedCellId]?.animalIndex;
                 if (status === 'booked' && animalIndex === undefined) {
-                    newLastIndex++;
-                    animalIndex = newLastIndex % animals.length;
+                    newIdx++;
+                    animalIndex = newIdx % animals.length;
                 }
-                
-                newAppointments[selectedCellId] = {
-                    status,
-                    note: note,
-                    animalIndex: animalIndex
-                };
+                newApps[selectedCellId] = { status, note, animalIndex };
             }
-
             try {
-                const appRef = getMainDocRef();
-                await setDoc(appRef, {
-                    data: newAppointments,
-                    lastIndex: newLastIndex,
-                    lastUpdated: new Date().toISOString()
-                });
+                await setDoc(getMainDocRef(), { data: newApps, lastIndex: newIdx, lastUpdated: new Date().toISOString() });
                 closeModal();
-            } catch (err) {
-                console.error("Save Error:", err);
-                alert("儲存失敗，請確認您的連線狀態。");
-            }
-        }
+            } catch (err) { alert("儲存失敗：" + err.message); }
+        };
 
-        // 啟動系統
+        renderTable();
         startSystem();
-
     </script>
 </body>
 </html>
