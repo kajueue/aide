@@ -141,7 +141,6 @@
             { id: '7', label: '7', time: '15:10-15:50' },
         ];
 
-        // 修正路徑：補足為 6 段 (artifacts -> {appId} -> public -> data -> config -> appointments_main)
         const getMainDocRef = () => doc(db, 'artifacts', appId, 'public', 'data', 'config', 'appointments_main');
 
         async function startSystem() {
@@ -149,7 +148,7 @@
                 await signInAnonymously(auth);
             } catch (err) {
                 console.error("Auth Error:", err);
-                document.getElementById('loader-text').innerText = "登入失敗：請確認 Firebase Authentication 的「匿名登入」已開啟，且「授權網域」已加入您的 GitHub 網址。";
+                document.getElementById('loader-text').innerText = "登入失敗：請確認 Firebase Authentication 的「匿名登入」已開啟。";
                 document.getElementById('loader-text').className = "text-xs text-rose-500 font-bold px-4";
             }
         }
@@ -247,19 +246,38 @@
             const note = document.getElementById('note-input').value;
             let newApps = { ...appointments };
             let newIdx = lastUsedAnimalIndex;
-            if (status === 'empty') delete newApps[selectedCellId];
-            else {
-                let animalIndex = newApps[selectedCellId]?.animalIndex;
-                if (status === 'booked' && animalIndex === undefined) {
-                    newIdx++;
-                    animalIndex = newIdx % animals.length;
+
+            if (status === 'empty') {
+                delete newApps[selectedCellId];
+            } else {
+                // 初始化存檔物件
+                const cellData = { status, note: note || "" };
+                
+                // 只有在標記已約時才處理動物圖標索引
+                if (status === 'booked') {
+                    let animalIndex = newApps[selectedCellId]?.animalIndex;
+                    if (animalIndex === undefined) {
+                        newIdx++;
+                        animalIndex = newIdx % animals.length;
+                    }
+                    cellData.animalIndex = animalIndex;
                 }
-                newApps[selectedCellId] = { status, note, animalIndex };
+                
+                newApps[selectedCellId] = cellData;
             }
+
             try {
-                await setDoc(getMainDocRef(), { data: newApps, lastIndex: newIdx, lastUpdated: new Date().toISOString() });
+                // 確保儲存時不帶入 undefined
+                await setDoc(getMainDocRef(), { 
+                    data: JSON.parse(JSON.stringify(newApps)), // 深度拷貝並移除 undefined
+                    lastIndex: newIdx, 
+                    lastUpdated: new Date().toISOString() 
+                });
                 closeModal();
-            } catch (err) { alert("儲存失敗：" + err.message); }
+            } catch (err) { 
+                console.error("Save error:", err);
+                alert("儲存失敗：" + err.message); 
+            }
         };
 
         renderTable();
