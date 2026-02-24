@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>會談預約管理系統 - Cloud Sync</title>
+    <title>會談預約管理系統</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons CDN -->
@@ -29,7 +30,7 @@
             <header class="mb-2 md:mb-4 flex items-center justify-between">
                 <h1 class="text-lg md:text-xl lg:text-2xl font-bold text-slate-900 flex items-center gap-2">
                     <i data-lucide="calendar" class="text-amber-800 w-5 h-5 md:w-6 md:h-6"></i>
-                    會談預約一覽表 (Cloud Sync)
+                    會談預約一覽表
                 </h1>
                 <div id="status-indicator" class="flex items-center gap-2 text-xs font-medium text-slate-400">
                     <span id="status-dot" class="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-slate-300 transition-colors"></span>
@@ -87,7 +88,7 @@
 
                     <div class="grid grid-cols-2 gap-2">
                         <button onclick="updateStatus('booked')" class="flex flex-col items-center justify-center gap-2 p-3 rounded-lg border border-amber-100 bg-[#F5F5F5] text-amber-900 text-sm font-bold hover:border-amber-800 transition-colors">
-                            <span class="text-2xl">✨</span> 標記已約
+                            <span class="text-2xl">✨</span> 已約
                         </button>
                         <button onclick="updateStatus('busy')" class="flex flex-col items-center justify-center gap-2 p-3 rounded-lg border border-rose-100 bg-rose-50 text-rose-700 text-sm font-bold hover:border-rose-500 transition-colors">
                             <i data-lucide="x-circle" class="w-6 h-6"></i> 不開放
@@ -96,7 +97,7 @@
                             <i data-lucide="minus-circle" class="w-6 h-6"></i> 暫定
                         </button>
                         <button onclick="updateStatus('empty')" class="flex flex-col items-center justify-center gap-2 p-3 rounded-lg border border-slate-100 bg-white text-slate-500 text-sm font-bold hover:border-slate-400 transition-colors">
-                            <i data-lucide="trash-2" class="w-6 h-6"></i> 清除/開放
+                            <i data-lucide="trash-2" class="w-6 h-6"></i> 清除
                         </button>
                     </div>
                 </div>
@@ -135,7 +136,7 @@
         const animals = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆', '🦅', '🦉', '🦇', '🐺'];
         const days = ['週一', '週二', '週三', '週四', '週五'];
         const timeSlots = [
-            { id: 'morning', label: '早休', time: '07:55' },
+            { id: 'morning', label: '早修', time: '07:55' },
             { id: '1', label: '1', time: '08:40' },
             { id: '2', label: '2', time: '09:30' },
             { id: '3', label: '3', time: '10:30' },
@@ -297,3 +298,4 @@
     </script>
 </body>
 </html>
+
