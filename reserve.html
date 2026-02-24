@@ -128,7 +128,7 @@
         let selectedCellId = null;
         let currentUser = null;
 
-        const animals = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆', '🦅', '🦉', '🦇', '🐺'];
+        const animals = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆', ' eagles', '🦉', '🦇', '🐺'];
         const days = ['週一', '週二', '週三', '週四', '週五'];
         const timeSlots = [
             { id: 'morning', label: '早休', time: '07:55-08:35' },
@@ -167,8 +167,9 @@
             const appRef = getMainDocRef();
             onSnapshot(appRef, (docSnap) => {
                 if (docSnap.exists()) {
-                    appointments = docSnap.data().data || {};
-                    lastUsedAnimalIndex = docSnap.data().lastIndex || -1;
+                    const cloudData = docSnap.data();
+                    appointments = cloudData.data || {};
+                    lastUsedAnimalIndex = cloudData.lastIndex !== undefined ? cloudData.lastIndex : -1;
                 }
                 renderTable();
                 document.getElementById('loading-overlay').classList.add('hidden');
@@ -206,7 +207,10 @@
                         switch (data.status) {
                             case 'booked':
                                 bgColor = 'bg-[#EFEBE9]'; textColor = 'text-amber-900 font-medium';
-                                text = data.note || '已預約'; content = `<span class="text-base">${data.animalIndex !== undefined ? animals[data.animalIndex] : '👤'}</span>`;
+                                text = data.note || '已預約'; 
+                                // 修正顯示邏輯：使用儲存在資料中的索引，若無則顯示預設圖標
+                                const icon = data.animalIndex !== undefined ? animals[data.animalIndex % animals.length] : '👤';
+                                content = `<span class="text-base">${icon}</span>`;
                                 break;
                             case 'busy':
                                 bgColor = 'bg-rose-50'; textColor = 'text-rose-700 font-medium';
@@ -251,29 +255,29 @@
             if (status === 'empty') {
                 delete newApps[selectedCellId];
             } else {
-                // 初始化存檔物件
                 const cellData = { status, note: note || "" };
                 
-                // 只有在標記已約時才處理動物圖標索引
                 if (status === 'booked') {
-                    let animalIndex = newApps[selectedCellId]?.animalIndex;
-                    if (animalIndex === undefined) {
-                        newIdx++;
-                        animalIndex = newIdx % animals.length;
+                    // 如果該格子原本沒有動物索引，才分配新的
+                    if (newApps[selectedCellId]?.animalIndex === undefined) {
+                        newIdx++; // 遞增全局索引
+                        cellData.animalIndex = newIdx;
+                    } else {
+                        // 保留原本的動物索引
+                        cellData.animalIndex = newApps[selectedCellId].animalIndex;
                     }
-                    cellData.animalIndex = animalIndex;
                 }
-                
                 newApps[selectedCellId] = cellData;
             }
 
             try {
-                // 確保儲存時不帶入 undefined
                 await setDoc(getMainDocRef(), { 
-                    data: JSON.parse(JSON.stringify(newApps)), // 深度拷貝並移除 undefined
+                    data: JSON.parse(JSON.stringify(newApps)),
                     lastIndex: newIdx, 
                     lastUpdated: new Date().toISOString() 
                 });
+                // 更新本地的 lastUsedAnimalIndex，確保下一次操作使用正確的基準
+                lastUsedAnimalIndex = newIdx;
                 closeModal();
             } catch (err) { 
                 console.error("Save error:", err);
