@@ -298,10 +298,26 @@
     function renderDatalists() {
         const currentBrand = brandInput.value.trim();
         const currentSeries = seriesInput.value.trim();
+        
+        // --- 品牌排序優化：按出現次數排序 ---
         const bList = document.getElementById('brandList');
-        const allBrands = [...new Set(allRecords.map(r => r.brand))].filter(Boolean);
-        bList.innerHTML = allBrands.map(b => `<option value="${b}">`).join('');
+        
+        // 1. 統計每個品牌出現的次數
+        const brandCounts = allRecords.reduce((acc, r) => {
+            if (r.brand) {
+                acc[r.brand] = (acc[r.brand] || 0) + 1;
+            }
+            return acc;
+        }, {});
 
+        // 2. 取得不重複品牌清單，並依照次數由大到小排序
+        const sortedBrands = Object.keys(brandCounts).sort((a, b) => {
+            return brandCounts[b] - brandCounts[a]; // 次數多的排前面
+        });
+
+        bList.innerHTML = sortedBrands.map(b => `<option value="${b}">`).join('');
+
+        // --- 系列與口味部分 (維持原有邏輯，但也可以視需求比照辦理) ---
         const sList = document.getElementById('seriesList');
         sList.innerHTML = ''; 
         if (currentBrand) {
