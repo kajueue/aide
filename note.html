@@ -144,7 +144,7 @@
     const connector = "[\\-\\~\\～\\—\\至\\到\\s]+";
     
     // 增加 \b 或確保結尾不是數字
-    const singleDateRegex = new RegExp(`(${yearPart}${monthPart}${separator}${dayPart}(?![0-9])(?:日)?)`, "i");
+    const singleDateRegex = new RegExp(`(?:^|[\\s])(${yearPart}${monthPart}${separator}${dayPart}(?![0-9])(?:日)?)`, "i");
     
     const fullRangeRegex = new RegExp(
         `(${yearPart}${monthPart}${separator}${dayPart}(?:日)?${connector}(?:(?:${monthPart}${separator})?${dayPart}(?![0-9])(?:日)?))`, 
