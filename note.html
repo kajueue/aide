@@ -100,7 +100,7 @@
         };
     </script>
 
-    <script type="text/babel">
+    <script type="text/babel" data-type="module">
         const { useState, useEffect, useRef } = React;
 
         const compressImage = (base64Str, maxWidth = 1024, maxHeight = 1024) => {
@@ -135,15 +135,12 @@
     if (!text) return null;
     const exclusions = ["7-11", "711", "9-11", "101"];
     
-    // 修改點：使用「負向先行斷言」(Negative Lookahead) 確保數字後面不會緊跟著其他數字
-    // 這樣 1/30 就不會被拆成 1/3 和 0
     const monthPart = "(?:0?[1-9]|1[0-2])";
-    const dayPart = "(?:3[01]|[12][0-9]|0?[1-9])"; // 調整順序，先匹配兩位數
+    const dayPart = "(?:3[01]|[12][0-9]|0?[1-9])"; 
     const separator = "[\\/\\-月]";
     const yearPart = "(?:\\d{4}[\\/\\-年])?";
     const connector = "[\\-\\~\\～\\—\\至\\到\\s]+";
     
-    // 增加 \b 或確保結尾不是數字
     const singleDateRegex = new RegExp(`(?:^|[\\s])(${yearPart}${monthPart}${separator}${dayPart}(?![0-9])(?:日)?)`, "i");
     
     const fullRangeRegex = new RegExp(
@@ -157,14 +154,12 @@
         return exclusions.includes(clean) ? null : matchStr;
     };
 
-    // 優先找區間
     const rangeMatch = text.match(fullRangeRegex);
     if (rangeMatch) {
         const result = checkExclusion(rangeMatch[1]);
         if (result) return result;
     }
 
-    // 再找單一日期
     const singleMatch = text.match(singleDateRegex);
     if (singleMatch) {
         const result = checkExclusion(singleMatch[1]);
