@@ -23,11 +23,6 @@
         }
     </script>
     
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js" data-presets="react" data-type="module"></script>
-    
     <style>
         :root {
             --earth-dark: #432818;
@@ -120,12 +115,22 @@
             signInAnonymously: (auth) => auth.signInAnonymously()
         };
     </script>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "https://esm.sh/react@18.2.0",
+          "react-dom": "https://esm.sh/react-dom@18.2.0"
+        }
+      }
+    </script>
 </head>
 <body>
     <div id="root"></div>
 
-    <script type="text/babel" data-presets="react">
-        const { useState, useEffect, useRef } = React;
+    <script type="module">
+        import React, { useState, useEffect, useRef } from 'react';
+        import ReactDOM from 'react-dom';
 
         // 圖片壓縮工具
         const compressImage = (base64Str, maxWidth = 1024, maxHeight = 1024) => {
@@ -223,57 +228,144 @@
         // SVG 圖標元件
         const Icon = ({ name, size = 18, className = "", fill = "none" }) => {
             const icons = {
-                trash: <path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />,
-                note: (
-                    <>
-                        <path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z" />
-                        <path d="M15 3v5h6" />
-                    </>
+                trash: React.createElement('path', { d: "M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" }),
+                note: React.createElement(React.Fragment, null, 
+                    React.createElement('path', { d: "M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z" }),
+                    React.createElement('path', { d: "M15 3v5h6" })
                 ),
-                calendar: (
-                    <>
-                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-                        <line x1="16" x2="16" y1="2" y2="6" />
-                        <line x1="8" x2="8" y1="2" y2="6" />
-                        <line x1="3" x2="21" y1="10" y2="10" />
-                    </>
+                calendar: React.createElement(React.Fragment, null,
+                    React.createElement('rect', { width: "18", height: "18", x: "3", y: "4", rx: "2", ry: "2" }),
+                    React.createElement('line', { x1: "16", x2: "16", y1: "2", y2: "6" }),
+                    React.createElement('line', { x1: "8", x2: "8", y1: "2", y2: "6" }),
+                    React.createElement('line', { x1: "3", x2: "21", y1: "10", y2: "10" })
                 ),
-                image: (
-                    <>
-                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                        <circle cx="9" cy="9" r="2" />
-                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                    </>
+                image: React.createElement(React.Fragment, null,
+                    React.createElement('rect', { width: "18", height: "18", x: "3", y: "3", rx: "2", ry: "2" }),
+                    React.createElement('circle', { cx: "9", cy: "9", r: "2" }),
+                    React.createElement('path', { d: "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" })
                 ),
-                x: <path d="M18 6 6 18M6 6l12 12" />,
-                loader: <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83" />,
-                send: (
-                    <>
-                        <path d="m22 2-7 20-4-9-9-4Z"/>
-                        <path d="M22 2 11 13"/>
-                    </>
+                x: React.createElement('path', { d: "M18 6 6 18M6 6l12 12" }),
+                loader: React.createElement('path', { d: "M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83" }),
+                send: React.createElement(React.Fragment, null,
+                    React.createElement('path', { d: "m22 2-7 20-4-9-9-4Z" }),
+                    React.createElement('path', { d: "M22 2 11 13" })
                 ),
-                check: <path d="M20 6 9 17l-5-5" />,
-                logOut: <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14 5-5-5-5m5 5H9" />,
-                google: <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" />
+                check: React.createElement('path', { d: "M20 6 9 17l-5-5" }),
+                logOut: React.createElement('path', { d: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14 5-5-5-5m5 5H9" }),
+                google: React.createElement('path', { d: "M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" })
             };
-            return (
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width={size}
-                    height={size}
-                    viewBox="0 0 24 24"
-                    fill={fill}
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className={className}
-                >
-                    {icons[name] || null}
-                </svg>
+            return React.createElement(
+                'svg',
+                {
+                    xmlns: "http://www.w3.org/2000/svg",
+                    width: size,
+                    height: size,
+                    viewBox: "0 0 24 24",
+                    fill: fill,
+                    stroke: "currentColor",
+                    strokeWidth: "2",
+                    strokeLinecap: "round",
+                    strokeLinejoin: "round",
+                    className: className
+                },
+                icons[name] || null
             );
         };
+
+        // 子元件：卡片元件
+        function NoteCard({ note, user, appId, renderContent, fullscreenImage, index }) {
+            const { db, doc, deleteDoc, updateDoc } = window.FirebaseSDK;
+            const [isEditing, setIsEditing] = useState(false);
+            const [editValue, setEditValue] = useState('');
+            const editRef = useRef(null);
+
+            const hasContent = note.content !== undefined && note.content !== null && note.content.toString().trim() !== "";
+            const hasImage = !!note.imageUrl;
+            const hasDate = !!note.targetDate;
+
+            const getInitialEditValue = () => {
+                const date = note.targetDate || "";
+                const content = note.content || "";
+                return `${date} ${content}`.trim();
+            };
+
+            const rowGroup = Math.floor(index / 2);
+            const isEvenGroup = rowGroup % 2 === 0;
+            const bgClass = isEvenGroup ? 'bg-[#f7f9f2] border-[#e9efe0]' : 'bg-[#fffdf0] border-[#f5f5e6]';
+
+            useEffect(() => {
+                if (isEditing) setEditValue(getInitialEditValue());
+            }, [isEditing]);
+
+            useEffect(() => {
+                if (isEditing && editRef.current) {
+                    editRef.current.focus();
+                    editRef.current.style.height = 'auto';
+                    editRef.current.style.height = editRef.current.scrollHeight + 'px';
+                }
+            }, [isEditing, editValue]);
+
+            const handleUpdate = async () => {
+                const initial = getInitialEditValue();
+                if (editValue === initial) {
+                    setIsEditing(false);
+                    return;
+                }
+                const newTargetDate = extractDateRange(editValue);
+                const newContent = newTargetDate ? editValue.replace(newTargetDate, '').trim() : editValue;
+                try {
+                    await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'notes', note.id), {
+                        content: newContent || "",
+                        targetDate: newTargetDate || null
+                    });
+                    setIsEditing(false);
+                } catch (err) { setIsEditing(false); }
+            };
+
+            const handleContentClick = (e) => {
+                if (e.target.tagName === 'A') return;
+                setIsEditing(true);
+            };
+
+            return React.createElement('article', { className: `note-card rounded-2xl p-3 card-shadow relative animate-fade-in group border ${bgClass} ${isEditing ? 'ring-2 ring-[#99582a]/20' : ''}` },
+                !isEditing && React.createElement('button', {
+                    onClick: (e) => { e.stopPropagation(); deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'notes', note.id)); },
+                    className: "absolute top-1 right-1 text-[#d5bdaf] hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all p-1 hover:bg-white rounded-full z-10"
+                }, React.createElement(Icon, { name: "trash", size: 13 })),
+                
+                hasDate && !isEditing && React.createElement('button', {
+                    onClick: () => setIsEditing(true),
+                    className: "flex items-center gap-1 text-[10px] font-black text-[#99582a] mb-1 bg-[#99582a]/10 w-fit px-1.5 py-0.5 rounded-full border border-[#99582a]/20 hover:bg-[#99582a]/20 transition-all shadow-sm"
+                }, React.createElement(Icon, { name: "calendar", size: 11 }), ` ${note.targetDate}`),
+
+                hasImage && React.createElement('div', {
+                    className: `relative cursor-zoom-in overflow-hidden rounded shadow-sm bg-black/5 ${ (hasContent || isEditing) ? 'mb-1.5' : '' }`,
+                    onClick: () => fullscreenImage(note.imageUrl)
+                }, React.createElement('img', { src: note.imageUrl, className: "w-full h-auto max-h-[400px] object-cover" })),
+
+                (isEditing || hasContent) && React.createElement('div', { className: "relative w-full" },
+                    isEditing ? React.createElement('div', { className: "flex flex-col gap-1" },
+                        React.createElement('textarea', {
+                            ref: editRef,
+                            value: editValue,
+                            onChange: (e) => {
+                                setEditValue(e.target.value);
+                                e.target.style.height = 'auto';
+                                e.target.style.height = e.target.scrollHeight + 'px';
+                            },
+                            onBlur: handleUpdate,
+                            className: "w-full bg-white/50 border-none p-0 text-[16px] font-medium text-[#432818] focus:outline-none resize-none overflow-hidden rounded"
+                        }),
+                        React.createElement('div', { className: "text-[9px] text-[#99582a]/40 font-bold self-end flex items-center gap-1" },
+                            React.createElement(Icon, { name: "check", size: 9 }), " 點擊空白處儲存"
+                        )
+                    ) : React.createElement('div', {
+                        onClick: handleContentClick,
+                        className: "text-[#432818] text-[16px] font-medium leading-relaxed whitespace-pre-wrap break-words cursor-text hover:bg-[#99582a]/5 rounded transition-colors"
+                    }, renderContent(note.content))
+                )
+            );
+        }
 
         // 主應用程式元件
         function App() {
@@ -389,272 +481,130 @@
                 return parts.map((part, i) => {
                     if (part && part.match(urlRegex)) {
                         const href = part.toLowerCase().startsWith('http') ? part : `https://${part}`;
-                        return (
-                            <a 
-                                key={i} 
-                                href={href} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="text-[#8b4513] hover:text-[#3d1f0a] underline decoration-[#8b4513]/40 font-bold break-all text-[14px] inline-block"
-                            >
-                                {part}
-                            </a>
-                        );
+                        return React.createElement('a', {
+                            key: i,
+                            href: href,
+                            target: "_blank",
+                            rel: "noopener noreferrer",
+                            className: "text-[#8b4513] hover:text-[#3d1f0a] underline decoration-[#8b4513]/40 font-bold break-all text-[14px] inline-block"
+                        }, part);
                     }
                     return part;
                 });
             };
 
             if (!user) {
-                return (
-                    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#f5ebe0]">
-                        <div className="bg-white p-8 rounded-[32px] shadow-2xl text-center max-w-sm w-full border border-[#e3d5ca]">
-                            <div className="w-16 h-16 bg-[#fdfaf6] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
-                                <Icon name="note" size={32} className="text-[#99582a]" />
-                            </div>
-                            <h1 className="text-2xl font-black text-[#432818] mb-1">大地記事</h1>
-                            <p className="text-[#99582a]/60 text-sm font-medium mb-8">個人專屬的靈感備忘錄</p>
-                            <button onClick={handleGoogleSignIn} className="w-full flex items-center justify-center gap-3 py-3.5 px-6 bg-[#432818] text-white rounded-xl font-bold hover:bg-[#3d1f0a] active:scale-95 transition-all shadow-md text-sm">
-                                <Icon name="google" size={18} fill="white" /> 使用 Google 帳號登入
-                            </button>
-                        </div>
-                    </div>
+                return React.createElement('div', { className: "min-h-screen flex flex-col items-center justify-center p-4 bg-[#f5ebe0]" },
+                    React.createElement('div', { className: "bg-white p-8 rounded-[32px] shadow-2xl text-center max-w-sm w-full border border-[#e3d5ca]" },
+                        React.createElement('div', { className: "w-16 h-16 bg-[#fdfaf6] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner" },
+                            React.createElement(Icon, { name: "note", size: 32, className: "text-[#99582a]" })
+                        ),
+                        React.createElement('h1', { className: "text-2xl font-black text-[#432818] mb-1" }, "大地記事"),
+                        React.createElement('p', { className: "text-[#99582a]/60 text-sm font-medium mb-8" }, "個人專屬的靈感備忘錄"),
+                        React.createElement('button', { onClick: handleGoogleSignIn, className: "w-full flex items-center justify-center gap-3 py-3.5 px-6 bg-[#432818] text-white rounded-xl font-bold hover:bg-[#3d1f0a] active:scale-95 transition-all shadow-md text-sm" },
+                            React.createElement(Icon, { name: "google", size: 18, fill: "white" }), " 使用 Google 帳號登入"
+                        )
+                    )
                 );
             }
 
             const leftNotes = notes.filter((_, i) => i % 2 === 0);
             const rightNotes = notes.filter((_, i) => i % 2 !== 0);
 
-            return (
-                <div className="flex flex-col md:flex-row min-h-screen">
-                    <aside className="hidden md:flex w-48 wood-texture bg-[#432818] text-[#f5ebe0] flex-col p-4 fixed h-full shadow-2xl z-20">
-                        <div className="mb-8">
-                            <h1 className="text-lg font-black flex items-center gap-2">
-                                <Icon name="note" size={20} className="text-[#bb9457]" /> 大地記事
-                            </h1>
-                        </div>
-                        <div className="flex-grow">
-                            <div className="flex items-center gap-2.5 p-2 bg-white/10 rounded-lg text-[11px] font-bold">
-                                <Icon name="note" size={13} className="text-[#bb9457]" /> 目前事件
-                                <span className="ml-auto bg-[#bb9457] text-[#432818] px-1.5 py-0.5 rounded-full text-[9px]">{notes.length}</span>
-                            </div>
-                        </div>
-                        <div className="mt-auto space-y-2">
-                            <div className="flex items-center gap-2 p-2 bg-white/5 rounded-lg">
-                                {user.photoURL ? (
-                                    <img src={user.photoURL} className="w-7 h-7 rounded border border-[#bb9457]/30" />
-                                ) : (
-                                    <div className="w-7 h-7 rounded border border-[#bb9457]/30 bg-white/10 flex items-center justify-center text-[10px]">U</div>
-                                )}
-                                <div className="flex-1 overflow-hidden">
-                                    <div className="font-bold text-[10px] truncate">{user.displayName || '使用者'}</div>
-                                    <div className="text-[9px] opacity-40 font-bold truncate">雲端同步中</div>
-                                </div>
-                            </div>
-                            <button onClick={handleSignOut} className="w-full flex items-center justify-center gap-1.5 p-2 text-[10px] font-bold text-[#bb9457] hover:bg-white/5 rounded-lg transition-all">
-                                <Icon name="logOut" size={11} /> 登出
-                            </button>
-                        </div>
-                    </aside>
+            return React.createElement('div', { className: "flex flex-col md:flex-row min-h-screen" },
+                React.createElement('aside', { className: "hidden md:flex w-48 wood-texture bg-[#432818] text-[#f5ebe0] flex-col p-4 fixed h-full shadow-2xl z-20" },
+                    React.createElement('div', { className: "mb-8" },
+                        React.createElement('h1', { className: "text-lg font-black flex items-center gap-2" },
+                            React.createElement(Icon, { name: "note", size: 20, className: "text-[#bb9457]" }), " 大地記事"
+                        )
+                    ),
+                    React.createElement('div', { className: "flex-grow" },
+                        React.createElement('div', { className: "flex items-center gap-2.5 p-2 bg-white/10 rounded-lg text-[11px] font-bold" },
+                            React.createElement(Icon, { name: "note", size: 13, className: "text-[#bb9457]" }), " 目前事件",
+                            React.createElement('span', { className: "ml-auto bg-[#bb9457] text-[#432818] px-1.5 py-0.5 rounded-full text-[9px]" }, notes.length)
+                        )
+                    ),
+                    React.createElement('div', { className: "mt-auto space-y-2" },
+                        React.createElement('div', { className: "flex items-center gap-2 p-2 bg-white/5 rounded-lg" },
+                            user.photoURL ? React.createElement('img', { src: user.photoURL, className: "w-7 h-7 rounded border border-[#bb9457]/30" }) : React.createElement('div', { className: "w-7 h-7 rounded border border-[#bb9457]/30 bg-white/10 flex items-center justify-center text-[10px]" }, "U"),
+                            React.createElement('div', { className: "flex-1 overflow-hidden" },
+                                React.createElement('div', { className: "font-bold text-[10px] truncate" }, user.displayName || '使用者'),
+                                React.createElement('div', { className: "text-[9px] opacity-40 font-bold truncate" }, "雲端同步中")
+                            )
+                        ),
+                        React.createElement('button', { onClick: handleSignOut, className: "w-full flex items-center justify-center gap-1.5 p-2 text-[10px] font-bold text-[#bb9457] hover:bg-white/5 rounded-lg transition-all" },
+                            React.createElement(Icon, { name: "logOut", size: 11 }), " 登出
+                        )
+                    )
+                ),
 
-                    <main className="flex-1 md:ml-48 bg-[#f5ebe0] pb-10">
-                        <div className="bg-white/40 backdrop-blur-sm border-b border-[#e3d5ca] px-4 py-4 md:px-8 md:py-4 mb-4">
-                            <header className="md:hidden flex items-center justify-between mb-4">
-                                <h1 className="text-lg font-black text-[#432818] flex items-center gap-2">
-                                    <Icon name="note" size={18} className="text-[#99582a]" /> 大地記事
-                                </h1>
-                                <div className="flex items-center gap-2">
-                                    {user.photoURL && <img src={user.photoURL} className="w-7 h-7 rounded-full border border-[#99582a]/20" />}
-                                    <button onClick={handleSignOut} className="p-1.5 text-[#99582a] bg-white/60 rounded-full"><Icon name="logOut" size={16} /></button>
-                                </div>
-                            </header>
+                React.createElement('main', { className: "flex-1 md:ml-48 bg-[#f5ebe0] pb-10" },
+                    React.createElement('div', { className: "bg-white/40 backdrop-blur-sm border-b border-[#e3d5ca] px-4 py-4 md:px-8 md:py-4 mb-4" },
+                        React.createElement('header', { className: "md:hidden flex items-center justify-between mb-4" },
+                            React.createElement('h1', { className: "text-lg font-black text-[#432818] flex items-center gap-2" },
+                                React.createElement(Icon, { name: "note", size: 18, className: "text-[#99582a]" }), " 大地記事"
+                            ),
+                            React.createElement('div', { className: "flex items-center gap-2" },
+                                user.photoURL && React.createElement('img', { src: user.photoURL, className: "w-7 h-7 rounded-full border border-[#99582a]/20" }),
+                                React.createElement('button', { onClick: handleSignOut, className: "p-1.5 text-[#99582a] bg-white/60 rounded-full" }, React.createElement(Icon, { name: "logOut", size: 16 }))
+                            )
+                        ),
 
-                            <div className="max-w-xl mx-auto">
-                                <div className="bg-white rounded-[20px] card-shadow border border-[#e3d5ca] overflow-hidden focus-within:ring-2 focus-within:ring-[#99582a]/10 transition-all px-1.5 py-0.5">
-                                    {selectedImage && (
-                                        <div className="p-2 bg-[#fdfaf6] border-b border-[#f5ebe0] relative flex justify-center group rounded-t-[16px] mb-1">
-                                            <img src={selectedImage} className="max-h-40 rounded shadow-sm" />
-                                            <button onClick={() => setSelectedImage(null)} className="absolute top-3 right-3 p-1 bg-[#432818] text-white rounded-full"><Icon name="x" size={12} /></button>
-                                        </div>
-                                    )}
-                                    <div className="flex items-end gap-0.5">
-                                        <button onClick={() => fileInputRef.current.click()} className="p-2.5 text-[#99582a] hover:bg-[#99582a]/5 rounded-lg transition-all active:scale-90 shrink-0"><Icon name="image" size={20} /></button>
-                                        <input type="file" ref={fileInputRef} onChange={(e) => handleImageProcess(e.target.files[0])} className="hidden" accept="image/*" />
-                                        <textarea 
-                                            ref={textareaRef} 
-                                            rows="1" 
-                                            value={inputValue} 
-                                            onChange={(e) => setInputValue(e.target.value)} 
-                                            onPaste={handlePaste}
-                                            placeholder=""
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' && !('ontouchstart' in window) && !e.shiftKey) { e.preventDefault(); handleAddNote(); }
-                                            }} 
-                                            className="flex-1 bg-transparent border-none py-2.5 text-[16px] font-medium text-[#432818] focus:outline-none resize-none no-scrollbar" 
-                                        />
-                                        <button onClick={handleAddNote} disabled={isUploading || (!inputValue.trim() && !selectedImage)} className="p-2.5 bg-[#432818] text-[#f5ebe0] rounded-lg shadow-md active:scale-95 disabled:opacity-20 transition-all shrink-0 m-1">
-                                            {isUploading ? <Icon name="loader" size={18} className="animate-spin" /> : <Icon name="send" size={18} />}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        React.createElement('div', { className: "max-w-xl mx-auto" },
+                            React.createElement('div', { className: "bg-white rounded-[20px] card-shadow border border-[#e3d5ca] overflow-hidden focus-within:ring-2 focus-within:ring-[#99582a]/10 transition-all px-1.5 py-0.5" },
+                                selectedImage && React.createElement('div', { className: "p-2 bg-[#fdfaf6] border-b border-[#f5ebe0] relative flex justify-center group rounded-t-[16px] mb-1" },
+                                    React.createElement('img', { src: selectedImage, className: "max-h-40 rounded shadow-sm" }),
+                                    React.createElement('button', { onClick: () => setSelectedImage(null)} , React.createElement(Icon, { name: "x", size: 12 }))
+                                ),
+                                React.createElement('div', { className: "flex items-end gap-0.5" },
+                                    React.createElement('button', { onClick: () => fileInputRef.current.click(), className: "p-2.5 text-[#99582a] hover:bg-[#99582a]/5 rounded-lg transition-all active:scale-90 shrink-0" }, React.createElement(Icon, { name: "image", size: 20 })),
+                                    React.createElement('input', { type: "file", ref: fileInputRef, onChange: (e) => handleImageProcess(e.target.files[0]), className: "hidden", accept: "image/*" }),
+                                    React.createElement('textarea', {
+                                        ref: textareaRef,
+                                        rows: "1",
+                                        value: inputValue,
+                                        onChange: (e) => setInputValue(e.target.value),
+                                        onPaste: handlePaste,
+                                        onKeyDown: (e) => { if (e.key === 'Enter' && !('ontouchstart' in window) && !e.shiftKey) { e.preventDefault(); handleAddNote(); } },
+                                        className: "flex-1 bg-transparent border-none py-2.5 text-[16px] font-medium text-[#432818] focus:outline-none resize-none no-scrollbar"
+                                    }),
+                                    React.createElement('button', { onClick: handleAddNote, disabled: isUploading || (!inputValue.trim() && !selectedImage), className: "p-2.5 bg-[#432818] text-[#f5ebe0] rounded-lg shadow-md active:scale-95 disabled:opacity-20 transition-all shrink-0 m-1" },
+                                        isUploading ? React.createElement(Icon, { name: "loader", size: 18, className: "animate-spin" }) : React.createElement(Icon, { name: "send", size: 18 })
+                                    )
+                                )
+                            )
+                        )
+                    ),
 
-                        <div className="px-4 md:px-8 lg:px-10">
-                            <section className="max-w-4xl mx-auto">
-                                {loading ? (
-                                    <div className="flex justify-center py-10"><Icon name="loader" size={20} className="animate-spin text-[#99582a]" /></div>
-                                ) : (
-                                    <>
-                                        <div className="flex flex-col gap-4 md:hidden">
-                                            {notes.map((note, index) => (
-                                                <NoteCard key={note.id} note={note} user={user} appId={appId} renderContent={renderContent} fullscreenImage={setFullscreenImage} index={index} />
-                                            ))}
-                                        </div>
-                                        <div className="hidden md:flex gap-4 items-start">
-                                            <div className="flex-1 flex flex-col gap-4">
-                                                {leftNotes.map((note, idx) => (
-                                                    <NoteCard key={note.id} note={note} user={user} appId={appId} renderContent={renderContent} fullscreenImage={setFullscreenImage} index={idx * 2} />
-                                                ))}
-                                            </div>
-                                            <div className="flex-1 flex flex-col gap-4">
-                                                {rightNotes.map((note, idx) => (
-                                                    <NoteCard key={note.id} note={note} user={user} appId={appId} renderContent={renderContent} fullscreenImage={setFullscreenImage} index={idx * 2 + 1} />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </section>
-                        </div>
-                    </main>
+                    React.createElement('div', { className: "px-4 md:px-8 lg:px-10" },
+                        React.createElement('section', { className: "max-w-4xl mx-auto" },
+                            loading ? React.createElement('div', { className: "flex justify-center py-10" }, React.createElement(Icon, { name: "loader", size: 20, className: "animate-spin text-[#99582a]" })) :
+                            React.createElement(React.Fragment, null,
+                                React.createElement('div', { className: "flex flex-col gap-4 md:hidden" },
+                                    notes.map((note, index) => React.createElement(NoteCard, { key: note.id, note: note, user: user, appId: appId, renderContent: renderContent, fullscreenImage: setFullscreenImage, index: index }))
+                                ),
+                                React.createElement('div', { className: "hidden md:flex gap-4 items-start" },
+                                    React.createElement('div', { className: "flex-1 flex flex-col gap-4" },
+                                        leftNotes.map((note, idx) => React.createElement(NoteCard, { key: note.id, note: note, user: user, appId: appId, renderContent: renderContent, fullscreenImage: setFullscreenImage, index: idx * 2 }))
+                                    ),
+                                    React.createElement('div', { className: "flex-1 flex flex-col gap-4" },
+                                        rightNotes.map((note, idx) => React.createElement(NoteCard, { key: note.id, note: note, user: user, appId: appId, renderContent: renderContent, fullscreenImage: setFullscreenImage, index: idx * 2 + 1 }))
+                                    )
+                                )
+                            )
+                        )
+                    )
+                ),
 
-                    {fullscreenImage && (
-                        <div className="fixed inset-0 z-[100] bg-[#432818]/90 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setFullscreenImage(null)}>
-                            <img src={fullscreenImage} className="max-w-full max-h-[85vh] object-contain rounded shadow-2xl animate-fade-in" />
-                        </div>
-                    )}
-                </div>
-            );
-        }
-
-        // 卡片元件
-        function NoteCard({ note, user, appId, renderContent, fullscreenImage, index }) {
-            const { db, doc, deleteDoc, updateDoc } = window.FirebaseSDK;
-            const [isEditing, setIsEditing] = useState(false);
-            const [editValue, setEditValue] = useState('');
-            const editRef = useRef(null);
-
-            const hasContent = note.content !== undefined && note.content !== null && note.content.toString().trim() !== "";
-            const hasImage = !!note.imageUrl;
-            const hasDate = !!note.targetDate;
-
-            const getInitialEditValue = () => {
-                const date = note.targetDate || "";
-                const content = note.content || "";
-                return `${date} ${content}`.trim();
-            };
-
-            const rowGroup = Math.floor(index / 2);
-            const isEvenGroup = rowGroup % 2 === 0;
-            const bgClass = isEvenGroup ? 'bg-[#f7f9f2] border-[#e9efe0]' : 'bg-[#fffdf0] border-[#f5f5e6]';
-
-            useEffect(() => {
-                if (isEditing) setEditValue(getInitialEditValue());
-            }, [isEditing]);
-
-            useEffect(() => {
-                if (isEditing && editRef.current) {
-                    editRef.current.focus();
-                    editRef.current.style.height = 'auto';
-                    editRef.current.style.height = editRef.current.scrollHeight + 'px';
-                }
-            }, [isEditing, editValue]);
-
-            const handleUpdate = async () => {
-                const initial = getInitialEditValue();
-                if (editValue === initial) {
-                    setIsEditing(false);
-                    return;
-                }
-                const newTargetDate = extractDateRange(editValue);
-                const newContent = newTargetDate ? editValue.replace(newTargetDate, '').trim() : editValue;
-                try {
-                    await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'notes', note.id), {
-                        content: newContent || "",
-                        targetDate: newTargetDate || null
-                    });
-                    setIsEditing(false);
-                } catch (err) { setIsEditing(false); }
-            };
-
-            const handleContentClick = (e) => {
-                if (e.target.tagName === 'A') {
-                    return;
-                }
-                setIsEditing(true);
-            };
-
-            return (
-                <article className={`note-card rounded-2xl p-3 card-shadow relative animate-fade-in group border ${bgClass} ${isEditing ? 'ring-2 ring-[#99582a]/20' : ''}`}>
-                    {!isEditing && (
-                        <button onClick={(e) => { e.stopPropagation(); deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'notes', note.id)); }}
-                                className="absolute top-1 right-1 text-[#d5bdaf] hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all p-1 hover:bg-white rounded-full z-10">
-                            <Icon name="trash" size={13} />
-                        </button>
-                    )}
-                    
-                    {hasDate && !isEditing && (
-                        <button 
-                            onClick={() => setIsEditing(true)}
-                            className="flex items-center gap-1 text-[10px] font-black text-[#99582a] mb-1 bg-[#99582a]/10 w-fit px-1.5 py-0.5 rounded-full border border-[#99582a]/20 hover:bg-[#99582a]/20 transition-all shadow-sm"
-                        >
-                            <Icon name="calendar" size={11} /> {note.targetDate}
-                        </button>
-                    )}
-
-                    {hasImage && (
-                        <div className={`relative cursor-zoom-in overflow-hidden rounded shadow-sm bg-black/5 ${ (hasContent || isEditing) ? 'mb-1.5' : '' }`} onClick={() => fullscreenImage(note.imageUrl)}>
-                            <img src={note.imageUrl} className="w-full h-auto max-h-[400px] object-cover" />
-                        </div>
-                    )}
-
-                    {(isEditing || hasContent) && (
-                        <div className="relative w-full">
-                            {isEditing ? (
-                                <div className="flex flex-col gap-1">
-                                    <textarea
-                                        ref={editRef}
-                                        value={editValue}
-                                        onChange={(e) => {
-                                            setEditValue(e.target.value);
-                                            e.target.style.height = 'auto';
-                                            e.target.style.height = e.target.scrollHeight + 'px';
-                                        }}
-                                        onBlur={handleUpdate}
-                                        className="w-full bg-white/50 border-none p-0 text-[16px] font-medium text-[#432818] focus:outline-none resize-none overflow-hidden rounded"
-                                    />
-                                    <div className="text-[9px] text-[#99582a]/40 font-bold self-end flex items-center gap-1">
-                                        <Icon name="check" size={9} /> 點擊空白處儲存
-                                    </div>
-                                </div>
-                            ) : (
-                                <div 
-                                    onClick={handleContentClick}
-                                    className="text-[#432818] text-[16px] font-medium leading-relaxed whitespace-pre-wrap break-words cursor-text hover:bg-[#99582a]/5 rounded transition-colors"
-                                >
-                                    {renderContent(note.content)}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </article>
+                fullscreenImage && React.createElement('div', { className: "fixed inset-0 z-[100] bg-[#432818]/90 backdrop-blur-md flex items-center justify-center p-4", onClick: () => setFullscreenImage(null) },
+                    React.createElement('img', { src: fullscreenImage, className: "max-w-full max-h-[85vh] object-contain rounded shadow-2xl animate-fade-in" })
+                )
             );
         }
 
         // 掛載 React
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        root.render(React.createElement(App));
     </script>
 </body>
 </html>
