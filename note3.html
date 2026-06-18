@@ -342,7 +342,7 @@
             }
         };
 
-        // --- 徹底拔除 <h3> 置中，回歸 A 版本乾淨靠左的卡片渲染 ---
+        // --- 確保卡片內部所有文字與第一行完全 text-left 靠左 ---
         const renderCards = () => {
             const mobileContainer = document.getElementById('notes-container-mobile');
             const leftContainer = document.getElementById('notes-container-left');
@@ -362,27 +362,27 @@
                     ? 'bg-[#f7f9f2] border-[#e9efe0]' 
                     : 'bg-[#fffdf0] border-[#f5f5e6]';
 
-                // ✅ 這裡完全不切第一行，沒有 <h3>，沒有 text-center，整包內文用 renderUrlLinks 解析並完全 text-left 靠左！
+                // ✅ 確保在外層使用 flex flex-col items-start 且內文 text-left，徹底修正對齊問題
                 const cardHtml = `
-                    <article class="note-card rounded-2xl px-4 py-3.5 card-shadow relative border animate-fade-in group transition-all ${bgClass}">
+                    <article class="note-card rounded-2xl px-4 py-3.5 card-shadow relative border animate-fade-in group transition-all items-start justify-start text-left ${bgClass}">
                         <button class="delete-card-btn absolute top-2 right-2 text-[#d5bdaf] hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all p-1 hover:bg-white rounded-full z-10" data-id="${note.id}">
                             🗑️
                         </button>
                         
                         ${note.targetDate ? `
-                            <div class="flex items-center gap-1 text-[10px] font-black text-[#99582a] mb-2 bg-[#99582a]/10 w-fit px-1.5 py-0.5 rounded-full border border-[#99582a]/20 shadow-sm self-start">
+                            <div class="flex items-center gap-1 text-[10px] font-black text-[#99582a] mb-2 bg-[#99582a]/10 w-fit px-1.5 py-0.5 rounded-full border border-[#99582a]/20 shadow-sm self-start text-left">
                                 📅 ${note.targetDate}
                             </div>
                         ` : ''}
 
                         ${note.imageUrl ? `
-                            <div class="relative cursor-zoom-in overflow-hidden rounded shadow-sm bg-black/5 ${note.content ? 'mb-2' : ''} zoomable-img" data-src="${note.imageUrl}">
+                            <div class="relative cursor-zoom-in overflow-hidden rounded shadow-sm bg-black/5 w-full ${note.content ? 'mb-2' : ''} zoomable-img" data-src="${note.imageUrl}">
                                 <img src="${note.imageUrl}" class="w-full h-auto max-h-[400px] object-cover">
                             </div>
                         ` : ''}
 
                         ${note.content || !note.imageUrl ? `
-                            <div class="card-content-text text-[#432818] text-[16px] font-medium leading-relaxed whitespace-pre-wrap break-words text-left hover:bg-[#99582a]/5 p-0.5 rounded transition-colors cursor-text w-full" data-id="${note.id}">
+                            <div class="card-content-text text-[#432818] text-[16px] font-medium leading-relaxed whitespace-pre-wrap break-words text-left hover:bg-[#99582a]/5 p-0.5 rounded transition-colors cursor-text w-full flex flex-col items-start" data-id="${note.id}">
                                 ${renderUrlLinks(note.content)}
                             </div>
                         ` : ''}
@@ -425,7 +425,7 @@
                     const fullText = `${currentNote.targetDate || ''} ${currentNote.content || ''}`.trim();
 
                     const container = document.createElement('div');
-                    container.className = "flex flex-col gap-1 w-full text-left";
+                    container.className = "flex flex-col gap-1 w-full text-left items-start";
 
                     const textarea = document.createElement('textarea');
                     textarea.value = fullText;
@@ -484,7 +484,7 @@
             return result;
         };
 
-        // --- ✅ 100% 還原 A 版本最穩定的雲端資料抓取監聽器 ---
+        // --- 100% 還原 A 版本最穩定的雲端資料抓取監聽器 ---
         auth.onAuthStateChanged((user) => {
             currentUser = user;
             renderApp();
@@ -493,7 +493,6 @@
                 db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('notes')
                   .onSnapshot((snapshot) => {
                       const rawNotes = [];
-                      // ✅ 精準還原 A 版本結構，確保背景絕不當機
                       snapshot.forEach(doc => {
                           const data = doc.data();
                           rawNotes.push({
