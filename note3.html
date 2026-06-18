@@ -387,29 +387,29 @@
 
                 // 🎯 修正處：這裡將原本的 py-3.5 改成了 py-2，讓卡片的上下間界（邊界）直接變短！
                 const cardHtml = `
-                    <article class="note-card rounded-2xl px-4 py-2 card-shadow relative border animate-fade-in group transition-all ${bgClass}">
-                        <button class="delete-card-btn absolute top-2 right-2 text-[#d5bdaf] hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all p-1 hover:bg-white rounded-full z-10" data-id="${note.id}">
-                            🗑️
-                        </button>
-                        
-                        ${note.targetDate ? `
-                            <div class="date-badge flex items-center gap-1 text-[10px] font-black text-[#99582a] mb-1.5 bg-[#99582a]/10 px-1.5 py-0.5 rounded-full border border-[#99582a]/20 shadow-sm">
-                                📅 ${note.targetDate}
-                            </div>
-                        ` : ''}
+<article class="note-card rounded-2xl px-4 py-2 card-shadow relative border animate-fade-in group transition-all ${bgClass}">
+    <button class="delete-card-btn absolute top-2 right-2 text-[#d5bdaf] hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all p-1 hover:bg-white rounded-full z-10" data-id="${note.id}">
+        🗑️
+    </button>
+    
+    ${note.targetDate ? `
+        <div class="date-badge flex items-center gap-1 text-[10px] font-black text-[#99582a] mb-1.5 bg-[#99582a]/10 px-1.5 py-0.5 rounded-full border border-[#99582a]/20 shadow-sm w-fit">
+            📅 ${note.targetDate}
+        </div>
+    ` : ''}
 
-                        ${note.imageUrl ? `
-                            <div class="relative cursor-zoom-in overflow-hidden rounded shadow-sm bg-black/5 w-full ${note.content ? 'mb-2' : ''} zoomable-img" data-src="${note.imageUrl}">
-                                <img src="${note.imageUrl}" class="w-full h-auto max-h-[400px] object-cover">
-                            </div>
-                        ` : ''}
+    ${note.imageUrl ? `
+        <div class="relative cursor-zoom-in overflow-hidden rounded shadow-sm bg-black/5 w-full ${note.content ? 'mb-2' : ''} zoomable-img" data-src="${note.imageUrl}">
+            <img src="${note.imageUrl}" class="w-full h-auto max-h-[400px] object-cover">
+        </div>
+    ` : ''}
 
-                        ${note.content || !note.imageUrl ? `
-                            <div class="card-content-text text-[#432818] text-[16px] font-medium leading-relaxed whitespace-pre-wrap break-words hover:bg-[#99582a]/5 p-0.5 rounded transition-colors cursor-text" data-id="${note.id}">
-                                ${renderUrlLinks(note.content)}
-                            </div>
-                        ` : ''}
-                    </article>
+    ${note.content || !note.imageUrl ? `
+        <div class="card-content-text text-[#432818] text-[16px] font-medium leading-relaxed whitespace-pre-wrap break-words hover:bg-[#99582a]/5 p-0.5 rounded transition-colors cursor-text w-full block text-left" data-id="${note.id}">
+            ${renderUrlLinks(note.content)}
+        </div>
+    ` : ''}
+</article>
                 `;
 
                 mobileContainer.insertAdjacentHTML('beforeend', cardHtml);
