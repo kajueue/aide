@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
 <head>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💭</text></svg>">
     <meta charset="UTF-8">
@@ -25,8 +27,6 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <style>
-        /* 原本這裡的 @import url(...) 已經刪除了，剩下的保留 */
-        
         :root {
             --earth-dark: #432818;
             --earth-primary: #99582a;
@@ -106,6 +106,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
+        // 圖片壓縮工具
         const compressImage = (base64Str, maxWidth = 1024, maxHeight = 1024) => {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -134,43 +135,45 @@
             });
         };
 
+        // 日期擷取工具
         const extractDateRange = (text) => {
-    if (!text) return null;
-    const exclusions = ["7-11", "711", "9-11", "101"];
-    
-    const monthPart = "(?:0?[1-9]|1[0-2])";
-    const dayPart = "(?:3[01]|[12][0-9]|0?[1-9])"; 
-    const separator = "[\\/\\-月]";
-    const yearPart = "(?:\\d{4}[\\/\\-年])?";
-    const connector = "[\\-\\~\\～\\—\\至\\到\\s]+";
-    
-    const singleDateRegex = new RegExp(`(?:^|[\\s])(${yearPart}${monthPart}${separator}${dayPart}(?![0-9])(?:日)?)`, "i");
-    
-    const fullRangeRegex = new RegExp(
-        `(${yearPart}${monthPart}${separator}${dayPart}(?:日)?${connector}(?:(?:${monthPart}${separator})?${dayPart}(?![0-9])(?:日)?))`, 
-        "i"
-    );
+            if (!text) return null;
+            const exclusions = ["7-11", "711", "9-11", "101"];
+            
+            const monthPart = "(?:0?[1-9]|1[0-2])";
+            const dayPart = "(?:3[01]|[12][0-9]|0?[1-9])"; 
+            const separator = "[\\/\\-月]";
+            const yearPart = "(?:\\d{4}[\\/\\-年])?";
+            const connector = "[\\-\\~\\～\\—\\至\\到\\s]+";
+            
+            const singleDateRegex = new RegExp(`(?:^|[\\s])(${yearPart}${monthPart}${separator}${dayPart}(?![0-9])(?:日)?)`, "i");
+            const fullRangeRegex = new RegExp(
+                `(${yearPart}${monthPart}${separator}${dayPart}(?:日)?${connector}(?:(?:${monthPart}${separator})?${dayPart}(?![0-9])(?:日)?))`, 
+                "i"
+            );
 
-    const checkExclusion = (matchStr) => {
-        if (!matchStr) return null;
-        const clean = matchStr.trim();
-        return exclusions.includes(clean) ? null : matchStr;
-    };
+            const checkExclusion = (matchStr) => {
+                if (!matchStr) return null;
+                const clean = matchStr.trim();
+                return exclusions.includes(clean) ? null : matchStr;
+            };
 
-    const rangeMatch = text.match(fullRangeRegex);
-    if (rangeMatch) {
-        const result = checkExclusion(rangeMatch[1]);
-        if (result) return result;
-    }
+            const rangeMatch = text.match(fullRangeRegex);
+            if (rangeMatch) {
+                const result = checkExclusion(rangeMatch[1]);
+                if (result) return result;
+            }
 
-    const singleMatch = text.match(singleDateRegex);
-    if (singleMatch) {
-        const result = checkExclusion(singleMatch[1]);
-        if (result) return result;
-    }
-    
-    return null;
-};
+            const singleMatch = text.match(singleDateRegex);
+            if (singleMatch) {
+                const result = checkExclusion(singleMatch[1]);
+                if (result) return result;
+            }
+            
+            return null;
+        };
+
+        // 智慧備忘錄排序
         const sortNotesSmartly = (data) => {
             const sortedByCreated = [...data].sort((a, b) => {
                 const timeA = a.createdAt?.toMillis() || Date.now();
@@ -196,6 +199,7 @@
             return result;
         };
 
+        // SVG 圖標元件
         const Icon = ({ name, size = 18, className = "", fill = "none" }) => {
             const icons = {
                 trash: <path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />,
@@ -250,6 +254,7 @@
             );
         };
 
+        // 主應用程式元件
         function App() {
             const [user, setUser] = useState(null);
             const [inputValue, setInputValue] = useState('');
@@ -511,6 +516,7 @@
             );
         }
 
+        // 卡片元件
         function NoteCard({ note, user, appId, renderContent, fullscreenImage, index }) {
             const { db, doc, deleteDoc, updateDoc } = window.FirebaseSDK;
             const [isEditing, setIsEditing] = useState(false);
@@ -568,7 +574,7 @@
             };
 
             return (
-                <article className={`note-card rounded-2xl p-3 card-shadow relative animate-fade-in group border ${bgClass} ${isEditing ? 'ring-2 ring-[#99582a]/20' : ''}`}>
+                <article className={`note-card rounded-2xl p-3 card-shadow relative animate-fade-in group border ${bgClass} ${isEditing ? 'ring-2 ring-2 ring-[#99582a]/20' : ''}`}>
                     {!isEditing && (
                         <button onClick={(e) => { e.stopPropagation(); deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'notes', note.id)); }}
                                 className="absolute top-1 right-1 text-[#d5bdaf] hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all p-1 hover:bg-white rounded-full z-10">
@@ -624,9 +630,9 @@
             );
         }
 
+        // 掛載 React 根節點並渲染
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
 </body>
-
 </html>
