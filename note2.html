@@ -70,6 +70,18 @@
         textarea, input {
             font-size: 16px !important;
         }
+
+        /* 👑 雙重保險：強制覆蓋可能殘留的舊 B 版 html 標籤樣式 */
+        .card-content-text, 
+        .card-content-text h3, 
+        .card-content-text p, 
+        .card-content-text div {
+            text-align: left !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
     </style>
 
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
@@ -149,12 +161,15 @@
             });
         };
 
-        // 智慧清空舊標籤與解析超連結
+        // 智慧過濾舊標籤物與解析超連結
         const renderCleanContent = (text) => {
             if (!text) return '';
             
-            // 核心修正：自動洗掉可能殘留在資料庫舊字串裡的 <h3>, </h3> 標籤或 <p> 標籤
-            let cleanText = text.replace(/<\/?h3[^>]*>/gi, '').replace(/<\/?p[^>]*>/gi, '');
+            // 強力洗掉舊資料中混雜的所有 HTML 排版區塊標籤，回歸最純粹的內文
+            let cleanText = text.replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, '$1')
+                                .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1')
+                                .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1')
+                                .replace(/<\/?(h3|p|div)[^>]*>/gi, '');
 
             const urlRegex = /((?:https?:\/\/|www\.|[a-z0-9-]+\.[a-z]{2,})(?:[^\s()<>]+|\((?:[^\s()<>]+|(?:\([^\s()<>]+\)))?\))+(w+:\((?:[^\s()<>]+|(?:\([^\s()<>]+\)))?\)|[^\s`!()\[\]{};:'".,<>?«»指標“”指標‘’]))/gi;
             return cleanText.replace(urlRegex, (url) => {
@@ -346,7 +361,7 @@
             }
         };
 
-        // --- 卡片渲染：導入智慧清洗過濾器 ---
+        // --- 卡片渲染 ---
         const renderCards = () => {
             const mobileContainer = document.getElementById('notes-container-mobile');
             const leftContainer = document.getElementById('notes-container-left');
@@ -366,15 +381,14 @@
                     ? 'bg-[#f7f9f2] border-[#e9efe0]' 
                     : 'bg-[#fffdf0] border-[#f5f5e6]';
 
-                // 移除卡片內部不必要的額外 padding (全面採用緊湊的 px-4 py-3.5)
                 const cardHtml = `
-                    <article class="note-card rounded-2xl px-4 py-3.5 card-shadow relative border animate-fade-in group transition-all ${bgClass}">
+                    <article class="note-card rounded-2xl px-4 py-3 card-shadow relative border animate-fade-in group transition-all ${bgClass}">
                         <button class="delete-card-btn absolute top-2 right-2 text-[#d5bdaf] hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all p-1 hover:bg-white rounded-full z-10" data-id="${note.id}">
                             🗑️
                         </button>
                         
                         ${note.targetDate ? `
-                            <div class="flex items-center gap-1 text-[10px] font-black text-[#99582a] mb-2 bg-[#99582a]/10 w-fit px-1.5 py-0.5 rounded-full border border-[#99582a]/20 shadow-sm self-start">
+                            <div class="flex items-center gap-1 text-[10px] font-black text-[#99582a] mb-1.5 bg-[#99582a]/10 w-fit px-1.5 py-0.5 rounded-full border border-[#99582a]/20 shadow-sm self-start">
                                 📅 ${note.targetDate}
                             </div>
                         ` : ''}
@@ -420,16 +434,18 @@
                 };
             });
 
-            // 點擊編輯時，同步把乾淨、無 HTML 標籤的內容放進 textarea
+            // 點擊編輯
             document.querySelectorAll('.card-content-text').forEach(div => {
                 div.onclick = function(e) {
                     if (e.target.tagName === 'A') return;
                     const id = div.getAttribute('data-id');
                     const currentNote = notesData.find(n => n.id === id);
                     
-                    // 同步在編輯框內清洗資料庫的舊標籤物
                     let rawContent = currentNote.content || '';
-                    let cleanRawContent = rawContent.replace(/<\/?h3[^>]*>/gi, '').replace(/<\/?p[^>]*>/gi, '');
+                    let cleanRawContent = rawContent.replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, '$1')
+                                                    .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1')
+                                                    .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1')
+                                                    .replace(/<\/?(h3|p|div)[^>]*>/gi, '');
                     const fullText = `${currentNote.targetDate || ''} ${cleanRawContent}`.trim();
 
                     const container = document.createElement('div');
@@ -460,7 +476,6 @@
                         const newDate = extractDateRange(val);
                         const newContent = newDate ? val.replace(newDate, '').trim() : val;
 
-                        // 儲存時覆寫成乾淨的新資料，這樣這筆資料在資料庫裡就會永遠正常了！
                         await db.collection('artifacts').doc(appId).collection('users').doc(currentUser.uid).collection('notes').doc(id).update({
                             content: newContent || "",
                             targetDate: newDate || null
