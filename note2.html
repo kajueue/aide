@@ -20,7 +20,7 @@
     </script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght=400;500;700;900&display=swap');
 
         :root {
             --earth-dark: #432818;
@@ -100,7 +100,7 @@
         let selectedImageBase64 = null;
         let isUploading = false;
 
-        // SVG 圖標函數（完美重現 B 版本的極簡按鈕圖標，不需要引用任何庫）
+        // SVG 圖標函數
         const getIconSvg = (name) => {
             const paths = {
                 send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
@@ -109,7 +109,7 @@
             return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths[name] || ''}</svg>`;
         };
 
-        // --- A 版本核心邏輯：日期偵測與圖片壓縮（完全不變動） ---
+        // --- A 版本核心邏輯：日期偵測與圖片壓縮 ---
         const extractDateRange = (text) => {
             if (!text) return null;
             const exclusions = ["7-11", "711", "9-11", "101"];
@@ -158,7 +158,7 @@
             });
         };
 
-        // --- 介面渲染：完美將 A 版本邏輯套入 B 版本 UI 容器中 ---
+        // --- 介面渲染 ---
         const renderApp = () => {
             const root = document.getElementById('app-root');
 
@@ -168,7 +168,7 @@
                         <div class="bg-white p-8 rounded-[32px] shadow-2xl text-center max-w-sm w-full border border-[#e3d5ca]">
                             <div class="w-16 h-16 bg-[#fdfaf6] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner text-3xl">💭</div>
                             <h1 class="text-2xl font-black text-[#432818] mb-1">大地記事</h1>
-                            <p class="text-[#99582a]/60 text-sm font-medium mb-8">個人專屬的靈感備忘錄</p>
+                            <p class="text-[#99582a]/60 text-sm font-medium mb-8">個人專專屬的靈感備忘錄</p>
                             <button id="login-btn" class="w-full flex items-center justify-center gap-3 py-3.5 px-6 bg-[#432818] text-white rounded-xl font-bold hover:bg-[#3d1f0a] active:scale-95 transition-all shadow-md text-sm">
                                 🔑 使用 Google 帳號登入
                             </button>
@@ -255,7 +255,7 @@
             renderCards();
         };
 
-        // --- A 版本事件監聽（安全無改動） ---
+        // --- A 版本事件監聽 ---
         const initEventListeners = () => {
             const logoutPc = document.getElementById('logout-btn-pc');
             if (logoutPc) logoutPc.onclick = () => auth.signOut();
@@ -341,7 +341,7 @@
             }
         };
 
-        // --- 卡片渲染：套用 B 版本的雙色溫潤背景與點擊空白處儲存提示 ---
+        // --- 卡片渲染：已修正對齊與上下空白緊湊度 ---
         const renderCards = () => {
             const mobileContainer = document.getElementById('notes-container-mobile');
             const leftContainer = document.getElementById('notes-container-left');
@@ -357,19 +357,20 @@
                 const rowGroup = Math.floor(index / 2);
                 const isEvenGroup = rowGroup % 2 === 0;
 
-                // B版本指定的黃綠雙色溫潤交錯背景色
+                // 溫潤交錯背景色
                 const bgClass = isEvenGroup 
                     ? 'bg-[#f7f9f2] border-[#e9efe0]' 
                     : 'bg-[#fffdf0] border-[#f5f5e6]';
 
+                // 修正重點：p-3 縮小內邊距，移除多餘間距，並全面將內容強制置左 (text-left)
                 const cardHtml = `
-                    <article class="note-card rounded-2xl p-4 card-shadow relative border animate-fade-in group transition-all ${bgClass}">
+                    <article class="note-card rounded-2xl p-3.5 card-shadow relative border animate-fade-in group transition-all ${bgClass}">
                         <button class="delete-card-btn absolute top-2 right-2 text-[#d5bdaf] hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all p-1 hover:bg-white rounded-full z-10" data-id="${note.id}">
                             🗑️
                         </button>
                         
                         ${note.targetDate ? `
-                            <div class="flex items-center gap-1 text-[10px] font-black text-[#99582a] mb-2 bg-[#99582a]/10 w-fit px-1.5 py-0.5 rounded-full border border-[#99582a]/20 shadow-sm">
+                            <div class="flex items-center gap-1 text-[10px] font-black text-[#99582a] mb-2 bg-[#99582a]/10 w-fit px-1.5 py-0.5 rounded-full border border-[#99582a]/20 shadow-sm self-start">
                                 📅 ${note.targetDate}
                             </div>
                         ` : ''}
@@ -381,7 +382,7 @@
                         ` : ''}
 
                         ${note.content || !note.imageUrl ? `
-                            <div class="card-content-text text-[#432818] text-[16px] font-medium leading-relaxed whitespace-pre-wrap break-words text-left hover:bg-[#99582a]/5 p-1 rounded transition-colors cursor-text" data-id="${note.id}">
+                            <div class="card-content-text text-[#432818] text-[16px] font-medium leading-relaxed whitespace-pre-wrap break-words text-left hover:bg-[#99582a]/5 p-0.5 rounded transition-colors cursor-text w-full" data-id="${note.id}">
                                 ${renderUrlLinks(note.content)}
                             </div>
                         ` : ''}
@@ -415,7 +416,7 @@
                 };
             });
 
-            // 整合點擊無框極簡編輯與內嵌儲存提示
+            // 修正重點：無框編輯狀態也改為 text-left、優化內距，並確保第一行完美對齊左側
             document.querySelectorAll('.card-content-text').forEach(div => {
                 div.onclick = function(e) {
                     if (e.target.tagName === 'A') return;
@@ -428,7 +429,7 @@
 
                     const textarea = document.createElement('textarea');
                     textarea.value = fullText;
-                    textarea.className = "w-full bg-white/60 border border-[#99582a]/20 p-2 text-[16px] font-medium text-[#432818] focus:outline-none resize-none overflow-hidden rounded-xl text-left";
+                    textarea.className = "w-full bg-white/70 border border-[#99582a]/20 p-1.5 text-[16px] font-medium text-[#432818] focus:outline-none resize-none overflow-hidden rounded-xl text-left";
 
                     const hint = document.createElement('div');
                     hint.className = "text-[9px] text-[#99582a]/40 font-bold self-end flex items-center gap-1 mt-0.5";
