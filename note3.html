@@ -4,7 +4,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💭</text></svg>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
-    <title>記事本</title>
+    <title>大地記事3</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -50,12 +50,13 @@
             display: flex;
             flex-direction: column;
             width: 100%;
+            align-items: flex-start !important; /* 強制內容物靠左起頭 */
         }
         .note-card:hover {
             transform: translateY(-2px);
         }
 
-        /* 🎯 核心修正：強制卡片裡面的文字、第一行、超連結全部徹底靠左對齊 */
+        /* 🎯 最高權限覆蓋：確保卡片內所有文字、連結與元件 100% 靠左 */
         .note-card, 
         .card-content-text, 
         .card-content-text * {
@@ -162,7 +163,7 @@
             const urlRegex = /((?:https?:\/\/|www\.|[a-z0-9-]+\.[a-z]{2,})(?:[^\s()<>]+|\((?:[^\s()<>]+|(?:\([^\s()<>]+\)))?\))+(w+:\((?:[^\s()<>]+|(?:\([^\s()<>]+\)))?\)|[^\s`!()\[\]{};:'".,<>?«»指標“”指標‘’]))/gi;
             return text.replace(urlRegex, (url) => {
                 const href = url.toLowerCase().startsWith('http') ? url : `https://${url}`;
-                return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-[#8b4513] hover:text-[#3d1f0a] underline decoration-[#8b4513]/40 font-bold break-all text-[14px] inline-block mt-0.5">${url}</a>`;
+                return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-[#8b4513] hover:text-[#3d1f0a] underline decoration-[#8b4513]/40 font-bold break-all text-[14px] inline-block mt-0.5 text-left">${url}</a>`;
             });
         };
 
@@ -233,7 +234,7 @@
                                     <div class="flex items-end gap-0.5">
                                         <button id="upload-trigger" class="p-2.5 text-[#99582a] hover:bg-[#99582a]/5 rounded-lg transition-all active:scale-90 shrink-0 text-xl">🖼️</button>
                                         <input type="file" id="file-input" class="hidden" accept="image/*">
-                                        <textarea id="note-textarea" rows="1" placeholder="寫點什麼..." class="flex-1 bg-transparent border-none py-2.5 text-[16px] font-medium text-[#432818] focus:outline-none resize-none no-scrollbar h-10"></textarea>
+                                        <textarea id="note-textarea" rows="1" placeholder="寫點什麼..." class="flex-1 bg-transparent border-none py-2.5 text-[16px] font-medium text-[#432818] focus:outline-none resize-none no-scrollbar h-10 text-left"></textarea>
                                         <button id="submit-note-btn" class="p-2.5 bg-[#432818] text-[#f5ebe0] rounded-lg shadow-md active:scale-95 disabled:opacity-20 transition-all shrink-0 m-1 text-sm font-bold flex items-center justify-center">
                                             ${isUploading ? '⌛' : getIconSvg('send')}
                                         </button>
@@ -368,14 +369,15 @@
                     ? 'bg-[#f7f9f2] border-[#e9efe0]' 
                     : 'bg-[#fffdf0] border-[#f5f5e6]';
 
+                // 🎯 結構修正：卡片與內文容器直接強灌 text-left 與 items-start
                 const cardHtml = `
-                    <article class="note-card rounded-2xl px-4 py-3.5 card-shadow relative border animate-fade-in group transition-all ${bgClass}">
+                    <article class="note-card text-left items-start rounded-2xl px-4 py-3.5 card-shadow relative border animate-fade-in group transition-all ${bgClass}">
                         <button class="delete-card-btn absolute top-2 right-2 text-[#d5bdaf] hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all p-1 hover:bg-white rounded-full z-10" data-id="${note.id}">
                             🗑️
                         </button>
                         
                         ${note.targetDate ? `
-                            <div class="flex items-center gap-1 text-[10px] font-black text-[#99582a] mb-2 bg-[#99582a]/10 w-fit px-1.5 py-0.5 rounded-full border border-[#99582a]/20 shadow-sm self-start">
+                            <div class="flex items-center gap-1 text-[10px] font-black text-[#99582a] mb-2 bg-[#99582a]/10 w-fit px-1.5 py-0.5 rounded-full border border-[#99582a]/20 shadow-sm self-start text-left">
                                 📅 ${note.targetDate}
                             </div>
                         ` : ''}
@@ -387,7 +389,7 @@
                         ` : ''}
 
                         ${note.content || !note.imageUrl ? `
-                            <div class="card-content-text text-[#432818] text-[16px] font-medium leading-relaxed whitespace-pre-wrap break-words hover:bg-[#99582a]/5 p-0.5 rounded transition-colors cursor-text w-full" data-id="${note.id}">
+                            <div class="card-content-text text-left text-[#432818] text-[16px] font-medium leading-relaxed whitespace-pre-wrap break-words hover:bg-[#99582a]/5 p-0.5 rounded transition-colors cursor-text w-full" data-id="${note.id}">
                                 ${renderUrlLinks(note.content)}
                             </div>
                         ` : ''}
@@ -430,7 +432,7 @@
                     const fullText = `${currentNote.targetDate || ''} ${currentNote.content || ''}`.trim();
 
                     const container = document.createElement('div');
-                    container.className = "flex flex-col gap-1 w-full text-left";
+                    container.className = "flex flex-col gap-1 w-full text-left items-start";
 
                     const textarea = document.createElement('textarea');
                     textarea.value = fullText;
