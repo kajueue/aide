@@ -162,7 +162,7 @@
                 <div class="flex flex-col md:flex-row min-h-screen">
                     <aside class="hidden md:flex w-52 wood-texture bg-[#432818] text-[#f5ebe0] flex-col p-5 fixed h-full shadow-2xl z-20">
                         <div class="mb-8 flex items-center gap-2">
-                            <span class="text-2xl">📝</span>
+                            <span class="text-2xl"> </span>
                             <h1 class="text-xl font-black tracking-wider">大地記事</h1>
                         </div>
                         <div class="flex-grow">
@@ -185,7 +185,7 @@
                     <main class="flex-1 md:ml-52 bg-[#f4eae1] pb-16">
                         <div class="px-4 py-6 md:px-12 md:py-6 max-w-4xl mx-auto w-full">
                             <header class="md:hidden flex items-center justify-between mb-4">
-                                <h1 class="text-xl font-black text-[#432818] flex items-center gap-1.5">📝 大地記事</h1>
+                                <h1 class="text-xl font-black text-[#432818] flex items-center gap-1.5"> 大地記事</h1>
                                 <button id="logout-btn-mobile" class="px-3 py-1.5 text-xs font-bold text-red-700 bg-white/80 rounded-full shadow-sm">🚪 登出</button>
                             </header>
                             
@@ -310,7 +310,7 @@
             }
         };
 
-        // --- 核心卡片渲染（完美靠左排版、無大標題強制設定） ---
+        // --- 核心卡片渲染（徹底移除大標題與置中排版，完全改回靠左對齊 text-left） ---
         const renderCards = () => {
             const mobileContainer = document.getElementById('notes-container-mobile');
             const leftContainer = document.getElementById('notes-container-left');
@@ -324,7 +324,7 @@
                 const rowGroup = Math.floor(index / 2);
                 const isEvenGroup = rowGroup % 2 === 0;
                 
-                // 還原黃綠交錯背景
+                // 還原黃綠交錯溫潤背景
                 const bgClass = isEvenGroup 
                     ? 'bg-[#f7f9f2] border-[#e2e8da]' 
                     : 'bg-[#fffdf0] border-[#f2edd3]';
@@ -348,7 +348,7 @@
                         ` : ''}
 
                         ${note.content ? `
-                            <div class="card-content-text text-[#432818] text-[16px] font-medium leading-relaxed whitespace-pre-wrap break-words text-left hover:bg-black/5 p-1 rounded transition-colors" data-id="${note.id}">
+                            <div class="card-content-text text-[#432818] text-[16px] font-medium leading-relaxed whitespace-pre-wrap break-words text-left p-1 rounded transition-colors" data-id="${note.id}">
                                 ${renderUrlLinks(note.content)}
                             </div>
                         ` : ''}
@@ -363,7 +363,7 @@
                 }
             });
 
-            // 綁定動態事件
+            // 刪除功能
             document.querySelectorAll('.delete-card-btn').forEach(btn => {
                 btn.onclick = (e) => {
                     e.stopPropagation();
@@ -374,6 +374,7 @@
                 };
             });
 
+            // 圖片燈箱
             document.querySelectorAll('.zoomable-img').forEach(div => {
                 div.onclick = () => {
                     document.getElementById('lightbox-img').src = div.getAttribute('data-src');
@@ -381,7 +382,7 @@
                 };
             });
 
-            // 編輯功能
+            // 點擊卡片編輯功能
             document.querySelectorAll('.card-content-text').forEach(div => {
                 div.onclick = function(e) {
                     if (e.target.tagName === 'A') return;
@@ -391,7 +392,7 @@
 
                     const textarea = document.createElement('textarea');
                     textarea.value = fullText;
-                    textarea.className = "w-full bg-white border border-[#99582a]/40 p-3 text-[16px] font-medium text-[#432818] focus:outline-none resize-none rounded-xl shadow-inner min-h-[120px]";
+                    textarea.className = "w-full bg-white border border-[#99582a]/40 p-3 text-[16px] font-medium text-[#432818] focus:outline-none resize-none rounded-xl shadow-inner min-h-[120px] text-left";
                     
                     div.replaceWith(textarea);
                     textarea.focus();
@@ -438,7 +439,7 @@
             return result;
         };
 
-        // --- 帳號監聽狀態 ---
+        // --- 帳號與即時資料監聽 ---
         auth.onAuthStateChanged((user) => {
             currentUser = user;
             renderApp();
