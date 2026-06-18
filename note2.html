@@ -81,7 +81,7 @@
     <div id="app-root"></div>
 
     <script>
-        // --- 核心安全鎖定：100% 沿用 A 版本 Firebase 連線設定 ---
+        // --- 核心安全鎖定：100% 沿用 A 版本 Firebase 連線設定與變數 ---
         const firebaseConfig = {
             apiKey: "AIzaSyCWIB1JBSmMeW2UvTEX80UvRNPq4kkQyj0",
             authDomain: "note-fb03c.firebaseapp.com",
@@ -100,7 +100,16 @@
         let selectedImageBase64 = null;
         let isUploading = false;
 
-        // --- A 版本功能函式（完全不更動邏輯） ---
+        // SVG 圖標函數（完美重現 B 版本的極簡按鈕圖標，不需要引用任何庫）
+        const getIconSvg = (name) => {
+            const paths = {
+                send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+                logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14 5-5-5-5m5 5H9"/>'
+            };
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths[name] || ''}</svg>`;
+        };
+
+        // --- A 版本核心邏輯：日期偵測與圖片壓縮（完全不變動） ---
         const extractDateRange = (text) => {
             if (!text) return null;
             const exclusions = ["7-11", "711", "9-11", "101"];
@@ -149,7 +158,7 @@
             });
         };
 
-        // --- 介面渲染：套用極簡新 UI 配置 ---
+        // --- 介面渲染：完美將 A 版本邏輯套入 B 版本 UI 容器中 ---
         const renderApp = () => {
             const root = document.getElementById('app-root');
 
@@ -159,7 +168,7 @@
                         <div class="bg-white p-8 rounded-[32px] shadow-2xl text-center max-w-sm w-full border border-[#e3d5ca]">
                             <div class="w-16 h-16 bg-[#fdfaf6] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner text-3xl">💭</div>
                             <h1 class="text-2xl font-black text-[#432818] mb-1">大地記事</h1>
-                            <p class="text-[#99582a]/60 text-sm font-medium mb-8">個人專專屬的靈感備忘錄</p>
+                            <p class="text-[#99582a]/60 text-sm font-medium mb-8">個人專屬的靈感備忘錄</p>
                             <button id="login-btn" class="w-full flex items-center justify-center gap-3 py-3.5 px-6 bg-[#432818] text-white rounded-xl font-bold hover:bg-[#3d1f0a] active:scale-95 transition-all shadow-md text-sm">
                                 🔑 使用 Google 帳號登入
                             </button>
@@ -191,7 +200,9 @@
                                     <div class="text-[9px] opacity-40 font-bold truncate">雲端同步中</div>
                                 </div>
                             </div>
-                            <button id="logout-btn-pc" class="w-full flex items-center justify-center gap-1.5 p-2 text-[10px] font-bold text-[#bb9457] hover:bg-white/5 rounded-lg transition-all">🚪 登出</button>
+                            <button id="logout-btn-pc" class="w-full flex items-center justify-center gap-1.5 p-2 text-[10px] font-bold text-[#bb9457] hover:bg-white/5 rounded-lg transition-all">
+                                ${getIconSvg('logout')} 登出
+                            </button>
                         </div>
                     </aside>
 
@@ -201,7 +212,7 @@
                                 <h1 class="text-lg font-black text-[#432818] flex items-center gap-2">💭 大地記事</h1>
                                 <div class="flex items-center gap-2">
                                     <img src="${currentUser.photoURL || ''}" class="w-7 h-7 rounded-full border border-[#99582a]/20">
-                                    <button id="logout-btn-mobile" class="p-1.5 text-[#99582a] bg-white/60 rounded-full text-xs shadow-sm">🚪</button>
+                                    <button id="logout-btn-mobile" class="p-1.5 text-[#99582a] bg-white/60 rounded-full text-xs shadow-sm">${getIconSvg('logout')}</button>
                                 </div>
                             </header>
 
@@ -215,8 +226,8 @@
                                         <button id="upload-trigger" class="p-2.5 text-[#99582a] hover:bg-[#99582a]/5 rounded-lg transition-all active:scale-90 shrink-0 text-xl">🖼️</button>
                                         <input type="file" id="file-input" class="hidden" accept="image/*">
                                         <textarea id="note-textarea" rows="1" placeholder="寫點什麼..." class="flex-1 bg-transparent border-none py-2.5 text-[16px] font-medium text-[#432818] focus:outline-none resize-none no-scrollbar h-10"></textarea>
-                                        <button id="submit-note-btn" class="p-2.5 bg-[#432818] text-[#f5ebe0] rounded-lg shadow-md active:scale-95 disabled:opacity-20 transition-all shrink-0 m-1 text-sm font-bold">
-                                            ${isUploading ? '⌛' : '🚀'}
+                                        <button id="submit-note-btn" class="p-2.5 bg-[#432818] text-[#f5ebe0] rounded-lg shadow-md active:scale-95 disabled:opacity-20 transition-all shrink-0 m-1 text-sm font-bold flex items-center justify-center">
+                                            ${isUploading ? '⌛' : getIconSvg('send')}
                                         </button>
                                     </div>
                                 </div>
@@ -330,7 +341,7 @@
             }
         };
 
-        // --- 卡片渲染：改為新 UI 風格，並加上「點擊空白處儲存」極簡內嵌控制 ---
+        // --- 卡片渲染：套用 B 版本的雙色溫潤背景與點擊空白處儲存提示 ---
         const renderCards = () => {
             const mobileContainer = document.getElementById('notes-container-mobile');
             const leftContainer = document.getElementById('notes-container-left');
@@ -346,7 +357,7 @@
                 const rowGroup = Math.floor(index / 2);
                 const isEvenGroup = rowGroup % 2 === 0;
 
-                // 黃綠雙色溫潤交錯背景色
+                // B版本指定的黃綠雙色溫潤交錯背景色
                 const bgClass = isEvenGroup 
                     ? 'bg-[#f7f9f2] border-[#e9efe0]' 
                     : 'bg-[#fffdf0] border-[#f5f5e6]';
@@ -369,7 +380,7 @@
                             </div>
                         ` : ''}
 
-                        ${note.content ? `
+                        ${note.content || !note.imageUrl ? `
                             <div class="card-content-text text-[#432818] text-[16px] font-medium leading-relaxed whitespace-pre-wrap break-words text-left hover:bg-[#99582a]/5 p-1 rounded transition-colors cursor-text" data-id="${note.id}">
                                 ${renderUrlLinks(note.content)}
                             </div>
