@@ -24,7 +24,8 @@
     </script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js" data-presets="react"></script>
     
     <style>
         :root {
@@ -73,15 +74,12 @@
             font-size: 16px !important;
         }
     </style>
-</head>
-<body>
-    <div id="root"></div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
 
+    <script>
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyCWIB1JBSmMeW2UvTEX80UvRNPq4kkQyj0",
             authDomain: "note-fb03c.firebaseapp.com",
@@ -91,19 +89,41 @@
             appId: "1:834422503254:web:5bb6bd988616c67f3a88f7"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(app);
+        const auth = firebase.auth(app);
 
         window.FirebaseSDK = {
-            app, db, auth, 
-            collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, query, serverTimestamp, 
-            GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
-            signInWithCustomToken, signInAnonymously
+            app, db, auth,
+            collection: (db, ...paths) => db.collection(paths.join('/')),
+            addDoc: (ref, data) => ref.add(data),
+            onSnapshot: (queryRef, callback, errCallback) => {
+                return queryRef.onSnapshot(
+                    snapshot => {
+                        snapshot.docs.map = (fn) => snapshot.docs.map(doc => fn({ id: doc.id, data: () => doc.data() }));
+                        callback(snapshot);
+                    },
+                    errCallback
+                );
+            },
+            doc: (db, ...paths) => db.doc(paths.join('/')),
+            deleteDoc: (docRef) => docRef.delete(),
+            updateDoc: (docRef, data) => docRef.update(data),
+            query: (ref) => ref,
+            serverTimestamp: () => firebase.firestore.FieldValue.serverTimestamp(),
+            GoogleAuthProvider: firebase.auth.GoogleAuthProvider,
+            signInWithPopup: (auth, provider) => auth.signInWithPopup(provider),
+            signOut: (auth) => auth.signOut(),
+            onAuthStateChanged: (auth, callback) => auth.onAuthStateChanged(callback),
+            signInWithCustomToken: (auth, token) => auth.signInWithCustomToken(token),
+            signInAnonymously: (auth) => auth.signInAnonymously()
         };
     </script>
+</head>
+<body>
+    <div id="root"></div>
 
-    <script type="text/babel">
+    <script type="text/babel" data-presets="react">
         const { useState, useEffect, useRef } = React;
 
         // 圖片壓縮工具
@@ -176,8 +196,8 @@
         // 智慧備忘錄排序
         const sortNotesSmartly = (data) => {
             const sortedByCreated = [...data].sort((a, b) => {
-                const timeA = a.createdAt?.toMillis() || Date.now();
-                const timeB = b.createdAt?.toMillis() || Date.now();
+                const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : Date.now();
+                const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : Date.now();
                 return timeB - timeA;
             });
             const result = [];
@@ -292,6 +312,7 @@
                 setLoading(true);
                 const { db, collection, query, onSnapshot } = window.FirebaseSDK;
                 const notesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'notes');
+                
                 const unsubscribe = onSnapshot(query(notesRef), (snapshot) => {
                     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     setNotes(sortNotesSmartly(data));
@@ -362,7 +383,7 @@
 
             const renderContent = (text) => {
                 if (!text) return null;
-                const urlRegex = /((?:https?:\/\/|www\.|[a-z0-9-]+\.[a-z]{2,})(?:[^\s()<>]+|\((?:[^\s()<>]+|(?:\([^\s()<>]+\)))?\))+(?:\((?:[^\s()<>]+|(?:\([^\s()<>]+\)))?\)|[^\s`!()\[\]{};:'".,<>?«»“”指標‘’]))/gi;
+                const urlRegex = /((?:https?:\/\/|www\.|[a-z0-9-]+\.[a-z]{2,})(?:[^\s()<>]+|\((?:[^\s()<>]+|(?:\([^\s()<>]+\)))?\))+(?:\((?:[^\s()<>]+|(?:\([^\s()<>]+\)))?\)|[^\s`!()\[\]{};:'".,<>?«»指標“”指標‘’]))/gi;
                 const parts = text.split(urlRegex);
                 return parts.map((part, i) => {
                     if (part && part.match(urlRegex)) {
@@ -574,7 +595,7 @@
             };
 
             return (
-                <article className={`note-card rounded-2xl p-3 card-shadow relative animate-fade-in group border ${bgClass} ${isEditing ? 'ring-2 ring-2 ring-[#99582a]/20' : ''}`}>
+                <article className={`note-card rounded-2xl p-3 card-shadow relative animate-fade-in group border ${bgClass} ${isEditing ? 'ring-2 ring-[#99582a]/20' : ''}`}>
                     {!isEditing && (
                         <button onClick={(e) => { e.stopPropagation(); deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'notes', note.id)); }}
                                 className="absolute top-1 right-1 text-[#d5bdaf] hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all p-1 hover:bg-white rounded-full z-10">
@@ -630,7 +651,7 @@
             );
         }
 
-        // 掛載 React 根節點並渲染
+        // 掛載 React
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
