@@ -151,7 +151,7 @@
 
         const renderUrlLinks = (text) => {
             if (!text) return '';
-            const urlRegex = /((?:https?:\/\/|www\.|[a-z0-9-]+\.[a-z]{2,})(?:[^\s()<>]+|\((?:[^\s()<>]+|(?:\([^\s()<>]+\)))?\))+(w+:\((?:[^\s()<>]+|(?:\([^\s()<>]+\)))?\)|[^\s`!()\[\]{};:'".,<>?«»指標“”指標‘’]))/gi;
+            const urlRegex = /((?:https?:\/\/|www\.|[a-z0-9-]+\.[a-z]{2,})(?:[^\s()<>]+|\((?:[^\s()<>]+|(?:\([^\s()<>]+\)))?\))+(w+:\((?:[^\s()<>]+|(?:\([^\s()<>]+\)))?\)|[^\s`!()\[\] {};:'".,<>?«»指標“”指標‘’]))/gi;
             return text.replace(urlRegex, (url) => {
                 const href = url.toLowerCase().startsWith('http') ? url : `https://${url}`;
                 return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-[#8b4513] hover:text-[#3d1f0a] underline decoration-[#8b4513]/40 font-bold break-all text-[14px] inline-block mt-0.5">${url}</a>`;
@@ -168,7 +168,7 @@
                         <div class="bg-white p-8 rounded-[32px] shadow-2xl text-center max-w-sm w-full border border-[#e3d5ca]">
                             <div class="w-16 h-16 bg-[#fdfaf6] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner text-3xl">💭</div>
                             <h1 class="text-2xl font-black text-[#432818] mb-1">大地記事</h1>
-                            <p class="text-[#99582a]/60 text-sm font-medium mb-8">個人專專屬的靈感備忘錄</p>
+                            <p class="text-[#99582a]/60 text-sm font-medium mb-8">個人專屬的靈感備忘錄</p>
                             <button id="login-btn" class="w-full flex items-center justify-center gap-3 py-3.5 px-6 bg-[#432818] text-white rounded-xl font-bold hover:bg-[#3d1f0a] active:scale-95 transition-all shadow-md text-sm">
                                 🔑 使用 Google 帳號登入
                             </button>
@@ -341,7 +341,7 @@
             }
         };
 
-        // --- 卡片渲染：已修正對齊與上下空白緊湊度 ---
+        // --- 卡片渲染：徹底修正 <h3> 造成的置中與大空白問題 ---
         const renderCards = () => {
             const mobileContainer = document.getElementById('notes-container-mobile');
             const leftContainer = document.getElementById('notes-container-left');
@@ -362,10 +362,10 @@
                     ? 'bg-[#f7f9f2] border-[#e9efe0]' 
                     : 'bg-[#fffdf0] border-[#f5f5e6]';
 
-                // 修正重點：p-3 縮小內邊距，移除多餘間距，並全面將內容強制置左 (text-left)
+                // 【徹底修正】：將原本卡片整體的內距微調為 p-5（上下更緊湊），且完全移除破壞排版的 <h3> 標籤
                 const cardHtml = `
-                    <article class="note-card rounded-2xl p-3.5 card-shadow relative border animate-fade-in group transition-all ${bgClass}">
-                        <button class="delete-card-btn absolute top-2 right-2 text-[#d5bdaf] hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all p-1 hover:bg-white rounded-full z-10" data-id="${note.id}">
+                    <article class="note-card rounded-2xl p-5 card-shadow relative border animate-fade-in group transition-all ${bgClass}">
+                        <button class="delete-card-btn absolute top-3 right-3 text-[#d5bdaf] hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all p-1 hover:bg-white rounded-full z-10" data-id="${note.id}">
                             🗑️
                         </button>
                         
@@ -416,7 +416,7 @@
                 };
             });
 
-            // 修正重點：無框編輯狀態也改為 text-left、優化內距，並確保第一行完美對齊左側
+            // 無框編輯狀態：同步確保純置左、無多餘空間
             document.querySelectorAll('.card-content-text').forEach(div => {
                 div.onclick = function(e) {
                     if (e.target.tagName === 'A') return;
