@@ -4,7 +4,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💭</text></svg>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
-    <title>大地記事3</title>
+    <title>大地記事</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -49,16 +49,22 @@
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             display: flex;
             flex-direction: column;
-            width: 100%;
-            align-items: flex-start !important; /* 強制內容物靠左起頭 */
+            width: 100% !important;
+            align-items: stretch !important; /* 🎯 關鍵修正 1：不要用 items-start，改用 stretch 讓子元素撐滿左右 */
         }
         .note-card:hover {
             transform: translateY(-2px);
         }
 
-        /* 🎯 最高權限覆蓋：確保卡片內所有文字、連結與元件 100% 靠左 */
+        /* 🎯 關鍵修正 2：強制卡片內所有文字容器與子元素 100% 寬度且文字絕對靠左 */
         .note-card, 
-        .card-content-text, 
+        .card-content-text {
+            width: 100% !important;
+            display: block !important;
+            text-align: left !important;
+        }
+
+        /* 🎯 關鍵修正 3：確保裡面的超連結跟段落，不會因為任何預設樣式變成置中 */
         .card-content-text * {
             text-align: left !important;
         }
@@ -369,15 +375,15 @@
                     ? 'bg-[#f7f9f2] border-[#e9efe0]' 
                     : 'bg-[#fffdf0] border-[#f5f5e6]';
 
-                // 🎯 結構修正：卡片與內文容器直接強灌 text-left 與 items-start
+                // 🎯 結構修正：澈底移除了任何會縮小寬度的 items-start，改用 w-full 強制滿版
                 const cardHtml = `
-                    <article class="note-card text-left items-start rounded-2xl px-4 py-3.5 card-shadow relative border animate-fade-in group transition-all ${bgClass}">
+                    <article class="note-card text-left rounded-2xl px-4 py-3.5 card-shadow relative border animate-fade-in group transition-all w-full block ${bgClass}">
                         <button class="delete-card-btn absolute top-2 right-2 text-[#d5bdaf] hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all p-1 hover:bg-white rounded-full z-10" data-id="${note.id}">
                             🗑️
                         </button>
                         
                         ${note.targetDate ? `
-                            <div class="flex items-center gap-1 text-[10px] font-black text-[#99582a] mb-2 bg-[#99582a]/10 w-fit px-1.5 py-0.5 rounded-full border border-[#99582a]/20 shadow-sm self-start text-left">
+                            <div class="flex items-center gap-1 text-[10px] font-black text-[#99582a] mb-2 bg-[#99582a]/10 w-fit px-1.5 py-0.5 rounded-full border border-[#99582a]/20 shadow-sm text-left">
                                 📅 ${note.targetDate}
                             </div>
                         ` : ''}
@@ -389,7 +395,7 @@
                         ` : ''}
 
                         ${note.content || !note.imageUrl ? `
-                            <div class="card-content-text text-left text-[#432818] text-[16px] font-medium leading-relaxed whitespace-pre-wrap break-words hover:bg-[#99582a]/5 p-0.5 rounded transition-colors cursor-text w-full" data-id="${note.id}">
+                            <div class="card-content-text text-left text-[#432818] text-[16px] font-medium leading-relaxed whitespace-pre-wrap break-words hover:bg-[#99582a]/5 p-0.5 rounded transition-colors cursor-text w-full block" data-id="${note.id}">
                                 ${renderUrlLinks(note.content)}
                             </div>
                         ` : ''}
@@ -432,7 +438,7 @@
                     const fullText = `${currentNote.targetDate || ''} ${currentNote.content || ''}`.trim();
 
                     const container = document.createElement('div');
-                    container.className = "flex flex-col gap-1 w-full text-left items-start";
+                    container.className = "flex flex-col gap-1 w-full text-left";
 
                     const textarea = document.createElement('textarea');
                     textarea.value = fullText;
