@@ -21,9 +21,30 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, doc, deleteDoc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyCWIB1JBSmMeW2UvTEX80UvRNPq4kkQyj0",
+            authDomain: "note-fb03c.firebaseapp.com",
+            projectId: "note-fb03c",
+            storageBucket: "note-fb03c.firebasestorage.app",
+            messagingSenderId: "834422503254",
+            appId: "1:834422503254:web:5bb6bd988616c67f3a88f7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // 完美對齊你原本的工作環境
+        window.FirebaseSDK = {
+            auth, db, collection, addDoc, onSnapshot, serverTimestamp, doc, deleteDoc, updateDoc, query, orderBy,
+            GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously
+        };
+    </script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
@@ -78,43 +99,6 @@
 <body>
     <div id="root"></div>
 
-    <script>
-        // 初始化配置
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "AIzaSyCWIB1JBSmMeW2UvTEX80UvRNPq4kkQyj0",
-            authDomain: "note-fb03c.firebaseapp.com",
-            projectId: "note-fb03c",
-            storageBucket: "note-fb03c.firebasestorage.app",
-            messagingSenderId: "834422503254",
-            appId: "1:834422503254:web:5bb6bd988616c67f3a88f7"
-        };
-
-        // 初始化 Firebase Compat 執行個體
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-
-        // 綁定全域 SDK 方法，完美對齊下方的 React 程式碼調用，不影響現有的處理邏輯
-        window.FirebaseSDK = {
-            auth: firebase.auth(),
-            db: firebase.firestore(),
-            collection: (db, ...paths) => db.collection(paths.join('/')),
-            addDoc: (ref, data) => ref.add(data),
-            onSnapshot: (ref, next, error) => ref.onSnapshot(next, error),
-            doc: (db, ...paths) => db.doc(paths.join('/')),
-            deleteDoc: (ref) => ref.delete(),
-            updateDoc: (ref, data) => ref.update(data),
-            query: (ref) => ref, 
-            serverTimestamp: () => firebase.firestore.FieldValue.serverTimestamp(),
-            GoogleAuthProvider: firebase.auth.GoogleAuthProvider,
-            signInWithPopup: (auth, provider) => auth.signInWithPopup(provider),
-            signOut: (auth) => auth.signOut(),
-            onAuthStateChanged: (auth, callback) => auth.onAuthStateChanged(callback),
-            signInWithCustomToken: (auth, token) => auth.signInWithCustomToken(token),
-            signInAnonymously: (auth) => auth.signInAnonymously()
-        };
-    </script>
-
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
@@ -156,13 +140,8 @@
             const yearPart = "(?:\\d{4}[\\/\\-年])?";
             const connector = "[\\-\\~\\～\\—\\至\\到\\s]+";
 
-            // 修正點：移除原本因複製貼上導致重複宣告的 singleDateRegex const 錯誤，合併邏輯
             const singleDateRegex = new RegExp(`(?:^|[\\s])(${yearPart}${monthPart}${separator}${dayPart}(?![0-9])(?:日)?)`, "i");
-
-            const fullRangeRegex = new RegExp(
-                `(${yearPart}${monthPart}${separator}${dayPart}(?:日)?${connector}(?:(?:${monthPart}${separator})?${dayPart}(?![0-9])(?:日)?))`, 
-                "i"
-            );
+            const fullRangeRegex = new RegExp(`(${yearPart}${monthPart}${separator}${dayPart}(?:日)?${connector}(?:(?:${monthPart}${separator})?${dayPart}(?![0-9])(?:日)?))`, "i");
 
             const checkExclusion = (matchStr) => {
                 if (!matchStr) return null;
@@ -278,32 +257,33 @@
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'earth-note-web-app';
 
             useEffect(() => {
-                if (!window.FirebaseSDK) return;
-                const { auth, onAuthStateChanged, signInWithCustomToken, signInAnonymously } = window.FirebaseSDK;
+                const checkSDK = setInterval(() => {
+                    if (window.FirebaseSDK) {
+                        clearInterval(checkSDK);
+                        const { auth, onAuthStateChanged, signInWithCustomToken, signInAnonymously } = window.FirebaseSDK;
 
-                const initAuth = async () => {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        try { await signInWithCustomToken(auth, __initial_auth_token); } 
-                        catch (e) { await signInAnonymously(auth); }
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            signInWithCustomToken(auth, __initial_auth_token).catch(() => signInAnonymously(auth));
+                        }
+
+                        onAuthStateChanged(auth, (u) => {
+                            setUser(u);
+                            if (!u) { setNotes([]); setLoading(false); }
+                        });
                     }
-                };
-                initAuth();
-
-                const unsubscribe = onAuthStateChanged(auth, (u) => {
-                    setUser(u);
-                    if (!u) { setNotes([]); setLoading(false); }
-                });
-                return () => unsubscribe();
+                }, 100);
+                return () => clearInterval(checkSDK);
             }, []);
 
             useEffect(() => {
                 if (!user || !window.FirebaseSDK) return;
                 setLoading(true);
-                const { db, collection, query, onSnapshot } = window.FirebaseSDK;
+                const { db, collection, query, orderBy, onSnapshot } = window.FirebaseSDK;
                 
-                // 修正點：對齊相容版資料路徑快照
                 const notesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'notes');
-                const unsubscribe = onSnapshot(notesRef.orderBy('createdAt', 'desc'), (snapshot) => {
+                const q = query(notesRef, orderBy('createdAt', 'desc'));
+                
+                const unsubscribe = onSnapshot(q, (snapshot) => {
                     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     setNotes(sortNotesSmartly(data));
                     setLoading(false);
@@ -366,11 +346,9 @@
                     });
                     setInputValue('');
                     setSelectedImage(null);
-                } // 修正點：加上必要的 catch 區塊避免阻斷執行
-                catch (error) { 
+                } catch (error) { 
                     console.error("儲存失敗", error);
-                }
-                finally { setIsUploading(false); }
+                } finally { setIsUploading(false); }
             };
 
             const renderContent = (text) => {
@@ -404,7 +382,7 @@
                                 <Icon name="note" size={32} className="text-[#99582a]" />
                             </div>
                             <h1 className="text-2xl font-black text-[#432818] mb-1">大地記事</h1>
-                            <p className="text-[#99582a]/60 text-sm font-medium mb-8">個人專專屬的靈感備忘錄</p>
+                            <p className="text-[#99582a]/60 text-sm font-medium mb-8">個人專屬的靈感備忘錄</p>
                             <button onClick={handleGoogleSignIn} className="w-full flex items-center justify-center gap-3 py-3.5 px-6 bg-[#432818] text-white rounded-xl font-bold hover:bg-[#3d1f0a] active:scale-95 transition-all shadow-md text-sm">
                                 <Icon name="google" size={18} fill="white" /> 使用 Google 帳號登入
                             </button>
@@ -530,6 +508,7 @@
         }
 
         function NoteCard({ note, user, appId, renderContent, fullscreenImage, index }) {
+            // 完全沿用你原本可用的 Firebase 原生模組化 SDK 方法
             const { db, doc, deleteDoc, updateDoc } = window.FirebaseSDK;
             const [isEditing, setIsEditing] = useState(false);
             const [editValue, setEditValue] = useState('');
@@ -570,6 +549,7 @@
                 const newTargetDate = extractDateRange(editValue);
                 const newContent = newTargetDate ? editValue.replace(newTargetDate, '').trim() : editValue;
                 try {
+                    // 修正點：使用原本模組化標準的 doc(db, ...) 參照寫法
                     const singleDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'notes', note.id);
                     await updateDoc(singleDocRef, {
                         content: newContent || "",
