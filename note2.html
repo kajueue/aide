@@ -29,7 +29,7 @@
         }
         body {
             font-family: 'Noto Sans TC', sans-serif;
-            background-color: var(--earth-bg);
+            background-color: #f4eae1;
             color: var(--earth-dark);
             overflow-x: hidden;
             overscroll-behavior: none;
@@ -39,7 +39,7 @@
             background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
         }
         .card-shadow {
-            box-shadow: 0 4px 12px -2px rgba(67, 40, 24, 0.06);
+            box-shadow: 0 10px 25px -5px rgba(67, 40, 24, 0.05), 0 8px 10px -6px rgba(67, 40, 24, 0.05);
         }
         .note-card {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -47,12 +47,15 @@
             flex-direction: column;
             width: 100%;
         }
+        .note-card:hover {
+            transform: translateY(-2px);
+        }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
+            from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in {
-            animation: fadeIn 0.3s ease-out forwards;
+            animation: fadeIn 0.35s ease-out forwards;
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         textarea, input { font-size: 16px !important; }
@@ -67,7 +70,7 @@
     <div id="app-root"></div>
 
     <script>
-        // --- 1. Firebase 初始化設定 ---
+        // --- Firebase 設定 ---
         const firebaseConfig = {
             apiKey: "AIzaSyCWIB1JBSmMeW2UvTEX80UvRNPq4kkQyj0",
             authDomain: "note-fb03c.firebaseapp.com",
@@ -81,13 +84,12 @@
         const auth = firebase.auth(app);
         const appId = 'earth-note-web-app';
 
-        // --- 2. 全域狀態管理 ---
         let currentUser = null;
         let notesData = [];
         let selectedImageBase64 = null;
         let isUploading = false;
 
-        // --- 3. 實用工具函式 ---
+        // --- 功能函式 ---
         const extractDateRange = (text) => {
             if (!text) return null;
             const exclusions = ["7-11", "711", "9-11", "101"];
@@ -132,15 +134,14 @@
             const urlRegex = /((?:https?:\/\/|www\.|[a-z0-9-]+\.[a-z]{2,})(?:[^\s()<>]+|\((?:[^\s()<>]+|(?:\([^\s()<>]+\)))?\))+(w+:\((?:[^\s()<>]+|(?:\([^\s()<>]+\)))?\)|[^\s`!()\[\]{};:'".,<>?«»指標“”指標‘’]))/gi;
             return text.replace(urlRegex, (url) => {
                 const href = url.toLowerCase().startsWith('http') ? url : `https://${url}`;
-                return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-[#8b4513] hover:text-[#3d1f0a] underline decoration-[#8b4513]/40 font-bold break-all text-[14px] inline-block">${url}</a>`;
+                return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-[#99582a] hover:text-[#432818] underline decoration-[#99582a]/40 font-bold break-all text-[15px] inline-block mt-0.5">${url}</a>`;
             });
         };
 
-        // --- 4. 核心渲染引擎 (純 JS 控制 UI 抽換) ---
+        // --- 核心渲染介面 ---
         const renderApp = () => {
             const root = document.getElementById('app-root');
             
-            // 登入介面
             if (!currentUser) {
                 root.innerHTML = `
                     <div class="min-h-screen flex flex-col items-center justify-center p-4 bg-[#f5ebe0]">
@@ -157,76 +158,73 @@
                 return;
             }
 
-            // 主程式雙欄/單欄介面
             root.innerHTML = `
                 <div class="flex flex-col md:flex-row min-h-screen">
-                    <aside class="hidden md:flex w-48 wood-texture bg-[#432818] text-[#f5ebe0] flex-col p-4 fixed h-full shadow-2xl z-20">
-                        <div class="mb-8"><h1 class="text-lg font-black flex items-center gap-2">📝 大地記事</h1></div>
+                    <aside class="hidden md:flex w-52 wood-texture bg-[#432818] text-[#f5ebe0] flex-col p-5 fixed h-full shadow-2xl z-20">
+                        <div class="mb-8 flex items-center gap-2">
+                            <span class="text-2xl">📝</span>
+                            <h1 class="text-xl font-black tracking-wider">大地記事</h1>
+                        </div>
                         <div class="flex-grow">
-                            <div class="flex items-center gap-2.5 p-2 bg-white/10 rounded-lg text-[11px] font-bold">
-                                📌 目前事件 <span class="ml-auto bg-[#bb9457] text-[#432818] px-1.5 py-0.5 rounded-full text-[9px]">${notesData.length}</span>
+                            <div class="flex items-center gap-2.5 p-2.5 bg-white/10 rounded-xl text-[12px] font-bold">
+                                📌 目前事件 <span class="ml-auto bg-[#bb9457] text-[#432818] px-2 py-0.5 rounded-full text-[10px] font-black">${notesData.length}</span>
                             </div>
                         </div>
-                        <div class="mt-auto space-y-2">
-                            <div class="flex items-center gap-2 p-2 bg-white/5 rounded-lg">
-                                <img src="${currentUser.photoURL || ''}" class="w-7 h-7 rounded border border-[#bb9457]/30">
+                        <div class="mt-auto space-y-3">
+                            <div class="flex items-center gap-3 p-2 bg-white/5 rounded-xl border border-white/5">
+                                <img src="${currentUser.photoURL || ''}" class="w-8 h-8 rounded-lg border border-[#bb9457]/30">
                                 <div class="flex-1 overflow-hidden">
-                                    <div class="font-bold text-[10px] truncate">${currentUser.displayName || '使用者'}</div>
-                                    <div class="text-[9px] opacity-40 font-bold">雲端同步中</div>
+                                    <div class="font-bold text-[11px] truncate">${currentUser.displayName || '使用者'}</div>
+                                    <div class="text-[9px] text-[#bb9457] font-bold tracking-tight">雲端同步正常</div>
                                 </div>
                             </div>
-                            <button id="logout-btn-pc" class="w-full flex items-center justify-center gap-1.5 p-2 text-[10px] font-bold text-[#bb9457] hover:bg-white/5 rounded-lg transition-all">🚪 登出</button>
+                            <button id="logout-btn-pc" class="w-full flex items-center justify-center gap-2 py-2 text-[11px] font-bold text-red-300 hover:bg-red-500/10 rounded-xl transition-all">🚪 登出系統</button>
                         </div>
                     </aside>
 
-                    <main class="flex-1 md:ml-48 bg-[#f5ebe0] pb-10">
-                        <div class="bg-white/40 backdrop-blur-sm border-b border-[#e3d5ca] px-4 py-4 md:px-8 md:py-4 mb-4">
+                    <main class="flex-1 md:ml-52 bg-[#f4eae1] pb-16">
+                        <div class="px-4 py-6 md:px-12 md:py-6 max-w-4xl mx-auto w-full">
                             <header class="md:hidden flex items-center justify-between mb-4">
-                                <h1 class="text-lg font-black text-[#432818]">📝 大地記事</h1>
-                                <button id="logout-btn-mobile" class="p-1.5 text-[#99582a] bg-white/60 rounded-full text-xs">🚪 登出</button>
+                                <h1 class="text-xl font-black text-[#432818] flex items-center gap-1.5">📝 大地記事</h1>
+                                <button id="logout-btn-mobile" class="px-3 py-1.5 text-xs font-bold text-red-700 bg-white/80 rounded-full shadow-sm">🚪 登出</button>
                             </header>
-                            <div class="max-w-xl mx-auto">
-                                <div class="bg-white rounded-[20px] card-shadow border border-[#e3d5ca] overflow-hidden px-2 py-1">
-                                    <div id="image-preview-box" class="hidden p-2 bg-[#fdfaf6] border-b border-[#f5ebe0] relative flex justify-center rounded-t-[16px] mb-1">
-                                        <img id="preview-img" class="max-h-40 rounded shadow-sm">
-                                        <button id="clear-img-btn" class="absolute top-1 right-1 bg-black/40 text-white rounded-full w-5 h-5 text-xs">✕</button>
-                                    </div>
-                                    <div class="flex items-end gap-1">
-                                        <button id="upload-trigger" class="p-2.5 text-[#99582a] hover:bg-[#99582a]/5 rounded-lg text-xl shrink-0">🖼️</button>
-                                        <input type="file" id="file-input" class="hidden" accept="image/*">
-                                        <textarea id="note-textarea" rows="1" placeholder="寫點什麼... (貼上圖片或輸入日期會自動偵測)" class="flex-1 bg-transparent border-none py-2.5 text-[16px] font-medium text-[#432818] focus:outline-none resize-none no-scrollbar h-10"></textarea>
-                                        <button id="submit-note-btn" class="p-2.5 bg-[#432818] text-[#f5ebe0] rounded-lg shadow-md font-bold shrink-0 m-1 disabled:opacity-20">
-                                            ${isUploading ? '⌛' : '發送'}
-                                        </button>
-                                    </div>
+                            
+                            <div class="bg-white rounded-[24px] card-shadow border border-[#e5d5c5] overflow-hidden p-2 transition-all focus-within:border-[#99582a]/50">
+                                <div id="image-preview-box" class="hidden p-3 bg-[#fdfaf6] border-b border-[#f5ebe0] relative flex justify-center rounded-t-[18px] mb-2">
+                                    <img id="preview-img" class="max-h-48 rounded-xl shadow-md">
+                                    <button id="clear-img-btn" class="absolute top-2 right-2 bg-black/50 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-black/70">✕</button>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button id="upload-trigger" class="p-3 text-[#99582a] hover:bg-[#99582a]/5 rounded-xl text-2xl shrink-0 transition-colors">🖼️</button>
+                                    <input type="file" id="file-input" class="hidden" accept="image/*">
+                                    <textarea id="note-textarea" rows="1" placeholder="寫點什麼..." class="flex-1 bg-transparent border-none py-3 px-1 text-[16px] font-medium text-[#432818] focus:outline-none resize-none no-scrollbar h-12"></textarea>
+                                    <button id="submit-note-btn" class="py-2.5 px-6 bg-[#432818] text-[#f5ebe0] rounded-xl shadow-md font-bold shrink-0 text-sm hover:bg-[#3d1f0a] transition-all disabled:opacity-30">
+                                        ${isUploading ? '⌛' : '發送'}
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="px-4 md:px-8 lg:px-10">
-                            <div class="max-w-4xl mx-auto">
-                                <div id="notes-container-mobile" class="flex flex-col gap-4 md:hidden"></div>
-                                <div class="hidden md:flex gap-4 items-start">
-                                    <div id="notes-container-left" class="flex-1 flex flex-col gap-4"></div>
-                                    <div id="notes-container-right" class="flex-1 flex flex-col gap-4"></div>
-                                </div>
+                        <div class="px-4 md:px-12 max-w-4xl mx-auto">
+                            <div id="notes-container-mobile" class="flex flex-col gap-5 md:hidden"></div>
+                            <div class="hidden md:flex gap-6 items-start">
+                                <div id="notes-container-left" class="flex-1 flex flex-col gap-6"></div>
+                                <div id="notes-container-right" class="flex-1 flex flex-col gap-6"></div>
                             </div>
                         </div>
                     </main>
                 </div>
 
-                <div id="lightbox" class="hidden fixed inset-0 z-[100] bg-[#432818]/90 backdrop-blur-md flex items-center justify-center p-4">
-                    <img id="lightbox-img" class="max-w-full max-h-[85vh] object-contain rounded shadow-2xl">
+                <div id="lightbox" class="hidden fixed inset-0 z-[100] bg-[#432818]/85 backdrop-blur-md flex items-center justify-center p-4">
+                    <img id="lightbox-img" class="max-w-full max-h-[88vh] object-contain rounded-2xl shadow-2xl">
                 </div>
             `;
 
-            // 綁定事件監聽
             initEventListeners();
-            // 渲染卡片清單
             renderCards();
         };
 
-        // --- 5. 綁定按鈕與鍵盤事件 ---
+        // --- 事件監聽綁定 ---
         const initEventListeners = () => {
             const logoutPc = document.getElementById('logout-btn-pc');
             if (logoutPc) logoutPc.onclick = () => auth.signOut();
@@ -239,13 +237,11 @@
             const submitBtn = document.getElementById('submit-note-btn');
             const clearImgBtn = document.getElementById('clear-img-btn');
 
-            // 自動高度
             textarea.oninput = () => {
-                textarea.style.height = '40px';
+                textarea.style.height = '48px';
                 textarea.style.height = textarea.scrollHeight + 'px';
             };
 
-            // 圖片選擇與壓縮
             uploadTrigger.onclick = () => fileInput.click();
             fileInput.onchange = (e) => handleImageFile(e.target.files[0]);
             textarea.onpaste = (e) => {
@@ -260,7 +256,6 @@
                 document.getElementById('image-preview-box').classList.add('hidden');
             };
 
-            // 快捷發送
             textarea.onkeydown = (e) => {
                 if (e.key === 'Enter' && !('ontouchstart' in window) && !e.shiftKey) {
                     e.preventDefault();
@@ -269,7 +264,6 @@
             };
             submitBtn.onclick = saveNote;
 
-            // 燈箱關閉
             document.getElementById('lightbox').onclick = () => {
                 document.getElementById('lightbox').classList.add('hidden');
             };
@@ -286,7 +280,7 @@
             reader.readAsDataURL(file);
         };
 
-        // --- 6. 寫入 Firebase 資料庫 ---
+        // --- 資料庫儲存 ---
         const saveNote = async () => {
             const textarea = document.getElementById('note-textarea');
             const text = textarea.value.trim();
@@ -294,7 +288,7 @@
             if (isUploading) return;
 
             isUploading = true;
-            renderApp(); // 更新發送按鈕狀態
+            renderApp();
 
             const targetDate = extractDateRange(text);
             const finalContent = targetDate ? text.replace(targetDate, '').trim() : text;
@@ -306,6 +300,7 @@
                     targetDate: targetDate,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
+                textarea.value = '';
                 selectedImageBase64 = null;
             } catch (err) {
                 console.error(err);
@@ -315,7 +310,7 @@
             }
         };
 
-        // --- 7. 渲染備忘錄卡片清單 (完美對應卡片交錯背景) ---
+        // --- 核心卡片渲染（完美靠左排版、無大標題強制設定） ---
         const renderCards = () => {
             const mobileContainer = document.getElementById('notes-container-mobile');
             const leftContainer = document.getElementById('notes-container-left');
@@ -328,37 +323,39 @@
             notesData.forEach((note, index) => {
                 const rowGroup = Math.floor(index / 2);
                 const isEvenGroup = rowGroup % 2 === 0;
-                const bgClass = isEvenGroup ? 'bg-[#f7f9f2] border-[#e9efe0]' : 'bg-[#fffdf0] border-[#f5f5e6]';
+                
+                // 還原黃綠交錯背景
+                const bgClass = isEvenGroup 
+                    ? 'bg-[#f7f9f2] border-[#e2e8da]' 
+                    : 'bg-[#fffdf0] border-[#f2edd3]';
 
                 const cardHtml = `
-                    <article class="note-card rounded-2xl p-4 card-shadow relative border animate-fade-in group ${bgClass}">
-                        <button class="delete-card-btn absolute top-2 right-2 text-[#d5bdaf] hover:text-red-500 p-1 bg-white/80 rounded-full shadow-sm z-10 transition-colors" data-id="${note.id}">
+                    <article class="note-card rounded-[24px] p-6 card-shadow relative border animate-fade-in group transition-all ${bgClass}">
+                        <button class="delete-card-btn absolute top-3 right-3 text-[#d5bdaf] hover:text-red-500 p-1.5 bg-white/90 rounded-full shadow-sm opacity-15 group-hover:opacity-100 transition-opacity z-10" data-id="${note.id}">
                             🗑️
                         </button>
                         
                         ${note.targetDate ? `
-                            <div class="flex items-center gap-1 text-[11px] font-black text-[#99582a] mb-2 bg-[#99582a]/10 w-fit px-2 py-0.5 rounded-full border border-[#99582a]/20">
+                            <div class="flex items-center gap-1 text-[12px] font-bold text-[#99582a] mb-3 bg-[#99582a]/10 w-fit px-2.5 py-0.5 rounded-full border border-[#99582a]/15">
                                 📅 ${note.targetDate}
                             </div>
                         ` : ''}
 
                         ${note.imageUrl ? `
-                            <div class="relative cursor-zoom-in overflow-hidden rounded-lg shadow-sm bg-black/5 mb-2 zoomable-img" data-src="${note.imageUrl}">
-                                <img src="${note.imageUrl}" class="w-full h-auto max-h-[350px] object-cover">
+                            <div class="relative cursor-zoom-in overflow-hidden rounded-xl shadow-inner bg-black/5 mb-3 zoomable-img" data-src="${note.imageUrl}">
+                                <img src="${note.imageUrl}" class="w-full h-auto max-h-[320px] object-cover hover:scale-[1.02] transition-transform duration-300">
                             </div>
                         ` : ''}
 
                         ${note.content ? `
-                            <div class="card-content-text text-[#432818] text-[16px] font-medium leading-relaxed whitespace-pre-wrap break-words hover:bg-[#99582a]/5 p-1 rounded transition-colors" data-id="${note.id}">
+                            <div class="card-content-text text-[#432818] text-[16px] font-medium leading-relaxed whitespace-pre-wrap break-words text-left hover:bg-black/5 p-1 rounded transition-colors" data-id="${note.id}">
                                 ${renderUrlLinks(note.content)}
                             </div>
                         ` : ''}
                     </article>
                 `;
 
-                // 手機板全放
                 mobileContainer.insertAdjacentHTML('beforeend', cardHtml);
-                // 電腦版左右交錯放置
                 if (index % 2 === 0) {
                     leftContainer.insertAdjacentHTML('beforeend', cardHtml);
                 } else {
@@ -366,12 +363,14 @@
                 }
             });
 
-            // 綁定卡片內動態元素的點擊事件
+            // 綁定動態事件
             document.querySelectorAll('.delete-card-btn').forEach(btn => {
                 btn.onclick = (e) => {
                     e.stopPropagation();
-                    const id = btn.getAttribute('data-id');
-                    db.collection('artifacts').doc(appId).collection('users').doc(currentUser.uid).collection('notes').doc(id).delete();
+                    if(confirm("確定要刪除這條記事嗎？")) {
+                        const id = btn.getAttribute('data-id');
+                        db.collection('artifacts').doc(appId).collection('users').doc(currentUser.uid).collection('notes').doc(id).delete();
+                    }
                 };
             });
 
@@ -382,17 +381,17 @@
                 };
             });
 
-            // 行內點擊直接編輯功能
+            // 編輯功能
             document.querySelectorAll('.card-content-text').forEach(div => {
                 div.onclick = function(e) {
                     if (e.target.tagName === 'A') return;
                     const id = div.getAttribute('data-id');
                     const currentNote = notesData.find(n => n.id === id);
-                    const fullText = `${currentNote.targetDate || ''} ${currentNote.content || ''}`.trim();
+                    const fullText = `${currentNote.targetDate || ''} \n${currentNote.content || ''}`.trim();
 
                     const textarea = document.createElement('textarea');
                     textarea.value = fullText;
-                    textarea.className = "w-full bg-white border border-[#99582a]/30 p-2 text-[16px] font-medium text-[#432818] focus:outline-none resize-none rounded shadow-inner";
+                    textarea.className = "w-full bg-white border border-[#99582a]/40 p-3 text-[16px] font-medium text-[#432818] focus:outline-none resize-none rounded-xl shadow-inner min-h-[120px]";
                     
                     div.replaceWith(textarea);
                     textarea.focus();
@@ -416,7 +415,7 @@
             });
         };
 
-        // --- 8. 智慧自動排序邏輯 ---
+        // --- 排序演算法 ---
         const sortNotesSmartly = (data) => {
             const sortedByCreated = [...data].sort((a, b) => {
                 const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : Date.now();
@@ -439,20 +438,18 @@
             return result;
         };
 
-        // --- 9. 監聽 Firebase 登入與資料即時更新狀態 ---
+        // --- 帳號監聽狀態 ---
         auth.onAuthStateChanged((user) => {
             currentUser = user;
             renderApp();
 
             if (user) {
-                // 即時接上資料庫監聽
                 db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('notes')
                   .onSnapshot((snapshot) => {
                       const rawNotes = [];
                       snapshot.forEach(doc => rawNotes.push({ id: doc.id, ...doc.data() }));
                       notesData = sortNotesSmartly(rawNotes);
                       renderCards();
-                      // 同步更新側邊欄數字
                       const pcCount = document.querySelector('aside span');
                       if (pcCount) pcCount.innerText = notesData.length;
                   });
