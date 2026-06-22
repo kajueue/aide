@@ -24,33 +24,29 @@
     :root { --earth-dark: #432818; --earth-primary: #99582a; --earth-bg: #f5ebe0; }
     body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--earth-bg); color: var(--earth-dark); overflow-x: hidden; }
 
-    /* 🎯 強制靠左的核心修正 */
-    /* 這裡使用更強的選擇器權重，確保絕對覆蓋 */
-    .note-card, 
-    .note-card * { 
-        text-align: left !important; 
-        justify-content: flex-start !important; 
-        align-items: flex-start !important; 
-        display: block !important; /* 強制轉為區塊，避免 flex 影響對齊 */
-    }
-
-    /* 特別針對卡片本身容器的 flex */
-    .note-card {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: flex-start !important;
+    /* 徹底修正：移除卡片內部不必要的間距 */
+    .note-card { 
+        display: flex !important; 
+        flex-direction: column !important; 
+        width: 100% !important; 
+        text-align: left !important;
     }
 
     .card-content-text {
         text-align: left !important;
-        width: 100% !important;
-        margin-left: 0 !important;
-        margin-right: auto !important;
+        white-space: pre-wrap !important;
+        word-break: break-word !important;
+        /* 移除強制區塊顯示，避免產生額外行高 */
+        display: inline !important; 
     }
 
-    .wood-texture { background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png'); }
+    /* 強制將所有超連結強制轉換為行內元素，消除換行空間 */
+    .card-content-text a {
+        display: inline !important;
+        text-align: left !important;
+    }
+
     .no-scrollbar::-webkit-scrollbar { display: none; }
-    textarea, input { font-size: 16px !important; text-align: left !important; }
 </style>
     
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
@@ -343,31 +339,8 @@
                     : 'bg-[#fffdf0] border-[#f5f5e6]';
 
                 // 🎯 語法修復：這裡完美保留穩定的 A 版本 Tailwind class 結構，對齊完全交給頂部 CSS 處理
-                const cardHtml = `
-                    <article class="note-card rounded-2xl px-4 py-3.5 card-shadow relative border animate-fade-in group transition-all ${bgClass}">
-                        <button class="delete-card-btn absolute top-2 right-2 text-[#d5bdaf] hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all p-1 hover:bg-white rounded-full z-10" data-id="${note.id}">
-                            🗑️
-                        </button>
-                        
-                        ${note.targetDate ? `
-                            <div class="flex items-center gap-1 text-[10px] font-black text-[#99582a] mb-2 bg-[#99582a]/10 w-fit px-1.5 py-0.5 rounded-full border border-[#99582a]/20 shadow-sm">
-                                📅 ${note.targetDate}
-                            </div>
-                        ` : ''}
-
-                        ${note.imageUrl ? `
-                            <div class="relative cursor-zoom-in overflow-hidden rounded shadow-sm bg-black/5 w-full ${note.content ? 'mb-2' : ''} zoomable-img" data-src="${note.imageUrl}">
-                                <img src="${note.imageUrl}" class="w-full h-auto max-h-[400px] object-cover">
-                            </div>
-                        ` : ''}
-
-                        ${note.content || !note.imageUrl ? `
-                            <div class="card-content-text text-[#432818] text-[16px] font-medium leading-relaxed whitespace-pre-wrap break-words hover:bg-[#99582a]/5 p-0.5 rounded transition-colors cursor-text" data-id="${note.id}">
-                                ${renderUrlLinks(note.content)}
-                            </div>
-                        ` : ''}
-                    </article>
-                `;
+                // 請將您的 cardHtml 寫成一行，不要換行，這樣就不會有空白行了
+const cardHtml = `<article class="note-card rounded-2xl px-4 py-3.5 card-shadow relative border animate-fade-in group transition-all ${bgClass}"><button class="delete-card-btn absolute top-2 right-2 text-[#d5bdaf] hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all p-1 hover:bg-white rounded-full z-10" data-id="${note.id}">🗑️</button>${note.targetDate ? `<div class="flex items-center gap-1 text-[10px] font-black text-[#99582a] mb-2 bg-[#99582a]/10 w-fit px-1.5 py-0.5 rounded-full border border-[#99582a]/20">${note.targetDate}</div>` : ''}${note.imageUrl ? `<div class="relative cursor-zoom-in overflow-hidden rounded shadow-sm bg-black/5 w-full ${note.content ? 'mb-2' : ''} zoomable-img" data-src="${note.imageUrl}"><img src="${note.imageUrl}" class="w-full h-auto max-h-[400px] object-cover"></div>` : ''}${note.content || !note.imageUrl ? `<div class="card-content-text text-[#432818] text-[16px] font-medium leading-relaxed break-words hover:bg-[#99582a]/5 p-0.5 rounded transition-colors cursor-text" data-id="${note.id}">${renderUrlLinks(note.content)}</div>` : ''}</article>`;
 
                 mobileContainer.insertAdjacentHTML('beforeend', cardHtml);
                 if (index % 2 === 0) {
