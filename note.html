@@ -19,73 +19,40 @@
         }
     </script>
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght=400;500;700;900&display=swap');
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+    :root { --earth-dark: #432818; --earth-primary: #99582a; --earth-bg: #f5ebe0; }
+    body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--earth-bg); color: var(--earth-dark); overflow-x: hidden; }
 
-        :root {
-            --earth-dark: #432818;
-            --earth-primary: #99582a;
-            --earth-bg: #f5ebe0;
-        }
+    /* 🎯 強制靠左的核心修正 */
+    /* 這裡使用更強的選擇器權重，確保絕對覆蓋 */
+    .note-card, 
+    .note-card * { 
+        text-align: left !important; 
+        justify-content: flex-start !important; 
+        align-items: flex-start !important; 
+        display: block !important; /* 強制轉為區塊，避免 flex 影響對齊 */
+    }
 
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background-color: var(--earth-bg);
-            color: var(--earth-dark);
-            overflow-x: hidden;
-            overscroll-behavior: none;
-            -webkit-font-smoothing: antialiased;
-        }
+    /* 特別針對卡片本身容器的 flex */
+    .note-card {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
 
-        .wood-texture {
-            background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
-        }
+    .card-content-text {
+        text-align: left !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: auto !important;
+    }
 
-        .card-shadow {
-            box-shadow: 0 4px 12px -2px rgba(67, 40, 24, 0.06);
-        }
-
-        /* 🎯 最強效力對齊修正 */
-        .note-card {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            display: flex !important;
-            flex-direction: column !important;
-            width: 100% !important;
-            align-items: flex-start !important; /* 強制所有子元件靠左起頭 */
-            text-align: left !important;
-        }
-        .note-card:hover {
-            transform: translateY(-2px);
-        }
-
-        /* 🎯 確保卡片內所有文字內容、超連結通通絕對靠左 */
-        .card-content-text {
-            width: 100% !important;
-            text-align: left !important;
-            display: block !important;
-        }
-
-        .card-content-text * {
-            text-align: left !important;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.3s ease-out forwards;
-        }
-
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-
-        textarea, input {
-            font-size: 16px !important;
-        }
-    </style>
-
+    .wood-texture { background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png'); }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    textarea, input { font-size: 16px !important; text-align: left !important; }
+</style>
+    
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
