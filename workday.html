@@ -17,7 +17,6 @@
         <header class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <!-- 將主標題改為 工作日誌 -->
                     <h1 class="text-3xl font-bold text-slate-900">工作日誌</h1>
                 </div>
                 
@@ -280,7 +279,7 @@
             <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                     <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
-                        <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i> 新增常設事項 (每週固定)
+                        <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i> 新增常設事項
                     </h3>
                     <button @click="showRoutineModal = false" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
                 </div>
@@ -408,7 +407,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const { createApp, ref, reactive, watch, onMounted } = Vue;
@@ -430,7 +429,7 @@
                 const db = ref(null);
                 const auth = ref(null);
                 const analytics = ref(null);
-               const userId = 'sameday';
+                const userId = ref('');
                 let isRemoteUpdate = false;
                 let useLocalOnly = false;
 
@@ -489,32 +488,29 @@
                     note: ''
                 });
 
-                const initFirebase = async () => {
+const initFirebase = async () => {
                     try {
                         const app = initializeApp(firebaseConfig);
                         analytics.value = getAnalytics(app);
                         db.value = getFirestore(app);
                         auth.value = getAuth(app);
 
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth.value, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth.value);
-                        }
-
-                        userId.value = auth.value.currentUser?.uid || crypto.randomUUID();
+                        const provider = new GoogleAuthProvider();
+                        const result = await signInWithPopup(auth.value, provider);
+                        
+                        userId.value = result.user.uid;
                         setupCloudSync();
                     } catch (e) {
+                        console.error("登入失敗:", e);
                         useLocalOnly = true;
                         loadLocalFallback();
                     }
                 };
 
-const getCloudDocRef = () => {
-    if (!db.value) return null;
-    // 使用一組固定的專案路徑，確保手機與電腦讀取的是同一個雲端檔案
-    return doc(db.value, 'artifacts', 'my_semester_planner_sameday', 'public', 'data');
-};
+                const getCloudDocRef = () => {
+                    if (useLocalOnly || !db.value || !userId.value) return null;
+                    return doc(db.value, 'artifacts', userId.value, 'public', 'semester_planner_main_data');
+                };
 
                 const setupCloudSync = () => {
                     const docRef = getCloudDocRef();
