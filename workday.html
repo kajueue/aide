@@ -41,19 +41,19 @@
 
                     <button @click="openRoutineModal" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2 rounded-xl font-medium text-sm flex items-center space-x-2 transition border border-indigo-200">
                         <i class="fa-solid fa-clock-rotate-left text-xs"></i>
-                        <span>新增常設事項</span>
+                        <span>新增常設</span>
                     </button>
 
                     <button @click="openExportModal" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-4 py-2 rounded-xl font-medium text-sm flex items-center space-x-2 transition border border-emerald-200">
                         <i class="fa-solid fa-file-arrow-down text-xs"></i>
-                        <span>匯出筆記文字</span>
+                        <span>匯出筆記</span>
                     </button>
                 </div>
             </div>
 
             <div class="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between text-sm text-slate-600 gap-2">
                 <div>
-                    目前已建立 <span class="font-bold text-slate-800">{{ weeks.length }}</span> 個週次 (僅顯示工作日 一～五)
+                    目前已建立 <span class="font-bold text-slate-800">{{ weeks.length }}</span> 個週次 (僅顯示一～五)
                 </div>
                 <div class="flex items-center space-x-2.5">
                     <button @click="sortByCurrentWeek" class="bg-amber-50 hover:bg-amber-100 text-amber-800 px-3 py-1.5 rounded-xl border border-amber-200 font-medium transition flex items-center gap-1.5 text-sm">
@@ -510,10 +510,11 @@
                     }
                 };
 
-                const getCloudDocRef = () => {
-                    if (useLocalOnly || !db.value || !userId.value) return null;
-                    return doc(db.value, 'artifacts', appId, 'public', 'semester_planner_main_data');
-                };
+const getCloudDocRef = () => {
+    if (!db.value) return null;
+    // 使用一組固定的專案路徑，確保手機與電腦讀取的是同一個雲端檔案
+    return doc(db.value, 'artifacts', 'my_semester_planner_sameday', 'public', 'data');
+};
 
                 const setupCloudSync = () => {
                     const docRef = getCloudDocRef();
