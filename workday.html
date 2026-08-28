@@ -14,7 +14,7 @@
 <body class="bg-slate-50 text-slate-800 min-h-screen text-base">
     <div id="app" class="max-w-5xl mx-auto px-4 py-6">
         
-        <header class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+        <header class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-6">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 class="text-3xl font-bold text-slate-900">工作日誌</h1>
@@ -174,56 +174,56 @@
                             </button>
                         </div>
 
-                        <!-- 該日任務與常設清單區域 -->
-                        <div class="space-y-2.5">
+                      <!-- 該日任務與常設清單區域（改為雙欄網格） -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                             <!-- 常設事項 -->
-                            <div v-for="routine in getRoutinesForDay(dayIndex)" :key="'r_'+routine.id" class="flex items-center justify-between bg-indigo-50/60 border border-indigo-100/80 px-5 py-3.5 rounded-xl">
-                                <div class="flex items-center space-x-3.5">
-                                    <input type="checkbox" disabled class="w-5 h-5 rounded border-indigo-300 text-indigo-600 cursor-not-allowed">
-                                    <span class="bg-indigo-200 text-indigo-800 text-xs font-bold px-2 py-0.5 rounded">常設</span>
-                                    <span class="font-medium text-indigo-900 text-lg">{{ routine.title }}</span>
-                                    <span v-if="routine.time" class="text-sm text-indigo-600 bg-white/80 px-2 py-0.5 rounded-md border border-indigo-100">{{ routine.time }}</span>
+                            <div v-for="routine in getRoutinesForDay(dayIndex)" :key="'r_'+routine.id" class="flex items-center justify-between bg-indigo-50/60 border border-indigo-100/80 px-4 py-3 rounded-xl">
+                                <div class="flex items-center space-x-2.5 min-w-0 pr-2">
+                                    <input type="checkbox" disabled class="w-4 h-4 rounded border-indigo-300 text-indigo-600 cursor-not-allowed shrink-0">
+                                    <span class="bg-indigo-200 text-indigo-800 text-xs font-bold px-1.5 py-0.5 rounded shrink-0">常設</span>
+                                    <span class="font-medium text-indigo-900 text-base truncate">{{ routine.title }}</span>
+                                    <span v-if="routine.time" class="text-xs text-indigo-600 bg-white/80 px-1.5 py-0.5 rounded border border-indigo-100 shrink-0">{{ routine.time }}</span>
                                 </div>
-                                <span class="text-xs text-indigo-400 italic">每週固定</span>
+                                <span class="text-xs text-indigo-400 italic shrink-0">每週固定</span>
                             </div>
 
                             <!-- 一般代辦事項 (勾選後僅反灰變暗，不自動刪除) -->
-                            <div v-for="(task, tIndex) in getTasksForDay(week, dayIndex)" :key="task.id" :class="task.completed ? 'bg-slate-100 text-slate-400 opacity-60' : 'bg-white text-slate-800'" class="group flex items-center justify-between border border-slate-200 px-5 py-3.5 rounded-xl shadow-2xs hover:border-slate-300 transition">
-                                <div class="flex items-center space-x-3.5 flex-1 min-w-0 pr-4">
-                                    <input type="checkbox" v-model="task.completed" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-5 h-5 cursor-pointer shrink-0">
+                            <div v-for="(task, tIndex) in getTasksForDay(week, dayIndex)" :key="task.id" :class="task.completed ? 'bg-slate-100 text-slate-400 opacity-60' : 'bg-white text-slate-800'" class="group flex items-center justify-between border border-slate-200 px-4 py-3 rounded-xl shadow-2xs hover:border-slate-300 transition">
+                                <div class="flex items-center space-x-2.5 flex-1 min-w-0 pr-2">
+                                    <input type="checkbox" v-model="task.completed" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer shrink-0">
                                     
                                     <!-- 節次或時間標示在事件前面 -->
-                                    <span v-if="task.period" :class="task.completed ? 'bg-slate-200 text-slate-400 border-slate-300' : 'bg-slate-100 text-slate-700 border-slate-200'" class="shrink-0 text-xs px-2.5 py-1 rounded-md font-medium border">{{ task.period }}</span>
-                                    <span v-if="task.time" :class="task.completed ? 'bg-slate-200 text-slate-400 border-slate-300' : 'bg-indigo-50 text-indigo-700 border-indigo-100'" class="shrink-0 text-xs px-2.5 py-1 rounded-md font-medium border">{{ task.time }}</span>
+                                    <span v-if="task.period" :class="task.completed ? 'bg-slate-200 text-slate-400 border-slate-300' : 'bg-slate-100 text-slate-700 border-slate-200'" class="shrink-0 text-xs px-2 py-0.5 rounded font-medium border">{{ task.period }}</span>
+                                    <span v-if="task.time" :class="task.completed ? 'bg-slate-200 text-slate-400 border-slate-300' : 'bg-indigo-50 text-indigo-700 border-indigo-100'" class="shrink-0 text-xs px-2 py-0.5 rounded font-medium border">{{ task.time }}</span>
 
-                                    <!-- 點擊文字直接編輯 (字體改大 text-lg) -->
-                                    <span @click="editTask(week.id, dayIndex, task)" :class="task.completed ? 'text-slate-400 font-normal' : 'font-medium text-slate-900'" class="truncate cursor-pointer hover:underline text-lg" title="點擊文字直接編輯事項">{{ task.title }}</span>
+                                    <!-- 點擊文字直接編輯 -->
+                                    <span @click="editTask(week.id, dayIndex, task)" :class="task.completed ? 'text-slate-400 font-normal' : 'font-medium text-slate-900'" class="truncate cursor-pointer hover:underline text-base" title="點擊文字直接編輯事項">{{ task.title }}</span>
                                     
-                                    <span v-if="task.note" class="text-sm truncate max-w-xs text-slate-400" :title="task.note">({{ task.note }})</span>
+                                    <span v-if="task.note" class="text-xs truncate text-slate-400" :title="task.note">({{ task.note }})</span>
                                 </div>
 
                                 <!-- 旁邊的小按鍵：上移、往左、往右、移至下週、刪除 -->
-                                <div class="flex items-center space-x-2 shrink-0">
-                                    <button @click="moveTask(week.id, dayIndex, tIndex, 'up')" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition" title="往上移動">
-                                        <i class="fa-solid fa-arrow-up text-sm"></i>
+                                <div class="flex items-center space-x-1 shrink-0">
+                                    <button @click="moveTask(week.id, dayIndex, tIndex, 'up')" class="text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-slate-100 transition" title="往上移動">
+                                        <i class="fa-solid fa-arrow-up text-xs"></i>
                                     </button>
-                                    <button @click="deferTask(week.id, dayIndex, task.id, 'yesterday')" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition" title="往前一日">
-                                        <i class="fa-solid fa-arrow-left text-sm"></i>
+                                    <button @click="deferTask(week.id, dayIndex, task.id, 'yesterday')" class="text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-slate-100 transition" title="往前一日">
+                                        <i class="fa-solid fa-arrow-left text-xs"></i>
                                     </button>
-                                    <button @click="deferTask(week.id, dayIndex, task.id, 'tomorrow')" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition" title="往後一日">
-                                        <i class="fa-solid fa-arrow-right text-sm"></i>
+                                    <button @click="deferTask(week.id, dayIndex, task.id, 'tomorrow')" class="text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-slate-100 transition" title="往後一日">
+                                        <i class="fa-solid fa-arrow-right text-xs"></i>
                                     </button>
-                                    <button @click="deferTask(week.id, dayIndex, task.id, 'next_week')" class="text-slate-400 hover:text-indigo-600 p-1.5 rounded-lg hover:bg-slate-100 transition" title="移至下週同日">
-                                        <i class="fa-solid fa-angles-right text-sm"></i>
+                                    <button @click="deferTask(week.id, dayIndex, task.id, 'next_week')" class="text-slate-400 hover:text-indigo-600 p-1 rounded hover:bg-slate-100 transition" title="移至下週同日">
+                                        <i class="fa-solid fa-angles-right text-xs"></i>
                                     </button>
-                                    <button @click="deleteTask(week.id, dayIndex, task.id)" class="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50 transition" title="刪除事項">
-                                        <i class="fa-solid fa-trash-can text-sm"></i>
+                                    <button @click="deleteTask(week.id, dayIndex, task.id)" class="text-slate-400 hover:text-rose-500 p-1 rounded hover:bg-rose-50 transition" title="刪除事項">
+                                        <i class="fa-solid fa-trash-can text-xs"></i>
                                     </button>
                                 </div>
                             </div>
 
-                            <!-- 若當日無任何事項 -->
-                            <div v-if="getTasksForDay(week, dayIndex).length === 0 && getRoutinesForDay(dayIndex).length === 0" class="text-sm text-slate-400 italic py-1.5">
+                            <!-- 若當日無任何事項 (跨兩欄顯示) -->
+                            <div v-if="getTasksForDay(week, dayIndex).length === 0 && getRoutinesForDay(dayIndex).length === 0" class="text-sm text-slate-400 italic py-1.5 col-span-full">
                                 無事項
                             </div>
                         </div>
