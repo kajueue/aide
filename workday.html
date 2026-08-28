@@ -407,8 +407,8 @@
     <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const { createApp, ref, reactive, watch, onMounted } = Vue;
 
@@ -489,24 +489,43 @@
                 });
 
 const initFirebase = async () => {
-                    try {
-                        const app = initializeApp(firebaseConfig);
-                        analytics.value = getAnalytics(app);
-                        db.value = getFirestore(app);
-                        auth.value = getAuth(app);
+    try {
+        const app = initializeApp(firebaseConfig);
+        analytics.value = getAnalytics(app);
+        db.value = getFirestore(app);
+        auth.value = getAuth(app);
 
-                        const provider = new GoogleAuthProvider();
-                        const result = await signInWithPopup(auth.value, provider);
-                        
-                        userId.value = result.user.uid;
-                        setupCloudSync();
-                    } catch (e) {
-                        console.error("登入失敗:", e);
-                        useLocalOnly = true;
-                        loadLocalFallback();
-                    }
-                };
+        // 監聽登入狀態：如果之前登入過，會自動取得身份，不用每次都跳出視窗
+        onAuthStateChanged(auth.value, (user) => {
+            if (user) {
+                userId.value = user.uid;
+                setupCloudSync();
+            } else {
+                // 如果尚未登入，切換到本地模式或提示登入
+                useLocalOnly = true;
+                loadLocalFallback();
+            }
+        });
+    } catch (e) {
+        console.error("初始化失敗:", e);
+        useLocalOnly = true;
+        loadLocalFallback();
+    }
+};
 
+// 讓你可以隨時手動點擊登入的函式
+const loginWithGoogle = async () => {
+    try {
+        const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth.value, provider);
+        userId.value = result.user.uid;
+        useLocalOnly = false;
+        setupCloudSync();
+        window.location.reload(); // 登入成功後重新整理載入雲端資料
+    } catch (e) {
+        console.error("登入失敗:", e);
+    }
+};
                 const getCloudDocRef = () => {
                     if (useLocalOnly || !db.value || !userId.value) return null;
                     return doc(db.value, 'artifacts', userId.value, 'public', 'semester_planner_main_data');
