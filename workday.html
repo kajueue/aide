@@ -104,7 +104,7 @@
                             <span v-if="task.note" class="text-sm truncate max-w-[120px] text-slate-400" :title="task.note">({{ task.note }})</span>
                         </div>
                         <div class="flex items-center space-x-1 shrink-0">
-                         <button @click="const actualIndex = globalTasks.length - 1 - tIndex; const [item] = globalTasks.splice(actualIndex, 1); globalTasks.push(item);" class="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition" title="移到最下方">
+                         <button @click="const actualIndex = globalTasks.length - 1 - tIndex; const [item] = globalTasks.splice(actualIndex, 1); globalTasks.push(item);" class="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition">
     <i class="fa-solid fa-arrow-up text-xs"></i>
 </button>
                             <button @click="deleteGlobalTask(task.id)" class="text-slate-400 hover:text-rose-500 p-1 rounded-md hover:bg-rose-50 transition" title="刪除事項">
@@ -600,23 +600,37 @@ const loginWithGoogle = async () => {
                     }
                 };
 
-                const syncCurrentSemester = () => {
-                    if (!semestersData[currentSemesterId.value]) {
-                        semestersData[currentSemesterId.value] = { weeks: [], globalTasks: [], routines: [] };
-                    }
-                    weeks.value = semestersData[currentSemesterId.value].weeks || [];
-                    globalTasks.value = semestersData[currentSemesterId.value].globalTasks || [];
-                    routines.value = semestersData[currentSemesterId.value].routines || [];
-                };
+const syncCurrentSemester = () => {
+    if (!semestersData[currentSemesterId.value]) {
+        semestersData[currentSemesterId.value] = { weeks: [], globalTasks: [], routines: [] };
+    }
+    
+    // 進入或切換學期時，自動過濾掉代辦專區超過 7 天已完成的項目
+    const now = new Date().getTime();
+    const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
+    let gList = semestersData[currentSemesterId.value].globalTasks || [];
+    semestersData[currentSemesterId.value].globalTasks = gList.filter(t => {
+        if (t.completed && t.completedAt) {
+            if (now - new Date(t.completedAt).getTime() >= oneWeekMs) {
+                return false; // 超過七天自動過濾
+            }
+        }
+        return true;
+    });
 
-                watch(currentSemesterId, (newId) => {
-                    syncCurrentSemester();
-                    saveDataToCloud();
-                });
+    weeks.value = semestersData[currentSemesterId.value].weeks || [];
+    globalTasks.value = semestersData[currentSemesterId.value].globalTasks || [];
+    routines.value = semestersData[currentSemesterId.value].routines || [];
+};
 
-                watch([weeks, globalTasks, routines], () => {
-                    saveDataToCloud();
-                }, { deep: true });
+watch(currentSemesterId, (newId) => {
+    syncCurrentSemester();
+    saveDataToCloud();
+});
+
+watch([weeks, globalTasks, routines], () => {
+    saveDataToCloud();
+}, { deep: true });
 
 const handleGlobalTaskCheck = (task) => {
     if (task.completed) {
@@ -642,38 +656,10 @@ const handleGlobalTaskCheck = (task) => {
 
     saveDataToCloud();
 };
-                const checkGlobalTasksAutoDelete = () => {
-                    const now = new Date().getTime();
-                    const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
-                    let changed = false;
-                    
-                    for (const semId in semestersData) {
-                        const gList = semestersData[semId].globalTasks;
-                        if (gList && gList.length > 0) {
-                            const filtered = gList.filter(t => {
-                                if (t.completed && t.completedAt) {
-                                    const checkedTime = new Date(t.completedAt).getTime();
-                                    if (now - checkedTime >= oneWeekMs) {
-                                        changed = true;
-                                        return false;
-                                    }
-                                }
-                                return true;
-                            });
-                            semestersData[semId].globalTasks = filtered;
-                        }
-                    }
-                    if (changed && semestersData[currentSemesterId.value]) {
-                        globalTasks.value = semestersData[currentSemesterId.value].globalTasks;
-                    }
-                };
 
-                onMounted(() => {
-                    initFirebase();
-                    setInterval(checkGlobalTasksAutoDelete, 60000);
-                });
-
-        
+onMounted(() => {
+    initFirebase();
+});
                 const generateDefaultWeeks = () => {
                     const list = [];
                     const startBase = new Date('2026-08-24');
