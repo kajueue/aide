@@ -97,16 +97,16 @@
             <!-- 採用 2 欄 Grid 佈局呈現事件，節省垂直空間 -->
             <div v-show="!globalTaskCollapsed" class="p-5">
                 <div v-if="globalTasks.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div v-for="(task, tIndex) in globalTasks" :key="task.id" :class="task.completed ? 'bg-slate-100 text-slate-400 opacity-60' : 'bg-white text-slate-800'" class="group flex items-center justify-between border border-slate-200 px-3 py-2 rounded-xl shadow-2xs hover:border-slate-300 transition">
+                    <div v-for="(task, tIndex) in globalTasks.slice().reverse()" :key="task.id" :class="task.completed ? 'bg-slate-100 text-slate-400 opacity-60' : 'bg-white text-slate-800'" class="group flex items-center justify-between border border-slate-200 px-3 py-2 rounded-xl shadow-2xs hover:border-slate-300 transition">
                         <div class="flex items-center space-x-3 flex-1 min-w-0 pr-2">
                             <input type="checkbox" v-model="task.completed" @change="handleGlobalTaskCheck(task)" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-5 h-5 cursor-pointer shrink-0">
                             <span @click="editGlobalTask(task)" :class="task.completed ? 'text-slate-400 font-normal' : 'font-medium text-slate-900'" class="truncate cursor-pointer hover:underline text-lg" title="點擊文字直接編輯事項">{{ task.title }}</span>
                             <span v-if="task.note" class="text-sm truncate max-w-[120px] text-slate-400" :title="task.note">({{ task.note }})</span>
                         </div>
                         <div class="flex items-center space-x-1 shrink-0">
-                            <button @click="moveGlobalTask(tIndex, 'up')" class="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition" title="往上移動">
-                                <i class="fa-solid fa-arrow-up text-xs"></i>
-                            </button>
+                         <button @click="const actualIndex = globalTasks.length - 1 - tIndex; const [item] = globalTasks.splice(actualIndex, 1); globalTasks.push(item);" class="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition" title="移到最下方">
+    <i class="fa-solid fa-arrow-up text-xs"></i>
+</button>
                             <button @click="deleteGlobalTask(task.id)" class="text-slate-400 hover:text-rose-500 p-1 rounded-md hover:bg-rose-50 transition" title="刪除事項">
                                 <i class="fa-solid fa-trash-can text-xs"></i>
                             </button>
@@ -114,7 +114,7 @@
                     </div>
                 </div>
                 <div v-if="globalTasks.length === 0" class="text-sm text-slate-400 italic text-center py-4">
-                    目前無代辦事項，點擊上方按鈕新增
+                    目前無代辦事項
                 </div>
             </div>
         </div>
@@ -618,15 +618,30 @@ const loginWithGoogle = async () => {
                     saveDataToCloud();
                 }, { deep: true });
 
-                const handleGlobalTaskCheck = (task) => {
-                    if (task.completed) {
-                        task.completedAt = new Date().toISOString();
-                    } else {
-                        delete task.completedAt;
-                    }
-                    saveDataToCloud();
-                };
+const handleGlobalTaskCheck = (task) => {
+    if (task.completed) {
+        task.completedAt = new Date().toISOString();
+    } else {
+        delete task.completedAt;
+    }
 
+    // 找到該項目在 globalTasks 陣列中的真實索引
+    const index = globalTasks.value.findIndex(t => t.id === task.id);
+    if (index !== -1) {
+        // 從原本位置剪下
+        const [item] = globalTasks.value.splice(index, 1);
+        
+       if (task.completed) {
+            // 打勾時改放到最前面
+            globalTasks.value.unshift(item);
+        } else {
+            // 取消打勾時放到最後面
+            globalTasks.value.push(item);
+        }
+    }
+
+    saveDataToCloud();
+};
                 const checkGlobalTasksAutoDelete = () => {
                     const now = new Date().getTime();
                     const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
@@ -658,6 +673,7 @@ const loginWithGoogle = async () => {
                     setInterval(checkGlobalTasksAutoDelete, 60000);
                 });
 
+        
                 const generateDefaultWeeks = () => {
                     const list = [];
                     const startBase = new Date('2026-08-24');
