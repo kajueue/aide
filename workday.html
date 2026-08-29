@@ -625,6 +625,18 @@ const handleGlobalTaskCheck = (task) => {
         delete task.completedAt;
     }
 
+    // 順便執行：自動過濾掉完成超過 7 天的項目
+    if (globalTasks.value) {
+        const now = new Date();
+        globalTasks.value = globalTasks.value.filter(t => {
+            if (!t.completed || !t.completedAt) return true;
+            const completedDate = new Date(t.completedAt);
+            const diffDays = (now - completedDate) / (1000 * 60 * 60 * 24);
+            return diffDays < 7;
+        });
+    }
+};
+
     // 找到該項目在 globalTasks 陣列中的真實索引
     const index = globalTasks.value.findIndex(t => t.id === task.id);
     if (index !== -1) {
