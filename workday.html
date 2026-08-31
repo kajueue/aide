@@ -59,9 +59,6 @@
                 <div class="flex items-center space-x-2.5">
                     <button @click="toggleAllExpand(true)" class="hover:bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 transition font-medium text-sm">全部展開</button>
                     <button @click="toggleAllExpand(false)" class="hover:bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 transition font-medium text-sm">全部折疊</button>
-                    <button @click="reverseWeeks" class="hover:bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 transition flex items-center gap-1.5 font-medium text-sm">
-                        <i class="fa-solid fa-arrows-up-down"></i> 反轉
-                    </button>
                 </div>
             </div>
         </header>
@@ -1028,10 +1025,9 @@ onMounted(() => {
                     weeks.value.forEach(w => w.collapsed = !expand);
                 };
 
-                const reverseWeeks = () => {
-                    weeks.value.reverse();
-                };
-
+const reverseWeeks = () => {
+    // 留空或註解，避免其他地方找不到它而報錯
+};
                 const openExportModal = () => {
                     let text = `=== 工作行事曆與代辦事項 ===\n\n`;
                     globalTasks.value.forEach((gt, idx) => {
