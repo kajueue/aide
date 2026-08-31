@@ -619,6 +619,18 @@ const syncCurrentSemester = () => {
     });
 
     weeks.value = semestersData[currentSemesterId.value].weeks || [];
+
+    // 確保同步資料時，過去的週次也會自動沉到最下面
+    weeks.value.sort((a, b) => {
+        const today = new Date().toISOString().split('T')[0];
+        const aEnded = a.endDateStr < today;
+        const bEnded = b.endDateStr < today;
+        if (aEnded !== bEnded) {
+            return aEnded ? 1 : -1; 
+        }
+        return a.weekNum - b.weekNum;
+    });
+
     globalTasks.value = semestersData[currentSemesterId.value].globalTasks || [];
     routines.value = semestersData[currentSemesterId.value].routines || [];
 };
@@ -661,28 +673,41 @@ onMounted(() => {
     initFirebase();
 });
                 const generateDefaultWeeks = () => {
-                    const list = [];
-                    const startBase = new Date('2026-08-24');
-                    for (let i = 0; i < 21; i++) {
-                        const wStart = new Date(startBase);
-                        wStart.setDate(startBase.getDate() + (i * 7));
-                        const wEnd = new Date(wStart);
-                        wEnd.setDate(wStart.getDate() + 4);
+    const list = [];
+    const startBase = new Date('2026-08-24');
+    for (let i = 0; i < 21; i++) {
+        const wStart = new Date(startBase);
+        wStart.setDate(startBase.getDate() + (i * 7));
+        const wEnd = new Date(wStart);
+        wEnd.setDate(wStart.getDate() + 4);
 
-                        list.push({
-                            id: 'w_' + Math.random().toString(36).substr(2, 9),
-                            weekNum: i,
-                            startDateStr: formatDateISO(wStart),
-                            endDateStr: formatDateISO(wEnd),
-                            dateRange: `${formatDateMD(wStart)}-${formatDateMD(wEnd)}`,
-                            collapsed: false,
-                            days: { 1: [], 2: [], 3: [], 4: [], 5: [] }
-                        });
-                    }
-                    weeks.value = list;
-                    globalTasks.value = [];
-                    routines.value = [];
-                };
+        list.push({
+            id: 'w_' + Math.random().toString(36).substr(2, 9),
+            weekNum: i,
+            startDateStr: formatDateISO(wStart),
+            endDateStr: formatDateISO(wEnd),
+            dateRange: `${formatDateMD(wStart)}-${formatDateMD(wEnd)}`,
+            collapsed: false,
+            days: { 1: [], 2: [], 3: [], 4: [], 5: [] }
+        });
+    }
+    weeks.value = list;
+
+    // 讓過去的週次自動沉到最下面
+    weeks.value.sort((a, b) => {
+        const today = new Date().toISOString().split('T')[0];
+        const aEnded = a.endDateStr < today;
+        const bEnded = b.endDateStr < today;
+        
+        if (aEnded !== bEnded) {
+            return aEnded ? 1 : -1; 
+        }
+        return a.weekNum - b.weekNum;
+    });
+
+    globalTasks.value = [];
+    routines.value = [];
+};
 
                 const formatDateISO = (d) => {
                     const m = String(d.getMonth() + 1).padStart(2, '0');
