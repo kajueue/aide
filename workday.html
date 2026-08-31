@@ -172,7 +172,7 @@
                                 <div class="flex items-center space-x-2.5 min-w-0 pr-2">
                                     <input type="checkbox" disabled class="w-4 h-4 rounded border-indigo-300 text-indigo-600 cursor-not-allowed shrink-0">
                                     <span class="bg-indigo-200 text-indigo-800 text-xs font-bold px-1.5 py-0.5 rounded shrink-0">常設</span>
-                                    <span class="font-medium text-indigo-900 text-base truncate">{{ routine.title }}</span>
+                                    <span class="font-medium text-indigo-900 text-lg truncate">{{ routine.title }}</span>
                                     <span v-if="routine.time" class="text-xs text-indigo-600 bg-white/80 px-1.5 py-0.5 rounded border border-indigo-100 shrink-0">{{ routine.time }}</span>
                                 </div>
                                 <span class="text-xs text-indigo-400 italic shrink-0">每週固定</span>
@@ -188,7 +188,7 @@
                                     <span v-if="task.time" :class="task.completed ? 'bg-slate-200 text-slate-400 border-slate-300' : 'bg-indigo-50 text-indigo-700 border-indigo-100'" class="shrink-0 text-xs px-2 py-0.5 rounded font-medium border">{{ task.time }}</span>
 
                                     <!-- 點擊文字直接編輯 -->
-                                    <span @click="editTask(week.id, dayIndex, task)" :class="task.completed ? 'text-slate-400 font-normal' : 'font-medium text-slate-900'" class="truncate cursor-pointer hover:underline text-base" title="點擊文字直接編輯事項">{{ task.title }}</span>
+                                    <span @click="editTask(week.id, dayIndex, task)" :class="task.completed ? 'text-slate-400 font-normal' : 'font-medium text-slate-900'" class="truncate cursor-pointer hover:underline text-lg" title="點擊文字直接編輯事項">{{ task.title }}</span>
                                     
                                     <span v-if="task.note" class="text-xs truncate text-slate-400" :title="task.note">({{ task.note }})</span>
                                 </div>
