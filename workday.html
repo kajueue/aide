@@ -168,17 +168,7 @@
 
                       <!-- 該日任務與常設清單區域（改為雙欄網格） -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                            <!-- 常設事項 -->
-                            <div v-for="routine in getRoutinesForDay(dayIndex)" :key="'r_'+routine.id" class="flex items-center justify-between bg-indigo-50/60 border border-indigo-100/80 px-3 py-2 rounded-xl">
-                                <div class="flex items-center space-x-2.5 min-w-0 pr-2">
-                                    <input type="checkbox" disabled class="w-4 h-4 rounded border-indigo-300 text-indigo-600 cursor-not-allowed shrink-0">
-                                    <span class="bg-indigo-200 text-indigo-800 text-xs font-bold px-1.5 py-0.5 rounded shrink-0">常設</span>
-                                    <span class="font-medium text-indigo-900 text-lg truncate">{{ routine.title }}</span>
-                                    <span v-if="routine.time" class="text-xs text-indigo-600 bg-white/80 px-1.5 py-0.5 rounded border border-indigo-100 shrink-0">{{ routine.time }}</span>
-                                </div>
-                                <span class="text-xs text-indigo-400 italic shrink-0">每週固定</span>
-                            </div>
-
+                          
                             <!-- 一般代辦事項 (勾選後僅反灰變暗，不自動刪除) -->
                             <div v-for="(task, tIndex) in getTasksForDay(week, dayIndex)" :key="task.id" :class="task.completed ? 'bg-slate-100 text-slate-400 opacity-60' : 'bg-white text-slate-800'" class="group flex items-center justify-between border border-slate-200 px-3 py-2 rounded-xl shadow-2xs hover:border-slate-300 transition">
                                 <div class="flex items-center space-x-2.5 flex-1 min-w-0 pr-2">
@@ -266,7 +256,7 @@
             </div>
         </div>
 
-        <!-- 2. 新增常設事項 Modal -->
+<!-- 2. 新增常設事項 Modal -->
         <div v-if="showRoutineModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
             <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50">
@@ -293,6 +283,17 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1.5">時間 (選填)</label>
                         <input v-model="routineForm.time" type="text" placeholder="" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <!-- 新增：起始週與結束週設定 -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">從第幾週 (選填)</label>
+                            <input v-model.number="routineForm.startWeek" type="number" min="1" placeholder="例: 1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">到第幾週 (選填)</label>
+                            <input v-model.number="routineForm.endWeek" type="number" min="1" placeholder="例: 4" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
                     </div>
                 </div>
                 <div class="px-4 py-3 bg-slate-50 border-t border-slate-100 flex justify-end space-x-3">
@@ -457,10 +458,12 @@
                 });
 
                 const routineForm = reactive({
-                    dayIndex: 1,
-                    title: '',
-                    time: ''
-                });
+    dayIndex: 1,
+    title: '',
+    time: '',
+    startWeek: null, // 起始週
+    endWeek: null    // 結束週
+});
 
                 const taskForm = reactive({
                     isEditing: false,
@@ -780,9 +783,6 @@ onMounted(() => {
                     return week.days[dayIndex];
                 };
 
-                const getRoutinesForDay = (dayIndex) => {
-                    return routines.value.filter(r => r.dayIndex === dayIndex);
-                };
 
                 const openGeneratorModal = () => {
                     showGeneratorModal.value = true;
@@ -845,16 +845,53 @@ onMounted(() => {
                     showRoutineModal.value = true;
                 };
 
-                const saveRoutine = () => {
-                    if (!routineForm.title.trim()) return;
-                    routines.value.push({
-                        id: 'r_' + Math.random().toString(36).substr(2, 9),
-                        dayIndex: routineForm.dayIndex,
-                        title: routineForm.title.trim(),
-                        time: routineForm.time.trim()
-                    });
-                    showRoutineModal.value = false;
-                };
+const saveRoutine = () => {
+    if (!routineForm.title.trim()) return;
+
+    const start = routineForm.startWeek ? Number(routineForm.startWeek) : null;
+    const end = routineForm.endWeek ? Number(routineForm.endWeek) : null;
+    const targetDay = routineForm.dayIndex;
+
+    // 走訪所有週次，尋找符合起訖範圍的週
+    weeks.value.forEach(week => {
+        const weekNum = week.weekNum;
+        let shouldAdd = false;
+
+        if (start && end) {
+            // 如果有填寫範圍，判斷當前週是否在範圍內
+            if (weekNum >= start && weekNum <= end) shouldAdd = true;
+        } else {
+            // 如果沒有填寫範圍，預設全學期每週都加入
+            shouldAdd = true;
+        }
+
+        if (shouldAdd) {
+            if (!week.days) week.days = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+            if (!week.days[targetDay]) week.days[targetDay] = [];
+
+            // 直接「複製」一筆一般事項到該週該星期的清單中
+            week.days[targetDay].push({
+                id: 't_' + Math.random().toString(36).substr(2, 9),
+                title: routineForm.title.trim(),
+                time: routineForm.time.trim(),
+                period: '',
+                note: '',
+                completed: false,
+                isRoutineSource: true // 可以加個標記識別它是從常設產生的（選填）
+            });
+        }
+    });
+
+    // 清空表單並關閉 Modal
+    routineForm.title = '';
+    routineForm.time = '';
+    routineForm.startWeek = null;
+    routineForm.endWeek = null;
+    routineForm.dayIndex = 1;
+    
+    showRoutineModal.value = false;
+    saveDataToCloud();
+};
 
                 const openAddTaskModal = (weekId, dayIndex) => {
                     taskForm.isEditing = false;
@@ -1029,50 +1066,46 @@ onMounted(() => {
 const reverseWeeks = () => {
     // 留空或註解，避免其他地方找不到它而報錯
 };
-                const openExportModal = () => {
-                    let text = `=== 工作行事曆與代辦事項 ===\n\n`;
-                    globalTasks.value.forEach((gt, idx) => {
-                        text += `[代辦事項] ${gt.title} ${gt.note ? '('+gt.note+')' : ''}\n`;
-                    });
-                    text += `\n-------------------------\n\n`;
-                    weeks.value.forEach(w => {
-                        text += `【 第 ${w.weekNum} 週 (${w.dateRange}) 】\n`;
-                        for (let d = 1; d <= 5; d++) {
-                            const dayTasks = w.days && w.days[d] ? w.days[d] : [];
-                            const dayRoutines = getRoutinesForDay(d);
-                            if (dayTasks.length > 0 || dayRoutines.length > 0) {
-                                text += `  星期${getDaySymbol(d)} (${getDayDateString(w, d)}):\n`;
-                                dayRoutines.forEach(r => {
-                                    text += `    - [常設] ${r.title} ${r.time ? '('+r.time+')' : ''}\n`;
-                                });
-                                dayTasks.forEach(t => {
-                                    text += `    - [${t.completed ? '已完成' : '未完成'}] ${t.period ? '節次'+t.period+' ' : ''}${t.time ? t.time+' ' : ''}${t.title}\n`;
-                                });
-                            }
-                        }
-                        text += `\n`;
-                    });
-                    exportTextContent.value = text;
-                    showExportModal.value = true;
-                };
 
-                const copyExportText = () => {
-                    const textarea = document.createElement('textarea');
-                    textarea.value = exportTextContent.value;
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    try {
-                        document.execCommand('copy');
-                    } catch(e) {}
-                    document.body.removeChild(textarea);
-                };
+const openExportModal = () => {
+    let text = `=== 工作行事曆與代辦事項 ===\n\n`;
+    globalTasks.value.forEach((gt, idx) => {
+        text += `[代辦事項] ${gt.title} ${gt.note ? '('+gt.note+')' : ''}\n`;
+    });
+    text += `\n-------------------------\n\n`;
+    weeks.value.forEach(w => {
+        text += `【 第 ${w.weekNum} 週 (${w.dateRange}) 】\n`;
+        for (let d = 1; d <= 5; d++) {
+            const dayTasks = w.days && w.days[d] ? w.days[d] : [];
 
+            if (dayTasks.length > 0) {
+                text += `  星期${getDaySymbol(d)} (${getDayDateString(w, d)}):\n`;
+                dayTasks.forEach(t => {
+                    text += `    - [${t.completed ? '已完成' : '未完成'}] ${t.period ? '節次'+t.period+' ' : ''}${t.time ? t.time+' ' : ''}${t.title}\n`;
+                });
+            }
+        }
+        text += `\n`;
+    });
+    exportTextContent.value = text;
+    showExportModal.value = true;
+};
+
+const copyExportText = () => {
+    const textarea = document.createElement('textarea');
+    textarea.value = exportTextContent.value;
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+        document.execCommand('copy');
+    } catch(e) {}
+    document.body.removeChild(textarea);
+};
                 return {
                     semesters,
                     currentSemesterId,
                     weeks,
                     globalTasks,
-                    routines,
                     globalTaskCollapsed,
                     userId,
                     showGeneratorModal,
@@ -1115,7 +1148,6 @@ const reverseWeeks = () => {
                     isToday,
                     isCurrentWeek,
                     getTasksForDay,
-                    getRoutinesForDay,
                     loginWithGoogle
                 };
             }
