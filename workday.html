@@ -159,7 +159,7 @@
                             <div class="flex items-center space-x-3">
                                 <span class="font-bold text-slate-800 text-base">星期{{ getDaySymbol(dayIndex) }}</span>
                                 <span class="text-sm text-slate-500 font-medium">({{ getDayDateString(week, dayIndex) }})</span>
-                                <span v-if="isToday(week, dayIndex)" class="bg-rose-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm animate-pulse">今天</span>
+                                <span v-if="isToday(week, dayIndex)" class="bg-emerald-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">今天</span>
                             </div>
                             <button @click="openAddTaskModal(week.id, dayIndex)" class="text-slate-500 hover:text-indigo-600 text-sm font-medium flex items-center gap-1.5 hover:bg-indigo-50 px-3 py-1.5 rounded-xl transition border border-dashed border-slate-300 hover:border-indigo-300 bg-white">
                                 <i class="fa-solid fa-plus text-xs"></i> 新增
@@ -170,7 +170,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                           
                             <!-- 一般代辦事項 (勾選後僅反灰變暗，不自動刪除) -->
-                            <div v-for="(task, tIndex) in getTasksForDay(week, dayIndex)" :key="task.id" :class="task.completed ? 'bg-slate-100 text-slate-400 opacity-60' : 'bg-white text-slate-800'" class="group flex items-center justify-between border border-slate-200 px-3 py-2 rounded-xl shadow-2xs hover:border-slate-300 transition">
+                            <div v-for="(task, tIndex) in getTasksForDay(week, dayIndex)" :key="task.id" :class="task.completed ? 'bg-slate-100 text-slate-500' : 'bg-white text-slate-800'" class="group flex items-center justify-between border border-slate-200 px-3 py-2 rounded-xl shadow-2xs hover:border-slate-300 transition">
                                 <div class="flex items-center space-x-2.5 flex-1 min-w-0 pr-2">
                                     <input type="checkbox" v-model="task.completed" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer shrink-0">
                                     
@@ -179,7 +179,7 @@
                                     <span v-if="task.time" :class="task.completed ? 'bg-slate-200 text-slate-400 border-slate-300' : 'bg-indigo-50 text-indigo-700 border-indigo-100'" class="shrink-0 text-xs px-2 py-0.5 rounded font-medium border">{{ task.time }}</span>
 
                                     <!-- 點擊文字直接編輯 -->
-                                    <span @click="editTask(week.id, dayIndex, task)" :class="task.completed ? 'text-slate-400 font-normal' : 'font-medium text-slate-900'" class="truncate cursor-pointer hover:underline text-lg" title="點擊文字直接編輯事項">{{ task.title }}</span>
+                                    <span @click="editTask(week.id, dayIndex, task)" :class="task.completed ? 'text-slate-500 font-normal' : 'font-medium text-slate-900'" class="truncate cursor-pointer hover:underline text-lg" title="點擊文字直接編輯事項">{{ task.title }}</span>
                                     
                                     <span v-if="task.note" class="text-xs truncate text-slate-400" :title="task.note">({{ task.note }})</span>
                                 </div>
