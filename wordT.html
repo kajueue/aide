@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>森系生字學習空間</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700&display=swap');
+        
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f5f8f8; color: #4a3f35; }
+
+        .card-container {
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.05);
+            min-height: 650px;
+        }
+
+        /* 上方生字導覽按鈕 */
+        .nav-btn {
+            transition: all 0.2s ease;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            min-width: 90px;
+            font-size: 1.4rem;
+            font-weight: 500;
+            padding: 8px 20px;
+            border-radius: 14px;
+            background: white;
+        }
+        .nav-btn.active {
+            background-color: #6d5d51;
+            color: white;
+            border-color: #6d5d51;
+            box-shadow: 0 4px 12px rgba(109, 93, 81, 0.25);
+        }
+
+        /* 左側：生字與注音標籤 */
+        .char-display {
+            font-size: 11rem;
+            color: #4a3f35;
+            line-height: 1;
+            font-family: "Noto Serif TC", serif;
+            margin-bottom: 25px; 
+        }
+        .zhuyin-tag {
+            background-color: #9c8c81;
+            color: white;
+            padding: 4px 30px;
+            border-radius: 25px;
+            font-size: 1.8rem;
+            font-weight: 500;
+            margin-bottom: 20px; /* 增加下方間距，為多音字按鈕留空間 */
+        }
+
+        /* 關鍵修正：多音字讀音切換鈕樣式 (仿照生字按鈕) */
+        .pron-toggle-btn {
+            transition: all 0.2s ease;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            font-size: 1.3rem;
+            font-weight: 700;
+            padding: 6px 20px;
+            border-radius: 50px; /* 膠囊造型 */
+            background: white;
+            color: #9c8c81;
+            margin: 0 4px;
+        }
+        .pron-toggle-btn.active {
+            background-color: #8b5e34; /* 深木色區別於導覽列 */
+            color: white;
+            border-color: #8b5e34;
+            box-shadow: 0 4px 8px rgba(139, 94, 52, 0.2);
+        }
+
+        /* 右側：詞條與例句 */
+        .example-card {
+            background-color: #fff;
+            border: 1px solid #f0f0f0;
+            border-radius: 18px;
+            padding: 16px 24px;
+            margin-bottom: 12px;
+        }
+        .word-title { font-size: 2.2rem; font-weight: 800; color: #4a3f35; }
+        .word-desc { font-size: 1.7rem; color: #444; margin-left: 12px; }
+        .example-sentence-box {
+            background-color: #f9fafb;
+            border-radius: 10px;
+            padding: 10px 18px;
+            margin-top: 8px;
+            color: #333;
+            font-size: 1.7rem;
+            line-height: 1.4;
+            display: flex;
+            gap: 12px;
+            border-left: 6px solid #e5e7eb;
+        }
+
+        /* VS 比較區塊 */
+        .vs-side-box {
+            background-color: #fffaf4;
+            border-top: 5px solid #d4a373;
+            padding: 18px;
+            border-radius: 20px;
+            width: 100%;
+            margin-top: 25px;
+        }
+        .vs-title { font-size: 1.7rem; font-weight: 800; color: #8b5e34; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .vs-text { font-size: 1.4rem; color: #5d5248; line-height: 1.5; margin-bottom: 4px; }
+
+        /* 彈窗置中 */
+        #input-modal {
+            display: flex;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 100;
+            backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-6">
+
+    <div class="max-w-[85%] mx-auto">
+        <header class="flex justify-between items-center mb-6">
+            <div class="invisible w-24 md:block"></div>
+            <h1 class="text-3xl font-bold tracking-widest text-[#6d5d51] text-center">森系生字學習空間</h1>
+            <button onclick="toggleModal(true)" class="bg-white border-2 border-gray-200 text-gray-600 px-6 py-2 rounded-full font-bold hover:bg-gray-50 transition-all">重新輸入</button>
+        </header>
+
+        <nav id="char-nav" class="flex flex-wrap justify-center gap-3 mb-6"></nav>
+
+        <div id="main-content" class="card-container p-6 md:p-10 flex flex-col md:flex-row gap-8">
+            <div class="w-full md:w-[30%] flex flex-col items-center justify-start border-r-0 md:border-r-2 border-gray-100 pr-0 md:pr-8">
+                <div id="main-char" class="char-display">?</div>
+                <div id="main-zhuyin" class="zhuyin-tag"></div>
+                
+                <div id="pron-selector" class="flex flex-wrap justify-center gap-2 mb-6"></div>
+                
+                <div id="vs-container" class="w-full"></div>
+            </div>
+
+            <div id="details-container" class="w-full md:w-[70%] flex flex-col"></div>
+        </div>
+    </div>
+
+    <div id="input-modal">
+        <div class="bg-white rounded-[32px] w-full max-w-4xl p-10 shadow-2xl mx-4">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">輸入教材內容</h2>
+            <textarea id="raw-input" class="w-full h-[450px] p-6 border-2 border-gray-100 rounded-2xl outline-none text-xl font-mono focus:border-[#6d5d51]" placeholder="在此貼上內容..."></textarea>
+            <div class="flex justify-end gap-6 mt-8">
+                <button onclick="toggleModal(false)" class="text-gray-400 font-bold text-lg">取消</button>
+                <button onclick="processInput()" class="bg-[#6d5d51] text-white px-12 py-4 rounded-2xl font-bold text-xl hover:bg-[#5a4d43] shadow-lg transition-all transform active:scale-95">開始學習</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let vocabularyData = [];
+        let currentIndex = 0;
+        let currentPronIndex = 0;
+
+        function toggleModal(show) { document.getElementById('input-modal').style.display = show ? 'flex' : 'none'; }
+        function clean(txt) { return txt ? txt.replace(/\*\*/g, '').trim() : ""; }
+
+        function processInput() {
+            const rawInput = document.getElementById('raw-input').value.trim();
+            if (!rawInput) return;
+
+            const sections = rawInput.split(/\n---\n|(?=\n\*\*[\u4e00-\u9fa5]\s)/).filter(s => s.trim());
+            
+            vocabularyData = sections.map(section => {
+                const lines = section.split('\n').map(l => l.trim()).filter(l => l);
+                if (lines.length === 0) return null;
+
+                const headerLine = lines[0];
+                const charMatch = clean(headerLine).match(/[\u4e00-\u9fa5]/);
+                const char = charMatch ? charMatch[0] : "字";
+                const zhuyin = clean(headerLine).match(/[ㄅ-ㄩˊˇˋ˙]+/g)?.join(' ') || "";
+                const vsMatch = clean(headerLine).match(/VS\s*([\u4e00-\u9fa5]+)/i);
+
+                let obj = {
+                    char, zhuyin, 
+                    vs: vsMatch ? vsMatch[1] : null,
+                    vsDesc: [],
+                    isPolyphonic: section.includes('讀音：'),
+                    pronunciations: [],
+                    items: []
+                };
+
+                let currentPron = null;
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i];
+                    const cleanL = clean(line).replace(/^[-*]\s*/, '');
+                    if (cleanL.includes('讀音：') || cleanL.includes('讀音:')) {
+                        currentPron = { sound: cleanL.split(/[：:]/)[1].trim(), items: [] };
+                        obj.pronunciations.push(currentPron);
+                        continue;
+                    }
+                    if (cleanL.includes('：') || cleanL.includes(':')) {
+                        const parts = cleanL.split(/[：:]/);
+                        const word = parts[0].trim();
+                        const [desc, ...ex] = parts.slice(1).join('：').split('#');
+                        const item = { word, desc: desc.trim(), example: ex.join('#').trim() };
+                        if (currentPron) currentPron.items.push(item);
+                        else obj.items.push(item);
+                    } 
+		// 同時檢查是否包含「主角字」或是「VS 對象字」
+else if ((cleanL.includes(obj.char) || (obj.vs && cleanL.includes(obj.vs))) && !cleanL.includes('：') && !cleanL.includes(':')) {
+    // 如果這行不是因為 VS 觸發的（即標題沒寫 VS），補上「字義」標籤
+    if (!obj.vs) obj.vs = "字義"; 
+    
+    obj.vsDesc.push(cleanL);
+}
+                }
+                return obj;
+            }).filter(o => o !== null);
+
+            currentIndex = 0; currentPronIndex = 0;
+            renderNav(); renderContent();
+            toggleModal(false);
+        }
+
+        function renderNav() {
+            document.getElementById('char-nav').innerHTML = vocabularyData.map((d, i) => `
+                <button onclick="switchChar(${i})" class="nav-btn ${i === currentIndex ? 'active' : ''}">${d.char}</button>
+            `).join('');
+        }
+
+        function switchChar(i) { currentIndex = i; currentPronIndex = 0; renderNav(); renderContent(); }
+        function switchPron(i) { currentPronIndex = i; renderContent(); }
+
+        function renderContent() {
+            const data = vocabularyData[currentIndex];
+            if (!data) return;
+
+            document.getElementById('main-char').innerText = data.char;
+            document.getElementById('main-zhuyin').innerText = data.zhuyin;
+
+            // 讀音切換鈕
+            const pSelector = document.getElementById('pron-selector');
+            pSelector.innerHTML = data.isPolyphonic ? data.pronunciations.map((p, i) => `
+                <button onclick="switchPron(${i})" class="pron-toggle-btn ${i === currentPronIndex ? 'active' : ''}">${p.sound}</button>
+            `).join('') : "";
+
+const vsBox = document.getElementById('vs-container');
+            
+            // 只有在有內容時才渲染
+            if (data.vsDesc && data.vsDesc.length > 0) {
+                // 判斷是否為真實的 VS (只有當 data.vs 不是我們預設填入的 "字義" 時才顯示標籤)
+                const isRealVS = data.vs && data.vs !== "字義";
+
+                vsBox.innerHTML = `
+                    <div class="vs-side-box">
+                        ${isRealVS ? `
+                            <div class="vs-title">
+                                <span>${data.char}</span>
+                                <span class="text-xs bg-[#d4a373] text-white px-2 py-0.5 rounded">VS</span>
+                                <span>${data.vs}</span>
+                            </div>
+                        ` : ''}
+                        <div class="${isRealVS ? '' : 'pt-1'}">
+                            ${data.vsDesc.map(d => `<p class="vs-text">· ${d}</p>`).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                vsBox.innerHTML = "";
+            }
+
+            // 下面這段 items 的處理維持不變
+            const items = data.isPolyphonic ? (data.pronunciations[currentPronIndex]?.items || []) : data.items;
+            document.getElementById('details-container').innerHTML = items.map(i => `
+                <div class="example-card">
+                    <div class="flex flex-wrap items-baseline gap-3">
+                        <span class="word-title">${i.word}</span>
+                        <span class="word-desc">${i.desc}</span>
+                    </div>
+                    ${i.example ? `<div class="example-sentence-box"><span class="text-[#9c8c81] font-bold">#</span><span>${i.example}</span></div>` : ''}
+                </div>
+            `).join('');
+        }
+        window.onload = () => toggleModal(true);
+    </script>
+</body>
+</html>
