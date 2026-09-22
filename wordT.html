@@ -167,64 +167,82 @@
         function toggleModal(show) { document.getElementById('input-modal').style.display = show ? 'flex' : 'none'; }
         function clean(txt) { return txt ? txt.replace(/\*\*/g, '').trim() : ""; }
 
-        function processInput() {
-            const rawInput = document.getElementById('raw-input').value.trim();
-            if (!rawInput) return;
+function processInput() {
+    const rawInput = document.getElementById('raw-input').value.trim();
+    if (!rawInput) return;
 
-            const sections = rawInput.split(/\n---\n|(?=\n\*\*[\u4e00-\u9fa5]\s)/).filter(s => s.trim());
-            
-            vocabularyData = sections.map(section => {
-                const lines = section.split('\n').map(l => l.trim()).filter(l => l);
-                if (lines.length === 0) return null;
+    // 1. 自動在大標題開頭前補上切分標記
+    // 匹配：單獨一行只有一個漢字，或是「漢字 + 注音/VS」開頭的標題行
+    let sanitizedText = rawInput.replace(/(^|\n)([\*\s]*[\u4e00-\u9fa5](\s+[ㄅ-ㄩˊˇˋ˙]+|\s*VS|\s*$))/gi, '\nSPLIT_MARK\n$2');
 
-                const headerLine = lines[0];
-                const charMatch = clean(headerLine).match(/[\u4e00-\u9fa5]/);
-                const char = charMatch ? charMatch[0] : "字";
-                const zhuyin = clean(headerLine).match(/[ㄅ-ㄩˊˇˋ˙]+/g)?.join(' ') || "";
-                const vsMatch = clean(headerLine).match(/VS\s*([\u4e00-\u9fa5]+)/i);
-
-                let obj = {
-                    char, zhuyin, 
-                    vs: vsMatch ? vsMatch[1] : null,
-                    vsDesc: [],
-                    isPolyphonic: section.includes('讀音：'),
-                    pronunciations: [],
-                    items: []
-                };
-
-                let currentPron = null;
-                for (let i = 1; i < lines.length; i++) {
-                    const line = lines[i];
-                    const cleanL = clean(line).replace(/^[-*]\s*/, '');
-                    if (cleanL.includes('讀音：') || cleanL.includes('讀音:')) {
-                        currentPron = { sound: cleanL.split(/[：:]/)[1].trim(), items: [] };
-                        obj.pronunciations.push(currentPron);
-                        continue;
-                    }
-                    if (cleanL.includes('：') || cleanL.includes(':')) {
-                        const parts = cleanL.split(/[：:]/);
-                        const word = parts[0].trim();
-                        const [desc, ...ex] = parts.slice(1).join('：').split('#');
-                        const item = { word, desc: desc.trim(), example: ex.join('#').trim() };
-                        if (currentPron) currentPron.items.push(item);
-                        else obj.items.push(item);
-                    } 
-		// 同時檢查是否包含「主角字」或是「VS 對象字」
-else if ((cleanL.includes(obj.char) || (obj.vs && cleanL.includes(obj.vs))) && !cleanL.includes('：') && !cleanL.includes(':')) {
-    // 如果這行不是因為 VS 觸發的（即標題沒寫 VS），補上「字義」標籤
-    if (!obj.vs) obj.vs = "字義"; 
+    // 2. 切分成獨立單元
+    const sections = sanitizedText.split('\nSPLIT_MARK\n').filter(s => s.trim());
     
-    obj.vsDesc.push(cleanL);
-}
+    vocabularyData = sections.map(section => {
+        const lines = section.split('\n').map(l => l.trim()).filter(l => l);
+        if (lines.length === 0) return null;
+
+        const headerLine = lines[0];
+        const cleanHeader = clean(headerLine);
+
+        // 抓主角生字
+        const charMatch = cleanHeader.match(/[\u4e00-\u9fa5]/);
+        const char = charMatch ? charMatch[0] : "";
+        if (!char) return null;
+
+        // 抓注音
+        let zhuyin = cleanHeader.match(/[ㄅ-ㄩˊˇˋ˙]+/g)?.[0] || "";
+
+        // 抓 VS 對象
+        const vsMatch = cleanHeader.match(/VS\s*([\u4e00-\u9fa5]+)/i);
+        const vsChar = vsMatch ? vsMatch[1] : null;
+
+        let obj = {
+            char, 
+            zhuyin, 
+            vs: vsChar,
+            vsDesc: [],
+            items: []
+        };
+
+        for (let i = 1; i < lines.length; i++) {
+            const rawLine = lines[i];
+            let cleanL = clean(rawLine);
+
+            // A. 處理詞條（包含冒號）
+            if (cleanL.includes('：') || cleanL.includes(':')) {
+                cleanL = cleanL.replace(/^[-\*·\s]+/, '');
+                const parts = cleanL.split(/[：:]/);
+                let word = parts[0].trim();
+                const [desc, ...ex] = parts.slice(1).join('：').split('#');
+                
+                // 若冒號前面沒寫字（如 - ：輕鬆的），帶入該單元的生字
+                if (!word) word = char;
+
+                obj.items.push({ 
+                    word, 
+                    desc: desc.trim(), 
+                    example: ex.join('#').trim() 
+                });
+            } 
+            // B. 處理 VS 區塊與字義說明（非詞條且有內容的行）
+            else if (cleanL.length > 0) {
+                // 清除開頭符號
+                cleanL = cleanL.replace(/^[-\*·\s]+/, '');
+                if (cleanL && !cleanL.toLowerCase().includes('vs')) {
+                    obj.vsDesc.push(cleanL);
                 }
-                return obj;
-            }).filter(o => o !== null);
-
-            currentIndex = 0; currentPronIndex = 0;
-            renderNav(); renderContent();
-            toggleModal(false);
+            }
         }
+        return obj;
+    }).filter(o => o !== null && (o.items.length > 0 || o.vsDesc.length > 0));
 
+    currentIndex = 0; 
+    currentPronIndex = 0;
+    renderNav(); 
+    renderContent();
+    toggleModal(false);
+}
         function renderNav() {
             document.getElementById('char-nav').innerHTML = vocabularyData.map((d, i) => `
                 <button onclick="switchChar(${i})" class="nav-btn ${i === currentIndex ? 'active' : ''}">${d.char}</button>
