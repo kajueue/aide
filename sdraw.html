@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>秘密觀察員抽籤器 - Secret Observer Generator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <!-- Vue 3 Global Build -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        angel: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            900: '#134e4a',
+                        },
+                        gold: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 4s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-8px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f766e 100%);
+            min-height: 100vh;
+            color: #f8fafc;
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .glass-input {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+        }
+
+        .glass-input:focus {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: #2dd4bf;
+            outline: none;
+        }
+
+        .glow-shadow {
+            box-shadow: 0 0 25px -5px rgba(20, 184, 166, 0.4);
+        }
+
+        .glow-gold {
+            box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.4);
+        }
+
+        /* Perspective Flip Card */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="p-3 sm:p-6 md:p-8 flex items-center justify-center min-h-screen">
+
+    <div id="app" class="w-full max-w-4xl mx-auto" v-cloak>
+        
+        <!-- Header -->
+        <header class="text-center mb-8 relative">
+            <div class="inline-flex items-center justify-center p-3 mb-3 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-300 animate-float">
+                <i class="fa-solid fa-wand-magic-sparkles text-2xl px-1"></i>
+            </div>
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-teal-200 via-amber-200 to-emerald-300 mb-2">
+                秘密觀察員抽籤器
+            </h1>
+        </header>
+
+        <!-- Main Card Container -->
+        <main class="glass-card rounded-3xl p-4 sm:p-8 shadow-2xl relative overflow-hidden">
+            
+            <!-- Step Navigation Indicator -->
+            <div class="flex items-center justify-between max-w-lg mx-auto mb-8 relative">
+                <div class="absolute top-1/2 left-0 w-full h-1 bg-slate-700 -translate-y-1/2 z-0"></div>
+                <div class="absolute top-1/2 left-0 h-1 bg-teal-500 transition-all duration-500 -translate-y-1/2 z-0" 
+                     :style="{ width: stepProgressWidth }"></div>
+
+                <!-- Step 1 Badge -->
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300"
+                         :class="currentStep >= 1 ? 'bg-teal-500 text-slate-950 font-black shadow-lg shadow-teal-500/50' : 'bg-slate-800 text-slate-400 border border-slate-700'">
+                        1
+                    </div>
+                    <span class="text-xs font-medium mt-1.5" :class="currentStep >= 1 ? 'text-teal-300 font-bold' : 'text-slate-400'">名單設定</span>
+                </div>
+
+                <!-- Step 2 Badge -->
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300"
+                         :class="currentStep >= 2 ? 'bg-teal-500 text-slate-950 font-black shadow-lg shadow-teal-500/50' : 'bg-slate-800 text-slate-400 border border-slate-700'">
+                        2
+                    </div>
+                    <span class="text-xs font-medium mt-1.5" :class="currentStep >= 2 ? 'text-teal-300 font-bold' : 'text-slate-400'">抽籤揭曉</span>
+                </div>
+
+                <!-- Step 3 Badge -->
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300"
+                         :class="currentStep >= 3 ? 'bg-teal-500 text-slate-950 font-black shadow-lg shadow-teal-500/50' : 'bg-slate-800 text-slate-400 border border-slate-700'">
+                        3
+                    </div>
+                    <span class="text-xs font-medium mt-1.5" :class="currentStep >= 3 ? 'text-teal-300 font-bold' : 'text-slate-400'">主持總覽</span>
+                </div>
+            </div>
+
+            <!-- STEP 1: MEMBER SETUP -->
+            <section v-if="currentStep === 1" class="space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-700/60">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-users text-teal-400"></i> 輸入參與成員號碼/姓名
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">預設 8 位成員（目前共有 {{ members.filter(m => m.trim()).length }} 人）</p>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <button @click="loadSampleNames" 
+                                class="px-3 py-1.5 text-xs font-medium rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-bolt text-amber-400"></i> 載入預設 8 人
+                        </button>
+                        <button @click="clearNames" 
+                                class="px-3 py-1.5 text-xs font-medium rounded-xl bg-slate-800 hover:bg-red-950/40 text-slate-400 hover:text-red-300 border border-slate-700 transition">
+                            清空
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Member Input List Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-3 max-h-[380px] overflow-y-auto pr-1">
+                    <div v-for="(name, index) in members" :key="index" class="relative flex items-center group">
+                        <span class="absolute left-3.5 text-xs font-bold text-slate-500 group-focus-within:text-teal-400 transition">
+                            #{{ index + 1 }}
+                        </span>
+                        <input type="text" 
+                               v-model="members[index]" 
+                               :placeholder="'' + (index + 1) + '號'"
+                               class="w-full glass-input rounded-2xl py-2.5 pl-10 pr-10 text-sm font-medium transition focus:ring-2 focus:ring-teal-500/40">
+                        <button v-if="members.length > 3" 
+                                @click="removeMember(index)" 
+                                title="刪除此項"
+                                class="absolute right-3 text-slate-500 hover:text-red-400 transition p-1">
+                            <i class="fa-solid fa-xmark text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Action Toolbar for Adding/Batch Inputs -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+                    <button @click="addMember" 
+                            class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-800/80 hover:bg-slate-700 text-teal-300 border border-teal-500/30 transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus text-xs"></i> 增加成員欄位
+                    </button>
+
+                    <div class="text-xs text-slate-400">
+                        <i class="fa-solid fa-circle-info text-teal-400/80 mr-1"></i> 最少需要 3 位成員才能開始抽籤
+                    </div>
+                </div>
+
+                <!-- Validation Warning Notice -->
+                <div v-if="validationError" class="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-base text-red-400"></i>
+                    <span>{{ validationError }}</span>
+                </div>
+
+                <!-- Generate Draw Button -->
+                <div class="pt-4 text-center">
+                    <button @click="generateMatches" 
+                            class="w-full sm:w-auto px-10 py-4 rounded-2xl bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-600 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-black text-lg glow-shadow transition-all duration-300 active:scale-95 flex items-center justify-center gap-3 mx-auto">
+                        <i class="fa-solid fa-dice text-xl"></i>
+                        <span>開始神祕抽籤配對</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- STEP 2: SECRET REVEAL PHASE (Pass-the-Phone) -->
+            <section v-if="currentStep === 2" class="space-y-6">
+                <div class="text-center max-w-lg mx-auto">
+                    <h2 class="text-2xl font-black text-white mb-1 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-user-secret text-amber-400"></i> 秘密觀察員卡牌庫
+                    </h2>
+                    <p class="text-xs text-slate-300">
+                        請每位成員點擊自己的號碼卡牌查看「您的任務對象」。<br>
+                        查看完成後可重新蓋上，保持驚喜感！
+                    </p>
+                </div>
+
+                <!-- Grid of Secret Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+                    <div v-for="person in memberObjects" :key="person.name"
+                         @click="openSecretModal(person)"
+                         class="group relative rounded-2xl p-4 cursor-pointer transition-all duration-300 border flex flex-col items-center justify-center text-center min-h-[120px] select-none"
+                         :class="person.revealed ? 'bg-slate-800/40 border-slate-700/60 opacity-80' : 'bg-gradient-to-b from-slate-800/90 to-slate-900/90 border-teal-500/40 hover:border-teal-400 hover:scale-[1.03] glow-shadow'">
+                        
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center mb-2 font-bold transition-transform group-hover:scale-110"
+                             :class="person.revealed ? 'bg-slate-700 text-slate-400' : 'bg-teal-500/20 text-teal-300 border border-teal-500/40'">
+                            <i class="fa-solid" :class="person.revealed ? 'fa-check' : 'fa-user-shield'"></i>
+                        </div>
+
+                        <span class="text-base font-bold text-white tracking-wide mb-1">{{ person.name }}</span>
+                        
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                              :class="person.revealed ? 'bg-slate-700 text-slate-400' : 'bg-teal-500/10 text-teal-300 border border-teal-500/30'">
+                            {{ person.revealed ? '已查看' : '點擊查看任務對象' }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Footer Navigation Buttons for Step 2 -->
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-slate-700/60">
+                    <button @click="currentStep = 1" 
+                            class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-arrow-left"></i> 返回修改成員
+                    </button>
+
+                    <button @click="currentStep = 3" 
+                            class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold border border-amber-500/40 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-key"></i> 切換至主持人總覽頁面
+                    </button>
+                </div>
+            </section>
+
+            <!-- STEP 3: HOST DASHBOARD & EXPORT -->
+            <section v-if="currentStep === 3" class="space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-700/60">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-clipboard-list text-amber-400"></i> 主持人配對總覽面板
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">為確保遊戲趣味，可保護防劇透解鎖模式</p>
+                    </div>
+
+                    <button @click="toggleHostUnlock" 
+                            class="px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-2"
+                            :class="hostUnlocked ? 'bg-red-500/20 border border-red-500/40 text-red-300' : 'bg-teal-500/20 border border-teal-500/40 text-teal-300'">
+                        <i class="fa-solid" :class="hostUnlocked ? 'fa-lock' : 'fa-lock-open'"></i>
+                        {{ hostUnlocked ? '重新鎖定防劇透' : '點擊解鎖完整結果' }}
+                    </button>
+                </div>
+
+                <!-- Host Lock Masked View -->
+                <div v-if="!hostUnlocked" class="p-8 text-center glass-card rounded-2xl border border-dashed border-slate-700 my-4">
+                    <div class="w-14 h-14 rounded-full bg-slate-800 text-amber-400 flex items-center justify-center mx-auto mb-3 text-xl border border-amber-500/30">
+                        <i class="fa-solid fa-eye-slash"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-1">配對清單已受隱私保護</h3>
+                    <p class="text-xs text-slate-400 max-w-sm mx-auto mb-4">如果您是活動主辦人且需要核對，請點擊上方「解鎖完整結果」按鈕。</p>
+                </div>
+
+                <!-- Unlocked Match Results Table -->
+                <div v-else class="space-y-3">
+                    <div class="overflow-x-auto rounded-2xl border border-slate-700/80">
+                        <table class="w-full text-left text-xs sm:text-sm">
+                            <thead class="bg-slate-800/80 text-slate-300 font-bold border-b border-slate-700">
+                                <tr>
+                                    <th class="p-3">#</th>
+                                    <th class="p-3 text-teal-300"><i class="fa-solid fa-user-astronaut mr-1"></i> 秘密觀察員 (抽籤者)</th>
+                                    <th class="p-3 text-center"><i class="fa-solid fa-arrow-right text-slate-500"></i></th>
+                                    <th class="p-3 text-amber-300"><i class="fa-solid fa-eye mr-1"></i> 任務對象</th>
+                                    <th class="p-3 text-right">個別通知文字</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800">
+                                <tr v-for="(receiver, giver, idx) in matches" :key="giver" class="hover:bg-slate-800/30 transition">
+                                    <td class="p-3 font-mono text-slate-500">{{ idx + 1 }}</td>
+                                    <td class="p-3 font-bold text-white">{{ giver }}</td>
+                                    <td class="p-3 text-center text-slate-500">➔</td>
+                                    <td class="p-3 font-bold text-amber-300">{{ receiver }}</td>
+                                    <td class="p-3 text-right">
+                                        <button @click="copyIndividualMessage(giver, receiver)" 
+                                                class="px-2.5 py-1 text-xs rounded-lg bg-slate-800 hover:bg-teal-900/40 text-teal-300 border border-slate-700 transition">
+                                            <i class="fa-solid fa-copy mr-1"></i> 複製私訊
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Action Toolbar for Export / Reshuffle -->
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-700/60">
+                    <button @click="copyAllResultsText" 
+                            class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 text-xs font-bold border border-slate-700 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-paste"></i> 複製全體秘密私訊剪貼簿
+                    </button>
+
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <button @click="currentStep = 2" 
+                                class="w-1/2 sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition">
+                            返回翻牌頁
+                        </button>
+
+                        <button @click="reShuffle" 
+                                class="w-1/2 sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 text-xs font-black transition">
+                            <i class="fa-solid fa-rotate-right mr-1"></i> 重新抽籤
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- SECRET REVEAL MODAL DIALOG -->
+        <div v-if="activeModalPerson" 
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md transition-all">
+            
+            <div class="glass-card rounded-3xl max-w-md w-full p-6 text-center relative border border-teal-500/30 glow-shadow animate-float">
+                
+                <!-- Close Modal Button -->
+                <button @click="closeSecretModal" 
+                        class="absolute top-4 right-4 text-slate-400 hover:text-white p-2 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+                <!-- Header info -->
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs font-bold mb-4">
+                    <i class="fa-solid fa-shield-halved"></i> 隱私防偷窺模式
+                </div>
+
+                <h3 class="text-xl font-black text-white mb-1">
+                    親愛的 <span class="text-teal-300 underline underline-offset-4">{{ activeModalPerson.name }}</span>
+                </h3>
+                <p class="text-xs text-slate-400 mb-6">請確保身旁沒有其他人偷看後，點擊下方卡片揭曉！</p>
+
+                <!-- Interactive Reveal Card Box -->
+                <div class="perspective-1000 my-4 cursor-pointer" @click="toggleCardReveal">
+                    <div class="relative w-full h-48 rounded-2xl transition-all duration-700 transform-style-3d shadow-xl"
+                         :class="isModalCardFlipped ? 'rotate-y-180' : ''">
+                        
+                        <!-- Front Side (Hidden) -->
+                        <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-slate-800 via-slate-900 to-teal-950 border-2 border-teal-500/40 p-6 flex flex-col items-center justify-center backface-hidden">
+                            <div class="w-16 h-16 rounded-full bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 text-2xl mb-3">
+                                <i class="fa-solid fa-eye animate-bounce"></i>
+                            </div>
+                            <span class="text-sm font-bold text-teal-200">點擊翻牌查看「任務對象」</span>
+                            <span class="text-[10px] text-slate-400 mt-1">Tap to reveal target</span>
+                        </div>
+
+                        <!-- Back Side (Revealed) -->
+                        <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-amber-950/90 via-slate-900 to-teal-950 border-2 border-amber-400/60 p-6 flex flex-col items-center justify-center rotate-y-180 backface-hidden glow-gold">
+                            <span class="text-xs font-bold text-amber-400 tracking-widest uppercase mb-1">YOUR TARGET</span>
+                            <span class="text-3xl font-black text-white tracking-wide my-1 text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400">
+                                {{ matches[activeModalPerson.name] }}
+                            </span>
+                            <span class="text-[11px] text-teal-300/80 mt-2 font-medium">
+                                默默觀察他/她，保持秘密直到活動時間結束！✨
+                            </span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Action Button in Modal -->
+                <div class="mt-6 flex gap-2">
+                    <button @click="closeSecretModal" 
+                            class="w-full py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-extrabold text-sm transition">
+                        記住了，蓋上卡片！
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Custom Toast Message Notification -->
+        <div v-if="toastMessage" 
+             class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl bg-slate-900/95 border border-teal-500/50 text-teal-200 font-bold text-xs sm:text-sm shadow-2xl flex items-center gap-2 animate-bounce">
+            <i class="fa-solid fa-circle-check text-teal-400 text-base"></i>
+            <span>{{ toastMessage }}</span>
+        </div>
+
+    </div>
+
+    <script>
+        const { createApp, ref, computed } = Vue;
+
+        createApp({
+            setup() {
+                // Member inputs state (Default 8 numbers)
+                const members = ref([
+                    '1號',
+                    '2號',
+                    '3號',
+                    '4號',
+                    '5號',
+                    '6號',
+                    '7號',
+                    '8號'
+                ]);
+
+                const currentStep = ref(1);
+                const matches = ref({}); // { GiverName: ReceiverName }
+                const memberObjects = ref([]); // [{ name: string, revealed: boolean }]
+                const validationError = ref('');
+                
+                // Modal State
+                const activeModalPerson = ref(null);
+                const isModalCardFlipped = ref(false);
+                
+                // Host Mode State
+                const hostUnlocked = ref(false);
+
+                // Toast Notification State
+                const toastMessage = ref('');
+
+                // Computed Step Progress Bar Width
+                const stepProgressWidth = computed(() => {
+                    if (currentStep.value === 1) return '0%';
+                    if (currentStep.value === 2) return '50%';
+                    return '100%';
+                });
+
+                // Load 8 default numbered members
+                const loadSampleNames = () => {
+                    members.value = [
+                        '1號',
+                        '2號',
+                        '3號',
+                        '4號',
+                        '5號',
+                        '6號',
+                        '7號',
+                        '8號'
+                    ];
+                    validationError.value = '';
+                    showToast('已成功載入 8 位成員範例！');
+                };
+
+                const clearNames = () => {
+                    members.value = ['', '', ''];
+                    validationError.value = '';
+                };
+
+                const addMember = () => {
+                    members.value.push('');
+                };
+
+                const removeMember = (index) => {
+                    if (members.value.length > 3) {
+                        members.value.splice(index, 1);
+                    }
+                };
+
+                /**
+                 * DERANGEMENT ALGORITHM (秘密觀察員錯排演算法)
+                 */
+                const generateMatches = () => {
+                    // Filter empty inputs & trim spaces
+                    const cleanedList = members.value
+                        .map(n => n.trim())
+                        .filter(n => n.length > 0);
+
+                    // Validation checks
+                    if (cleanedList.length < 3) {
+                        validationError.value = '請至少輸入 3 位成員才能進行配對！';
+                        return;
+                    }
+
+                    // Check duplicate names/numbers
+                    const uniqueNames = new Set(cleanedList);
+                    if (uniqueNames.size !== cleanedList.length) {
+                        validationError.value = '列表中有重複的號碼或姓名，請修改為不重複的內容！';
+                        return;
+                    }
+
+                    validationError.value = '';
+
+                    // Fisher-Yates Shuffle array
+                    const shuffled = [...cleanedList];
+                    for (let i = shuffled.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                    }
+
+                    // Create Derangement Cycle
+                    const matchResult = {};
+                    const n = shuffled.length;
+                    for (let i = 0; i < n; i++) {
+                        const giver = shuffled[i];
+                        const receiver = shuffled[(i + 1) % n];
+                        matchResult[giver] = receiver;
+                    }
+
+                    matches.value = matchResult;
+
+                    // Initialize card state for Step 2
+                    memberObjects.value = cleanedList.map(name => ({
+                        name: name,
+                        revealed: false
+                    }));
+
+                    currentStep.value = 2;
+                    hostUnlocked.value = false;
+
+                    // Trigger celebratory confetti
+                    if (typeof confetti === 'function') {
+                        confetti({
+                            particleCount: 80,
+                            spread: 70,
+                            origin: { y: 0.6 }
+                        });
+                    }
+
+                    showToast('秘密觀察員配對完成！任務對象已分配完畢！');
+                };
+
+                const reShuffle = () => {
+                    generateMatches();
+                };
+
+                // Modal Control logic
+                const openSecretModal = (person) => {
+                    activeModalPerson.value = person;
+                    isModalCardFlipped.value = false;
+                };
+
+                const closeSecretModal = () => {
+                    if (activeModalPerson.value) {
+                        activeModalPerson.value.revealed = true;
+                    }
+                    activeModalPerson.value = null;
+                    isModalCardFlipped.value = false;
+                };
+
+                const toggleCardReveal = () => {
+                    isModalCardFlipped.value = !isModalCardFlipped.value;
+                    if (isModalCardFlipped.value && typeof confetti === 'function') {
+                        confetti({
+                            particleCount: 35,
+                            spread: 50,
+                            origin: { y: 0.5 }
+                        });
+                    }
+                };
+
+                // Host View Unlock Toggle
+                const toggleHostUnlock = () => {
+                    hostUnlocked.value = !hostUnlocked.value;
+                    if (hostUnlocked.value) {
+                        showToast('主辦人檢視模式已開啟');
+                    }
+                };
+
+                // Utility Clipboard Copy
+                const copyToClipboard = (text) => {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    try {
+                        document.execCommand('copy');
+                        showToast('複製成功！');
+                    } catch (err) {
+                        console.error('Copy failed:', err);
+                    }
+                    document.body.removeChild(textarea);
+                };
+
+                const copyIndividualMessage = (giver, receiver) => {
+                    const text = `【秘密觀察員任務卡】\n親愛的 ${giver}：\n您本次抽到的任務對象是：🌟「 ${receiver} 」🌟\n請默默觀察並紀錄他/她喔！`;
+                    copyToClipboard(text);
+                };
+
+                const copyAllResultsText = () => {
+                    let text = `【秘密觀察員抽籤私訊總覽】\n--------------------\n`;
+                    for (const [giver, receiver] of Object.entries(matches.value)) {
+                        text += `給 ${giver}: 你的任務對象是【 ${receiver} 】\n`;
+                    }
+                    copyToClipboard(text);
+                };
+
+                const showToast = (msg) => {
+                    toastMessage.value = msg;
+                    setTimeout(() => {
+                        toastMessage.value = '';
+                    }, 2800);
+                };
+
+                return {
+                    members,
+                    currentStep,
+                    matches,
+                    memberObjects,
+                    validationError,
+                    activeModalPerson,
+                    isModalCardFlipped,
+                    hostUnlocked,
+                    toastMessage,
+                    stepProgressWidth,
+                    loadSampleNames,
+                    clearNames,
+                    addMember,
+                    removeMember,
+                    generateMatches,
+                    reShuffle,
+                    openSecretModal,
+                    closeSecretModal,
+                    toggleCardReveal,
+                    toggleHostUnlock,
+                    copyIndividualMessage,
+                    copyAllResultsText
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
